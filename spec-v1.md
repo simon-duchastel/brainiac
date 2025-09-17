@@ -114,7 +114,6 @@ The permanent, structured, and evolving knowledge base of the system.
         *   `created_at`: The ISO 8601 timestamp of the memory's creation.
         *   `updated_at`: The ISO 8601 timestamp of the memory's last modification.
         *   `tags`: A list of relevant keywords or categories.
-        *   `emotion`: A single, descriptive tag for the affective context of the memory.
         *   `reinforcement_count`: An integer, initialized at 0, that is incremented each time this memory is reinforced by the Promotion process. This serves as a direct measure of a memory's recurring importance.
     *   **Body:** The content of the memory in Markdown.
 *   **Indexing & Relationality (`_index.md`):** This is the core mechanism for search and establishing relationships.
@@ -122,7 +121,7 @@ The permanent, structured, and evolving knowledge base of the system.
     *   **Purpose:** To provide a summary of the directory's concept and to link it to other memories, forming a semantic web.
     *   **Content:** The `_index.md` file MUST contain:
         1.  A **summary** of the topic the directory represents.
-        2.  A **manifest** of the memory files and subdirectories it contains.
+        2.  A **manifest** of the memory files and subdirectories it contains (e.g., as a Markdown list).
         3.  A **"Related Memories"** section with explicit, UUID-based links to other relevant memory files or `_index.md` files throughout the LTM.
 
 ## 4. Core Processes
@@ -138,15 +137,17 @@ The system's processes operate on three distinct tiers to ensure responsiveness:
 ### 4.2. The Core Loop (Interaction Process)
 
 1.  Receive user prompt.
-2.  The system assembles the Working Memory context. This MUST include:
-    *   Core Identity (`system/core_identity.md`)
-    *   The User Prompt
-    *   The **entire content** of `memory/short_term.md`. This file serves as the primary source of immediate context.
-    *   Relevant LTM excerpts retrieved in the next step.
-3.  The LLM generates a set of search queries for LTM based on the full context assembled in the previous step, including the rich data from `short_term.md`.
-4.  The system retrieves the most relevant memory files based on the search results.
-5.  The LLM generates a response based on the assembled context.
-6.  For every LTM file read in step 4, an entry is appended to `logs/access.log`.
+2.  The system constructs an initial context for search query generation. This context MUST include:
+    *   The User Prompt.
+    *   The `## Summary` and `## Structured Data` sections from `memory/short_term.md`.
+3.  The LLM generates a set of search queries for LTM based on this initial context.
+4.  The system retrieves the most relevant memory files from LTM based on the search results. For every file read, an entry is appended to `logs/access.log`.
+5.  The system assembles the final Working Memory for response generation. This MUST include:
+    *   Core Identity (`system/core_identity.md`).
+    *   The User Prompt.
+    *   The **entire content** of `memory/short_term.md`.
+    *   The LTM excerpts retrieved in the previous step.
+6.  The LLM generates a response based on the final Working Memory context.
 7.  The response is delivered to the user.
 
 ### 4.3. The Reflection Process (Working -> STM)
@@ -156,7 +157,7 @@ The system's processes operate on three distinct tiers to ensure responsiveness:
 
 ### 4.4. The Promotion & Pruning Process (STM -> LTM)
 
-*   **Trigger:** 5 minutes of user inactivity **OR** when `memory/short_term.md` exceeds 4096 tokens.
+*   **Trigger:** 5 minutes of user inactivity **OR** when `memory/short_term.md` exceeds 4096 tokens. The specific method for counting tokens should be defined and consistently applied by the implementation.
 *   **Action:** This idle-time process is now a multi-step workflow:
     1.  **Acquire Lock:** The process acquires an exclusive lock on `memory/short_term.md`.
     2.  **Analyze:** The LLM reads the entire `## Event Log`. Its goal is to identify recurring themes, important entities, and concepts suitable for long-term storage. It outputs a list of these "promotion candidates" and the event timestamps related to each.
@@ -168,7 +169,7 @@ The system's processes operate on three distinct tiers to ensure responsiveness:
         *   For every file written or modified, a corresponding `WRITE` or `MODIFY` entry MUST be appended to `logs/access.log`.
         *   Relevant `_index.md` files are updated to reflect the change.
     5.  **Prune & Summarize:** After all candidates have been promoted, the LLM is called one last time to generate the summary for the next cycle. Its prompt is: "Review the old summary, the full event log from the preceding cycle, and a list of which events were just promoted. Generate a new, concise 1-3 paragraph summary of the cycle's activity. Incorporate themes from the old summary only if they remain relevant to recent events or are clearly defined as ongoing goals. You must be discerning; drop old themes that are no longer active to keep the summary fresh and focused."
-    6.  **Finalize:** The `memory/short_term.md` file is completely overwritten. The new content consists of the newly generated summary, empty `Structured Data` lists, and an empty `Event Log`. This resets the STM for the next cycle, carrying over only a high-level summary of what was left behind. The lock is then released.
+    6.  **Finalize:** The `memory/short_term.md` file is completely overwritten. The process must first read the existing `## Structured Data` section to identify any incomplete goals or tasks (e.g., unchecked checkboxes). The new file content consists of the newly generated summary, a `Structured Data` section populated **only with the incomplete goals and tasks from the previous cycle**, and an empty `Event Log`. This resets the STM, carrying over only a high-level summary and active tasks. The lock is then released.
 
 ### 4.5. The Organization Process (LTM Evolution)
 
@@ -180,7 +181,7 @@ The system's processes operate on three distinct tiers to ensure responsiveness:
         *   **Strengthen Relations:** Add new links between concepts in `_index.md` files.
         *   **Restructure:** Move frequently accessed memories to higher, more accessible locations in the hierarchy.
         *   **Archive:** Compress or move memories that have not been accessed for a prolonged period.
-    4.  Clear the `logs/access.log` file after it has been processed.
+    4.  Archive or clear the `logs/access.log` file after it has been processed.
 
 ## 5. System & Logging
 
