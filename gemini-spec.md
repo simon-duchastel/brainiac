@@ -167,7 +167,7 @@ The system's processes operate on three distinct tiers to ensure responsiveness:
         *   If a memory is modified, its `updated_at` timestamp is refreshed and its `reinforcement_count` is incremented.
         *   For every file written or modified, a corresponding `WRITE` or `MODIFY` entry MUST be appended to `logs/access.log`.
         *   Relevant `_index.md` files are updated to reflect the change.
-    5.  **Prune & Summarize:** After all candidates have been promoted, the LLM is called one last time. It is given the list of events that were just promoted. Its prompt is: "The following events were just archived to LTM. For the remaining, non-archived events in the log, generate a new, concise 1-3 paragraph summary. The old summary is now obsolete."
+    5.  **Prune & Summarize:** After all candidates have been promoted, the LLM is called one last time to generate the summary for the next cycle. Its prompt is: "Review the old summary, the full event log from the preceding cycle, and a list of which events were just promoted. Generate a new, concise 1-3 paragraph summary of the cycle's activity. Incorporate themes from the old summary only if they remain relevant to recent events or are clearly defined as ongoing goals. You must be discerning; drop old themes that are no longer active to keep the summary fresh and focused."
     6.  **Finalize:** The `memory/short_term.md` file is completely overwritten. The new content consists of the newly generated summary, empty `Structured Data` lists, and an empty `Event Log`. This resets the STM for the next cycle, carrying over only a high-level summary of what was left behind. The lock is then released.
 
 ### 4.5. The Organization Process (LTM Evolution)
