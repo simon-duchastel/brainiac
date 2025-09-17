@@ -71,9 +71,10 @@ The permanent, structured, and evolving knowledge base of the system.
 
 *   **Location:** `memory/long_term/`
 *   **Structure:** A hierarchical directory structure. The hierarchy itself is a form of knowledge representation. Deeper nesting implies more specific or nuanced concepts.
-*   **Memory Types:** LTM is organized into two primary top-level directories:
+*   **Memory Types:** LTM is organized into three primary top-level directories:
     *   `concrete/`: For semantic memory. Contains facts and knowledge about specific topics, concepts, and entities (e.g., `/concrete/programming/python/`).
     *   `events/`: For episodic memory. Contains records of interactions and actions taken by the system, organized chronologically (e.g., `/events/2025/09/16/`).
+    *   `skills/`: For procedural memory. Contains structured "recipes" or sequences of actions that lead to a successful outcome for a given task. Like other LTM directories, this is a hierarchical structure with `_index.md` files to facilitate search and organization (e.g., `/skills/refactoring/python/`).
 *   **File Format:** All memory files MUST be Markdown files with YAML frontmatter.
     *   **Frontmatter:**
         *   `uuid`: A unique, immutable identifier for the memory file. Essential for stable linking.
@@ -104,7 +105,7 @@ The system's processes operate on three distinct tiers to ensure responsiveness:
 
 1.  Receive user prompt.
 2.  The LLM generates a set of search queries based on the prompt and conversation summary.
-3.  The system searches LTM by scanning relevant `_index.md` files for the queries.
+3.  The system searches LTM by scanning relevant `_index.md` files for the queries. If the prompt suggests a task-oriented goal, the `skills/` directory may be prioritized.
 4.  The system retrieves the most relevant memory files based on the search results.
 5.  The system assembles the Working Memory context (Core Identity, summary, retrieved memories, prompt).
 6.  The LLM generates a response based on the assembled context.
@@ -114,7 +115,7 @@ The system's processes operate on three distinct tiers to ensure responsiveness:
 ### 4.3. The Reflection Process (Working -> STM)
 
 *   **Trigger:** Asynchronous, immediately after step 8 of the Core Loop.
-*   **Action:** The system uses the LLM with a dedicated prompt to summarize the last exchange (prompt and response). The summary should identify key facts, entities, goals, and decisions.
+*   **Action:** The system uses the LLM with a dedicated prompt to summarize the last exchange (prompt and response). The summary should identify key facts, entities, goals, and decisions. If a task was completed successfully via a sequence of actions (e.g., tool calls, commands), the process can also generate a structured "skill" memory that details the successful procedure.
 *   **Output:** A new, self-contained Markdown file is created in `memory/short_term/`.
 
 ### 4.4. The Promotion Process (STM -> LTM)
@@ -122,7 +123,7 @@ The system's processes operate on three distinct tiers to ensure responsiveness:
 *   **Trigger:** Idle-time (e.g., no user activity for 5 minutes).
 *   **Action:**
     1.  Scan all files in `memory/short_term/`.
-    2.  For each file, use the LLM to determine its appropriate destination in LTM (e.g., as a new `event` or an update to a `concrete` topic).
+    2.  For each file, use the LLM to determine its appropriate destination in LTM (e.g., as a new `event`, an update to a `concrete` topic, or a new entry in the `skills/` hierarchy).
     3.  Move or merge the content into the LTM file structure.
     4.  Use the LLM to update the `_index.md` files in the affected directory path, adding a reference to the new or updated memory.
     5.  Delete the original file from `memory/short_term/`.
