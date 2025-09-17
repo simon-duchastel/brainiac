@@ -113,8 +113,9 @@ The permanent, structured, and evolving knowledge base of the system.
         *   `uuid`: A unique, immutable identifier for the memory file. Essential for stable linking.
         *   `created_at`: The ISO 8601 timestamp of the memory's creation.
         *   `updated_at`: The ISO 8601 timestamp of the memory's last modification.
-        *   `tags`: A list of relevant keywords or categories (e.g., `[python, webdev, fastapi]`).
-        *   `emotion`: A single, descriptive tag for the affective context of the memory (e.g., `curiosity`, `satisfaction`).
+        *   `tags`: A list of relevant keywords or categories.
+        *   `emotion`: A single, descriptive tag for the affective context of the memory.
+        *   `reinforcement_count`: An integer, initialized at 0, that is incremented each time this memory is reinforced by the Promotion process. This serves as a direct measure of a memory's recurring importance.
     *   **Body:** The content of the memory in Markdown.
 *   **Indexing & Relationality (`_index.md`):** This is the core mechanism for search and establishing relationships.
     *   **Requirement:** Every directory inside LTM MUST contain an `_index.md` file.
@@ -155,21 +156,26 @@ The system's processes operate on three distinct tiers to ensure responsiveness:
 
 ### 4.4. The Promotion & Pruning Process (STM -> LTM)
 
-*   **Trigger:** Idle-time (e.g., no user activity for 5 minutes).
+*   **Trigger:** 5 minutes of user inactivity **OR** when `memory/short_term.md` exceeds 4096 tokens.
 *   **Action:** This idle-time process is now a multi-step workflow:
     1.  **Acquire Lock:** The process acquires an exclusive lock on `memory/short_term.md`.
     2.  **Analyze:** The LLM reads the entire `## Event Log`. Its goal is to identify recurring themes, important entities, and concepts suitable for long-term storage. It outputs a list of these "promotion candidates" and the event timestamps related to each.
-    3.  **Synthesize:** For each major "promotion candidate," the system makes a focused LLM call, providing the relevant log excerpts and instructing it to write a new, coherent, and consolidated LTM entry (as either a `concrete`, `event`, or `skill` memory).
-    4.  **Write to LTM:** The newly synthesized entries are written to their final destination in the `memory/long_term/` directory, with `_index.md` files being updated accordingly.
+    3.  **Synthesize:** For each major "promotion candidate," the system first searches LTM to find a relevant existing memory to modify or reinforce. 
+        *   If a relevant memory is found, the system makes a focused LLM call to merge the new information from the STM log excerpts, updating the existing LTM entry.
+        *   If no relevant memory is found, the system instructs the LLM to write a new, coherent, and consolidated LTM entry.
+    4.  **Write to LTM:** The new or modified entries are written to their destination in the `memory/long_term/` directory. 
+        *   If a memory is modified, its `updated_at` timestamp is refreshed and its `reinforcement_count` is incremented.
+        *   For every file written or modified, a corresponding `WRITE` or `MODIFY` entry MUST be appended to `logs/access.log`.
+        *   Relevant `_index.md` files are updated to reflect the change.
     5.  **Prune & Summarize:** After all candidates have been promoted, the LLM is called one last time. It is given the list of events that were just promoted. Its prompt is: "The following events were just archived to LTM. For the remaining, non-archived events in the log, generate a new, concise 1-3 paragraph summary. The old summary is now obsolete."
     6.  **Finalize:** The `memory/short_term.md` file is completely overwritten. The new content consists of the newly generated summary, empty `Structured Data` lists, and an empty `Event Log`. This resets the STM for the next cycle, carrying over only a high-level summary of what was left behind. The lock is then released.
 
 ### 4.5. The Organization Process (LTM Evolution)
 
-*   **Trigger:** Long idle-time or a scheduled nightly task.
+*   **Trigger:** This process is triggered on a fixed schedule of every 4 hours, but the run is skipped if `logs/access.log` is empty. It can also be triggered opportunistically during periods of extended user inactivity of not less than 30 minutes.
 *   **Action:** This is the system's "deep thought" cycle.
     1.  Read and parse the `logs/access.log` file.
-    2.  Use the LLM to identify access patterns (e.g., frequently used memories, co-accessed memories, unused memories).
+    2.  Use the LLM to identify access patterns (e.g., frequently read memories, frequently modified memories, co-accessed memories, unused memories).
     3.  Based on these patterns, the LLM proposes and executes refactoring operations:
         *   **Strengthen Relations:** Add new links between concepts in `_index.md` files.
         *   **Restructure:** Move frequently accessed memories to higher, more accessible locations in the hierarchy.
@@ -184,10 +190,9 @@ The `system/core_identity.md` file serves as the AI's constitution. It defines i
 
 ### 5.2. Access Logging
 
-The `logs/access.log` file is a simple, machine-readable log that records every time a file in LTM is read.
+The `logs/access.log` file is a simple, machine-readable log that records every time a file in LTM is read or written.
 
-*   **Purpose:** To provide the Organization Process with the necessary data to identify usage patterns and evolve the LTM structure.
-*   **Format:** `[ISO_8601_TIMESTAMP] | [ACTION] | [ABSOLUTE_FILE_PATH]`
-*   **Example:** `2025-09-16T15:30:00Z | READ | /path/to/project/memory/long_term/concrete/programming/python.md`
+*   **Purpose:** To provide the Organization Process with the necessary data to identify usage patterns and evolve the LTM structure. A `WRITE` or `MODIFY` action is a strong signal of a memory's current relevance and importance.
+*   **Format:** `[ISO_8601_TIMESTAMP] | [ACTION] | [ABSOLUTE_FILE_PATH]`, where `ACTION` is one of `READ`, `WRITE`, or `MODIFY`.
 
 
