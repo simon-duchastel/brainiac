@@ -4,7 +4,7 @@ This document outlines the implementation plan for the Braniac AI Memory System,
 
 ## 1. Project Structure
 
-The project will be organized into a multi-module Gradle project to ensure separation of concerns.
+The project will be organized into a hierarchical multi-module Gradle project to ensure clear separation of concerns.
 
 ```
 braniac/
@@ -12,16 +12,12 @@ braniac/
 ├── settings.gradle.kts
 ├── app/                  # Main application runner (e.g., for a REST API)
 │   └── src/
-├── core-model/           # Core data classes (Memory, LTMFile, etc.)
-│   └── src/
-├── core-fs/              # Filesystem service
-│   └── src/
-├── core-llm/             # LLM service
-│   └── src/
-├── core-search/          # Search service
-│   └── src/
-├── core-process/         # The four core processes
-│   └── src/
+├── core/                 # Parent module for all core logic
+│   ├── model/            # Core data classes (Memory, LTMFile, etc.)
+│   ├── fs/               # Filesystem service
+│   ├── llm/              # LLM service
+│   ├── search/           # Search service
+│   └── process/          # The four core processes
 ├── llm-adapter/          # Interface and implementations for LLM providers
 │   └── src/
 └── utils/                # Shared utility functions
@@ -30,9 +26,9 @@ braniac/
 
 ## 2. Core Components
 
-### 2.1. Data Models (`core-model`)
+### 2.1. Data Models (`core:model`)
 
-These are Kotlin `data class` representations of the core concepts in the spec.
+These are Kotlin `data class` representations of the core concepts in the spec. They will reside in the `core/model` module.
 
 *   **`LTMFile.kt`**: Represents a file in Long-Term Memory.
     ```kotlin
@@ -73,9 +69,9 @@ These are Kotlin `data class` representations of the core concepts in the spec.
 *   **`CoreIdentity.kt`**: Represents `core_identity.md`.
 *   **`AccessLogEntry.kt`**: Represents a line in `access.log`.
 
-### 2.2. FileSystem Service (`core-fs`)
+### 2.2. FileSystem Service (`core:fs`)
 
-A centralized service to handle all interactions with the file system. This is critical for maintaining consistency and preventing race conditions.
+A centralized service in the `core/fs` module to handle all interactions with the file system. This is critical for maintaining consistency and preventing race conditions.
 
 *   **`FileSystemService.kt`**
     *   `read(path: Path): String`
@@ -87,9 +83,9 @@ A centralized service to handle all interactions with the file system. This is c
     *   `acquireLock(path: Path)` and `releaseLock(path: Path)`: These methods will use file-system-level locks (e.g., `java.nio.channels.FileChannel.lock()`) to ensure atomic operations on `short_term.md`.
     *   `logAccess(action: String, path: Path)`
 
-### 2.3. LLM Service (`core-llm`)
+### 2.3. LLM Service (`core:llm`)
 
-An abstraction to decouple the system from a specific LLM provider.
+Located in the `core/llm` module, this service provides an abstraction for interacting with an LLM.
 
 *   **`LLMProvider.kt`** (Interface in `llm-adapter`)
     ```kotlin
@@ -98,20 +94,20 @@ An abstraction to decouple the system from a specific LLM provider.
     }
     ```
 *   Implementations for different providers (e.g., `OpenAIProvider.kt`, `ClaudeProvider.kt`) in `llm-adapter`.
-*   **`LLMService.kt`** (`core-llm`): A service that uses a configured `LLMProvider` to perform tasks like generating search queries, summarizing text, and creating LTM content. This service will be responsible for constructing the specific prompts required by the core processes.
+*   **`LLMService.kt`** (`core:llm`): A service that uses a configured `LLMProvider` to perform tasks like generating search queries, summarizing text, and creating LTM content. This service will be responsible for constructing the specific prompts required by the core processes.
 
-### 2.4. Search Service (`core-search`)
+### 2.4. Search Service (`core:search`)
 
-Responsible for searching the LTM.
+Located in the `core/search` module, this service is responsible for searching the LTM.
 
 *   **`SearchService.kt`**
     *   `searchLTM(queries: List<String>): List<LTMFile>`
     *   Initially, this can be implemented with a simple file-based search (e.g., using `ripgrep` or a similar tool via `run_shell_command`, or a native Kotlin implementation).
     *   For a more advanced implementation, this service could build and query an in-memory index of the LTM `_index.md` files.
 
-## 3. Core Processes (`core-process`)
+## 3. Core Processes (`core:process`)
 
-Each of the four processes from the spec will be implemented as a class.
+Each of the four processes from the spec will be implemented as a class in the `core/process` module.
 
 ### 3.1. `CoreLoopProcess.kt`
 
@@ -176,3 +172,15 @@ A simple configuration file (e.g., `config.properties` or `config.yml`) will be 
 *   Trigger thresholds (e.g., STM token limit, inactivity timeouts).
 
 This plan provides a solid foundation for building the Braniac system. The next step would be to start implementing the `core/model` and `core/service` components.
+
+## 6. Design Decisions
+
+### 6.1. AI-Powered vs. Manual File System Operations
+
+One proposal was to leverage an AI with tool-use for all file system operations, aiming to offload the implementation of tool-use logic. After consideration, this approach has been divided into two distinct use cases:
+
+*   **Low-Level I/O (Rejected):** Using an LLM for fundamental, high-frequency file operations (e.g., reading configuration, writing to the event log, file locking) is not recommended. The primary reasons are concerns about **reliability, performance, and cost**. These operations must be deterministic, fast, and cheap. An LLM call introduces significant latency, monetary cost, and a layer of probabilistic uncertainty that is unacceptable for critical data integrity tasks like file locking.
+
+*   **High-Level File Management (Accepted):** Using an LLM with a curated set of file management "tools" is highly desirable for the higher-level processes. The `OrganizationProcess`, for example, is an ideal candidate. We can provide it with tools from the `FileSystemService` (e.g., `moveMemory`, `addRelatedLink`) and instruct the LLM to use them to intelligently refactor the LTM based on access patterns. This approach correctly applies the LLM's strengths in reasoning and pattern recognition without compromising the system's core stability.
+
+**Decision:** We will implement a deterministic, robust `FileSystemService` in Kotlin for all low-level I/O. The functions from this service will then be exposed as tools for an LLM to consume at higher levels of abstraction, particularly within the `OrganizationProcess`.
