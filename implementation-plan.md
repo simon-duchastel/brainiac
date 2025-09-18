@@ -173,14 +173,3 @@ A simple configuration file (e.g., `config.properties` or `config.yml`) will be 
 
 This plan provides a solid foundation for building the Braniac system. The next step would be to start implementing the `core/model` and `core/service` components.
 
-## 6. Design Decisions
-
-### 6.1. AI-Powered vs. Manual File System Operations
-
-One proposal was to leverage an AI with tool-use for all file system operations, aiming to offload the implementation of tool-use logic. After consideration, this approach has been divided into two distinct use cases:
-
-*   **Low-Level I/O (Rejected):** Using an LLM for fundamental, high-frequency file operations (e.g., reading configuration, writing to the event log, file locking) is not recommended. The primary reasons are concerns about **reliability, performance, and cost**. These operations must be deterministic, fast, and cheap. An LLM call introduces significant latency, monetary cost, and a layer of probabilistic uncertainty that is unacceptable for critical data integrity tasks like file locking.
-
-*   **High-Level File Management (Accepted):** Using an LLM with a curated set of file management "tools" is highly desirable for the higher-level processes. The `OrganizationProcess`, for example, is an ideal candidate. We can provide it with tools from the `FileSystemService` (e.g., `moveMemory`, `addRelatedLink`) and instruct the LLM to use them to intelligently refactor the LTM based on access patterns. This approach correctly applies the LLM's strengths in reasoning and pattern recognition without compromising the system's core stability.
-
-**Decision:** We will implement a deterministic, robust `FileSystemService` in Kotlin for all low-level I/O. The functions from this service will then be exposed as tools for an LLM to consume at higher levels of abstraction, particularly within the `OrganizationProcess`.
