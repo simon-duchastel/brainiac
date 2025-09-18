@@ -7,18 +7,28 @@ import java.nio.channels.FileChannel
 import java.nio.channels.FileLock
 import java.nio.file.StandardOpenOption
 import java.time.Instant
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import com.fasterxml.jackson.module.kotlin.readValue
-import com.fasterxml.jackson.annotation.JsonFormat
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.charleskorn.kaml.Yaml
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+
+object InstantSerializer : KSerializer<Instant> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Instant", PrimitiveKind.STRING)
+    override fun serialize(encoder: Encoder, value: Instant) = encoder.encodeString(value.toString())
+    override fun deserialize(decoder: Decoder): Instant = Instant.parse(decoder.decodeString())
+}
 
 class FileSystemService {
-    private val yamlMapper = YAMLMapper()
-        .registerKotlinModule()
-        .registerModule(JavaTimeModule())
-        .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+    private val yaml = Yaml(
+        serializersModule = SerializersModule {
+            contextual(InstantSerializer)
+        }
+    )
     private val locks = mutableMapOf<Path, FileChannel>()
 
     fun read(path: Path): String {
@@ -38,14 +48,14 @@ class FileSystemService {
             throw IllegalArgumentException("Invalid LTM file format: missing frontmatter")
         }
         
-        val frontmatter = yamlMapper.readValue<LTMFrontmatter>(parts[1])
+        val frontmatter = yaml.decodeFromString(LTMFrontmatter.serializer(), parts[1])
         val markdownContent = parts[2]
         
         return LTMFile(frontmatter, markdownContent)
     }
 
     fun writeLtmFile(path: Path, ltmFile: LTMFile) {
-        val frontmatterYaml = yamlMapper.writeValueAsString(ltmFile.frontmatter)
+        val frontmatterYaml = yaml.encodeToString(LTMFrontmatter.serializer(), ltmFile.frontmatter)
         val content = "---\n$frontmatterYaml---\n${ltmFile.content}"
         write(path, content)
     }

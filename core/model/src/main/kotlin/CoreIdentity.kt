@@ -1,5 +1,8 @@
 package com.braniac.core.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class CoreIdentity(
     val name: String,
     val role: String,

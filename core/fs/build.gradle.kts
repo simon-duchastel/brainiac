@@ -1,6 +1,11 @@
+plugins {
+    alias(libs.plugins.kotlin.serialization)
+}
+
 dependencies {
     implementation(project(":core:model"))
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.2")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.2")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2")
+    implementation(libs.kotlinx.serialization.core)
+    implementation(libs.kaml)
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.kotest.assertions.core)
 }

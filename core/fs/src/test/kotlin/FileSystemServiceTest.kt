@@ -1,29 +1,35 @@
 package com.braniac.core.fs
 
 import com.braniac.core.model.*
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.io.TempDir
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.engine.test.logging.debug
+import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
 
-class FileSystemServiceTest {
+class FileSystemServiceTest : StringSpec({
     
-    private val fileSystemService = FileSystemService()
+    val fileSystemService = FileSystemService()
     
-    @Test
-    fun `should read and write simple text files`(@TempDir tempDir: Path) {
+    "should read and write simple text files" {
+        val tempDir = Files.createTempDirectory("test")
         val testFile = tempDir.resolve("test.txt")
         val content = "Hello, World!"
         
         fileSystemService.write(testFile, content)
         val readContent = fileSystemService.read(testFile)
         
-        assertEquals(content, readContent)
+        readContent shouldBe content
+        
+        Files.deleteIfExists(testFile)
+        Files.deleteIfExists(tempDir)
     }
     
-    @Test
-    fun `should read and write basic LTM files`(@TempDir tempDir: Path) {
+    "should read and write basic LTM files" {
+        val tempDir = Files.createTempDirectory("test")
         val testFile = tempDir.resolve("test.md")
         val content = """---
 uuid: test-123
@@ -41,17 +47,20 @@ This is a test."""
         fileSystemService.write(testFile, content)
         val readContent = fileSystemService.read(testFile)
         
-        assertEquals(content, readContent)
+        readContent shouldBe content
+        
+        Files.deleteIfExists(testFile)
+        Files.deleteIfExists(tempDir)
     }
     
-    @Test
-    fun `should acquire and release file locks`(@TempDir tempDir: Path) {
+    "should acquire and release file locks" {
+        val tempDir = Files.createTempDirectory("test")
         val testFile = tempDir.resolve("locked.txt")
         
         val lock = fileSystemService.acquireLock(testFile)
-        assertNotNull(lock)
+        lock shouldNotBe null
         
-        assertThrows(IllegalStateException::class.java) {
+        shouldThrow<IllegalStateException> {
             fileSystemService.acquireLock(testFile)
         }
         
@@ -59,7 +68,10 @@ This is a test."""
         
         // Should be able to acquire again after release
         val lock2 = fileSystemService.acquireLock(testFile)
-        assertNotNull(lock2)
+        lock2 shouldNotBe null
         fileSystemService.releaseLock(testFile)
+        
+        Files.deleteIfExists(testFile)
+        Files.deleteIfExists(tempDir)
     }
-}
+})

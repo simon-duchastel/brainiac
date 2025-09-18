@@ -1,15 +1,19 @@
 package com.braniac.core.model
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Contextual
 import java.time.Instant
 
+@Serializable
 data class LTMFrontmatter(
     val uuid: String,
-    val createdAt: Instant,
-    val updatedAt: Instant,
+    @Contextual val createdAt: Instant,
+    @Contextual val updatedAt: Instant,
     val tags: List<String>,
     var reinforcementCount: Int
 )
 
+@Serializable
 data class LTMFile(
     val frontmatter: LTMFrontmatter,
     val content: String

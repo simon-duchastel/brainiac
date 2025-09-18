@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.braniac.core.fs.FileSystemServiceTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2025-09-18T04:40:17.495Z" hostname="Simons-MacBook-Air.local" time="0.021">
+<testsuite name="com.braniac.core.fs.FileSystemServiceTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2025-09-18T04:45:22.467Z" hostname="Simons-MacBook-Air.local" time="0.016">
   <properties/>
-  <testcase name="should acquire and release file locks(Path)" classname="com.braniac.core.fs.FileSystemServiceTest" time="0.017"/>
-  <testcase name="should read and write simple text files(Path)" classname="com.braniac.core.fs.FileSystemServiceTest" time="0.002"/>
-  <testcase name="should read and write basic LTM files(Path)" classname="com.braniac.core.fs.FileSystemServiceTest" time="0.001"/>
+  <testcase name="should read and write simple text files" classname="com.braniac.core.fs.FileSystemServiceTest" time="0.008"/>
+  <testcase name="should read and write basic LTM files" classname="com.braniac.core.fs.FileSystemServiceTest" time="0.001"/>
+  <testcase name="should acquire and release file locks" classname="com.braniac.core.fs.FileSystemServiceTest" time="0.005"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

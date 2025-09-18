@@ -1,9 +1,12 @@
 package com.braniac.core.model
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Contextual
 import java.time.Instant
 
+@Serializable
 data class AccessLogEntry(
-    val timestamp: Instant,
+    @Contextual val timestamp: Instant,
     val action: String,
     val path: String,
     val details: String? = null
