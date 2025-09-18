@@ -12,12 +12,16 @@ braniac/
 ├── settings.gradle.kts
 ├── app/                  # Main application runner (e.g., for a REST API)
 │   └── src/
-├── core/                 # Core data structures and business logic
+├── core-model/           # Core data classes (Memory, LTMFile, etc.)
 │   └── src/
-│       └── main/kotlin/com/braniac/core/
-│           ├── model/        # Data classes (Memory, LTMFile, etc.)
-│           ├── service/      # Services (FileSystem, LLM, Search)
-│           └── process/      # The four core processes
+├── core-fs/              # Filesystem service
+│   └── src/
+├── core-llm/             # LLM service
+│   └── src/
+├── core-search/          # Search service
+│   └── src/
+├── core-process/         # The four core processes
+│   └── src/
 ├── llm-adapter/          # Interface and implementations for LLM providers
 │   └── src/
 └── utils/                # Shared utility functions
@@ -26,7 +30,7 @@ braniac/
 
 ## 2. Core Components
 
-### 2.1. Data Models (`core/model`)
+### 2.1. Data Models (`core-model`)
 
 These are Kotlin `data class` representations of the core concepts in the spec.
 
@@ -69,7 +73,7 @@ These are Kotlin `data class` representations of the core concepts in the spec.
 *   **`CoreIdentity.kt`**: Represents `core_identity.md`.
 *   **`AccessLogEntry.kt`**: Represents a line in `access.log`.
 
-### 2.2. FileSystem Service (`core/service`)
+### 2.2. FileSystem Service (`core-fs`)
 
 A centralized service to handle all interactions with the file system. This is critical for maintaining consistency and preventing race conditions.
 
@@ -83,20 +87,20 @@ A centralized service to handle all interactions with the file system. This is c
     *   `acquireLock(path: Path)` and `releaseLock(path: Path)`: These methods will use file-system-level locks (e.g., `java.nio.channels.FileChannel.lock()`) to ensure atomic operations on `short_term.md`.
     *   `logAccess(action: String, path: Path)`
 
-### 2.3. LLM Service (`llm-adapter`)
+### 2.3. LLM Service (`core-llm`)
 
 An abstraction to decouple the system from a specific LLM provider.
 
-*   **`LLMProvider.kt`** (Interface)
+*   **`LLMProvider.kt`** (Interface in `llm-adapter`)
     ```kotlin
     interface LLMProvider {
         fun generate(prompt: String): String
     }
     ```
-*   Implementations for different providers (e.g., `OpenAIProvider.kt`, `ClaudeProvider.kt`).
-*   **`LLMService.kt`** (`core/service`): A service that uses a configured `LLMProvider` to perform tasks like generating search queries, summarizing text, and creating LTM content. This service will be responsible for constructing the specific prompts required by the core processes.
+*   Implementations for different providers (e.g., `OpenAIProvider.kt`, `ClaudeProvider.kt`) in `llm-adapter`.
+*   **`LLMService.kt`** (`core-llm`): A service that uses a configured `LLMProvider` to perform tasks like generating search queries, summarizing text, and creating LTM content. This service will be responsible for constructing the specific prompts required by the core processes.
 
-### 2.4. Search Service (`core/service`)
+### 2.4. Search Service (`core-search`)
 
 Responsible for searching the LTM.
 
@@ -105,7 +109,7 @@ Responsible for searching the LTM.
     *   Initially, this can be implemented with a simple file-based search (e.g., using `ripgrep` or a similar tool via `run_shell_command`, or a native Kotlin implementation).
     *   For a more advanced implementation, this service could build and query an in-memory index of the LTM `_index.md` files.
 
-## 3. Core Processes (`core/process`)
+## 3. Core Processes (`core-process`)
 
 Each of the four processes from the spec will be implemented as a class.
 
