@@ -1,141 +1,174 @@
 # Braniac Implementation Plan
 
-## Architecture Overview
+This document outlines the implementation plan for the Braniac AI Memory System, based on `spec-v1.md`. The system will be built in Kotlin, focusing on modularity and decoupling.
 
-**Core Philosophy**: Selective AI delegation - leverage AI for intelligence, use deterministic code for infrastructure reliability. Build as modular Kotlin library with clean separation between memory engine and external interfaces.
+## 1. Project Structure
 
-## Module Architecture
-
-### 1. Memory Foundation (`braniac-memory`)
-
-**MemoryFile Models**: Strongly-typed representations of memory files with YAML frontmatter parsing. Separate models for regular memories vs index files due to different structures and requirements.
-
-**FileSystemManager**: Direct file I/O operations with atomic write guarantees. Handles memory file format serialization/deserialization. Abstracts storage to enable testing and future storage backends.
-
-**FileLockManager**: Exclusive file locking for STM updates as mandated by spec. Prevents corruption during concurrent access. Uses platform-specific file locking mechanisms.
-
-**AccessLogger**: Append-only logging of every file operation with precise timestamps. Simple text format for easy parsing by organization process. Critical for usage pattern analysis.
-
-### 2. Memory Repositories (`braniac-repositories`)
-
-**ShortTermMemoryRepository**: Manages STM file with strict append-only semantics for event log. Handles token counting for promotion triggers. Encapsulates file locking during updates. Maintains structured data sections (goals/facts/tasks).
-
-**LongTermMemoryRepository**: Hierarchical memory storage with automatic index file maintenance. Ensures every directory has required _index.md. Handles memory file CRUD with proper logging. Supports search by path patterns and UUID lookups.
-
-**MemoryIndexManager**: Maintains bidirectional links between memories via UUID references. Updates index files when memories are added/modified. Provides graph traversal capabilities for related memory discovery.
-
-### 3. AI Integration Layer (`braniac-ai`)
-
-**AIProvider Interface**: Defines specific methods for each AI task rather than generic "ask" methods. Enables targeted prompting and response parsing for each use case.
-
-**Selective Delegation Strategy**:
-- **Delegate to AI**: Memory synthesis, search query generation, access pattern analysis, content summarization
-- **Keep in Code**: File operations, access logging, token counting, timing, data validation
-
-**PromptTemplates**: Structured, version-controlled prompts for each AI operation. Includes response format specifications for reliable parsing. Tunable for different AI providers.
-
-**Provider Implementations**: Concrete implementations for Claude, OpenAI with provider-specific optimizations. Handles API rate limiting, retries, and error recovery.
-
-### 4. Core Processes (`braniac-processes`)
-
-**CoreLoop**: Synchronous user interaction handler following spec's 7-step process. Assembles working memory from core identity, STM summary, and relevant LTM excerpts. Coordinates with AI provider for response generation.
-
-**ReflectionProcessor**: Asynchronous STM updates immediately after interactions. Uses AI to extract key facts, goals, and tasks from interaction context. Appends timestamped events to STM event log.
-
-**PromotionProcessor**: STM→LTM consolidation triggered by idle time or token count. AI analyzes event log for promotion candidates. Searches existing LTM before creating new memories. Handles reinforcement counting and memory updates.
-
-**OrganizationProcessor**: LTM evolution based on access log analysis. AI identifies patterns in memory usage and proposes refactoring operations. Executes hierarchy restructuring, relationship strengthening, and archival.
-
-### 5. Search & Retrieval (`braniac-search`)
-
-**HybridSearchEngine**: Combines multiple search strategies for optimal relevance. Text search for exact matches, index search for curated relationships, optional semantic search for conceptual similarity.
-
-**QueryGenerator**: AI-powered search query generation from user context. Takes into account recent events, active goals, and conversation history. Generates multiple diverse queries for comprehensive coverage.
-
-**RelevanceRanker**: Scores search results using multiple signals: text relevance, access frequency, reinforcement count, relationship proximity, recency.
-
-### 6. Process Coordination (`braniac-scheduler`)
-
-**ProcessScheduler**: Manages timing requirements from spec. Coordinates three execution tiers: synchronous (CoreLoop), asynchronous (Reflection), idle (Promotion/Organization). Handles promotion triggers (5min idle OR 4096 tokens).
-
-**TokenCounter**: Precise token counting for STM using consistent methodology. Triggers promotion process when threshold exceeded. Configurable for different tokenization approaches.
-
-**EventBus**: Decouples processes via event-driven communication. Enables process coordination without tight coupling. Supports process monitoring and debugging.
-
-### 7. Engine Core (`braniac-engine`)
-
-**BraniacEngine**: Main public API providing simple interface for complex orchestration. Handles dependency injection and configuration. Manages system lifecycle and resource cleanup.
-
-**ConfigurationManager**: AI provider selection, timing parameters, file paths, token limits. Environment-specific configurations for development vs production.
-
-**SystemMonitor**: Memory usage tracking, process performance metrics, AI API usage statistics. Health checks and system status reporting.
-
-### 8. External Interfaces (`braniac-api`)
-
-**REST API**: HTTP endpoints for external integration. Streaming support for real-time interactions. Authentication and rate limiting for multi-user scenarios.
-
-**Admin API**: System monitoring, configuration management, memory export/import. Debug interfaces for development and troubleshooting.
-
-## Key Implementation Decisions
-
-**Memory Storage**: Plain text files in hierarchical directories as specified. YAML frontmatter with strict schema validation. Mandatory index files with relationship management.
-
-**Concurrency Model**: Kotlin coroutines for async operations. Exclusive file locking only where required (STM updates). Lock-free reading for performance.
-
-**AI Provider Strategy**: Abstract interface with multiple implementations. Provider-specific optimizations for different AI capabilities. Fallback mechanisms for reliability.
-
-**Error Handling**: Graceful degradation when AI services unavailable. Retry logic with exponential backoff. Local fallbacks for critical operations.
-
-**Testing Strategy**: MockAIProvider for deterministic testing. Test file system for isolation. Component testing with real AI providers for integration validation.
-
-## Development Phases
-
-**Phase 1 - Foundation (2-3 weeks)**
-Memory models, file system operations, basic AI provider integration. Core Loop implementation without advanced features.
-
-**Phase 2 - Process Engine (3-4 weeks)**
-Reflection and Promotion processes with proper locking. STM management and token counting. Access logging infrastructure.
-
-**Phase 3 - Intelligence Layer (2-3 weeks)**
-Organization process with pattern analysis. Advanced search and retrieval. Memory relationship management.
-
-**Phase 4 - API & Production (2-3 weeks)**
-REST API implementation. Configuration management. Performance optimization and monitoring.
-
-## Success Criteria
-
-System demonstrates emergent memory importance through access patterns. Autonomous memory organization improves retrieval over time. Reliable file operations with no data corruption. Cost-effective AI usage through selective delegation.
-
-## Component Dependencies
+The project will be organized into a multi-module Gradle project to ensure separation of concerns.
 
 ```
-braniac-api
-├── braniac-engine
-    ├── braniac-scheduler
-    │   ├── braniac-processes
-    │   │   ├── braniac-repositories
-    │   │   │   └── braniac-memory
-    │   │   ├── braniac-ai
-    │   │   │   └── braniac-memory
-    │   │   └── braniac-search
-    │   │       ├── braniac-repositories
-    │   │       └── braniac-ai
-    │   └── braniac-repositories
-    ├── braniac-processes
-    ├── braniac-search
-    ├── braniac-ai
-    ├── braniac-repositories
-    └── braniac-memory
+braniac/
+├── build.gradle.kts
+├── settings.gradle.kts
+├── app/                  # Main application runner (e.g., for a REST API)
+│   └── src/
+├── core/                 # Core data structures and business logic
+│   └── src/
+│       └── main/kotlin/com/braniac/core/
+│           ├── model/        # Data classes (Memory, LTMFile, etc.)
+│           ├── service/      # Services (FileSystem, LLM, Search)
+│           └── process/      # The four core processes
+├── llm-adapter/          # Interface and implementations for LLM providers
+│   └── src/
+└── utils/                # Shared utility functions
+    └── src/
 ```
 
-## Critical Implementation Notes
+## 2. Core Components
 
-**File Format Compliance**: Every LTM file must have exact YAML frontmatter structure with uuid, timestamps, tags, reinforcement_count. Index files must contain summary, manifest, and related memories sections.
+### 2.1. Data Models (`core/model`)
 
-**Locking Strategy**: Only STM updates require exclusive file locking. All other operations use optimistic concurrency. Access logging must be atomic and never block other operations.
+These are Kotlin `data class` representations of the core concepts in the spec.
 
-**AI Integration Points**: Search query generation, memory synthesis, access pattern analysis, content summarization. Each requires specific prompt templates and response parsing logic.
+*   **`LTMFile.kt`**: Represents a file in Long-Term Memory.
+    ```kotlin
+    data class LTMFrontmatter(
+        val uuid: String,
+        val createdAt: Instant,
+        val updatedAt: Instant,
+        val tags: List<String>,
+        var reinforcementCount: Int
+    )
 
-**Performance Considerations**: Token counting triggers promotion at 4096 tokens. Access logging overhead must be minimal. Search operations should be sub-second for typical queries.
+    data class LTMFile(
+        val frontmatter: LTMFrontmatter,
+        val content: String // Markdown content
+    )
+    ```
+*   **`ShortTermMemory.kt`**: Represents the `short_term.md` file.
+    ```kotlin
+    data class StructuredData(
+        val goals: List<String>,
+        val keyFacts: List<String>,
+        val tasks: List<String>
+    )
 
-**Reliability Requirements**: System must handle AI service outages gracefully. File corruption prevention is critical. Memory data must never be lost during process failures.
+    data class Event(
+        val timestamp: Instant,
+        val user: String,
+        val ai: String,
+        val thoughts: String
+    )
+
+    data class ShortTermMemory(
+        val summary: String,
+        val structuredData: StructuredData,
+        val eventLog: List<Event>
+    )
+    ```
+*   **`CoreIdentity.kt`**: Represents `core_identity.md`.
+*   **`AccessLogEntry.kt`**: Represents a line in `access.log`.
+
+### 2.2. FileSystem Service (`core/service`)
+
+A centralized service to handle all interactions with the file system. This is critical for maintaining consistency and preventing race conditions.
+
+*   **`FileSystemService.kt`**
+    *   `read(path: Path): String`
+    *   `write(path: Path, content: String)`
+    *   `readLtmFile(path: Path): LTMFile` (handles parsing frontmatter)
+    *   `writeLtmFile(path: Path, ltmFile: LTMFile)`
+    *   `readStm(): ShortTermMemory`
+    *   `writeStm(stm: ShortTermMemory)`
+    *   `acquireLock(path: Path)` and `releaseLock(path: Path)`: These methods will use file-system-level locks (e.g., `java.nio.channels.FileChannel.lock()`) to ensure atomic operations on `short_term.md`.
+    *   `logAccess(action: String, path: Path)`
+
+### 2.3. LLM Service (`llm-adapter`)
+
+An abstraction to decouple the system from a specific LLM provider.
+
+*   **`LLMProvider.kt`** (Interface)
+    ```kotlin
+    interface LLMProvider {
+        fun generate(prompt: String): String
+    }
+    ```
+*   Implementations for different providers (e.g., `OpenAIProvider.kt`, `ClaudeProvider.kt`).
+*   **`LLMService.kt`** (`core/service`): A service that uses a configured `LLMProvider` to perform tasks like generating search queries, summarizing text, and creating LTM content. This service will be responsible for constructing the specific prompts required by the core processes.
+
+### 2.4. Search Service (`core/service`)
+
+Responsible for searching the LTM.
+
+*   **`SearchService.kt`**
+    *   `searchLTM(queries: List<String>): List<LTMFile>`
+    *   Initially, this can be implemented with a simple file-based search (e.g., using `ripgrep` or a similar tool via `run_shell_command`, or a native Kotlin implementation).
+    *   For a more advanced implementation, this service could build and query an in-memory index of the LTM `_index.md` files.
+
+## 3. Core Processes (`core/process`)
+
+Each of the four processes from the spec will be implemented as a class.
+
+### 3.1. `CoreLoopProcess.kt`
+
+*   **Execution:** Synchronous.
+*   **Dependencies:** `FileSystemService`, `LLMService`, `SearchService`.
+*   **Logic:**
+    1.  Receives a user prompt.
+    2.  Constructs the initial context for search query generation.
+    3.  Uses `LLMService` to generate search queries.
+    4.  Uses `SearchService` to retrieve LTM excerpts.
+    5.  Assembles the final Working Memory.
+    6.  Uses `LLMService` to generate the AI response.
+    7.  Returns the response.
+
+### 3.2. `ReflectionProcess.kt`
+
+*   **Execution:** Asynchronous (runs in a separate coroutine).
+*   **Dependencies:** `FileSystemService`.
+*   **Logic:**
+    1.  Triggered after the `CoreLoopProcess` completes.
+    2.  Acquires a lock on `short_term.md` via `FileSystemService`.
+    3.  Appends the new event to the `Event Log`.
+    4.  Updates `Structured Data` if necessary.
+    5.  Releases the lock.
+
+### 3.3. `PromotionProcess.kt`
+
+*   **Execution:** Idle-time (background scheduler).
+*   **Dependencies:** `FileSystemService`, `LLMService`.
+*   **Logic:**
+    1.  Triggered by user inactivity or STM size limit.
+    2.  Acquires a lock on `short_term.md`.
+    3.  Uses `LLMService` to analyze the `Event Log` and identify promotion candidates.
+    4.  For each candidate, synthesizes new or updated LTM entries.
+    5.  Writes changes to LTM via `FileSystemService`, updating `_index.md` files.
+    6.  Uses `LLMService` to generate a new STM summary.
+    7.  Overwrites `short_term.md` with the new summary and pruned data.
+    8.  Releases the lock.
+
+### 3.4. `OrganizationProcess.kt`
+
+*   **Execution:** Idle-time (background scheduler, e.g., every 4 hours).
+*   **Dependencies:** `FileSystemService`, `LLMService`.
+*   **Logic:**
+    1.  Reads and parses `access.log`.
+    2.  Uses `LLMService` to identify access patterns.
+    3.  Proposes and executes refactoring operations on the LTM structure.
+    4.  Clears `access.log`.
+
+## 4. Concurrency and Scheduling
+
+*   **Coroutines:** Kotlin Coroutines will be used to manage the different execution tiers.
+    *   The `CoreLoopProcess` will run on a dispatcher tied to the main request thread (e.g., `Dispatchers.IO`).
+    *   The `ReflectionProcess` will be launched in a separate coroutine scope (`GlobalScope.launch` or a dedicated application scope).
+    *   The `PromotionProcess` and `OrganizationProcess` will be managed by a background scheduler (e.g., `java.util.concurrent.ScheduledThreadPoolExecutor` or a Kotlin-native library like `kotlinx-coroutines-core`'s `delay`).
+
+## 5. Configuration
+
+A simple configuration file (e.g., `config.properties` or `config.yml`) will be used to manage:
+*   File paths for the `system`, `memory`, and `logs` directories.
+*   LLM provider details (API keys, model names).
+*   Trigger thresholds (e.g., STM token limit, inactivity timeouts).
+
+This plan provides a solid foundation for building the Braniac system. The next step would be to start implementing the `core/model` and `core/service` components.
