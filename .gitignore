@@ -1,0 +1,63 @@
+# Gradle
+.gradle/
+build/
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+!gradle/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# VS Code
+.vscode/
+
+# Mac
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# JVM crash logs
+hs_err_pid*
+
+# Application specific
+# (Add application-specific patterns here as the project grows)
+
+# Test outputs
+/test-output/
+/test-results/
+
+# Local configuration files that might contain secrets
+local.properties
+config.local.*
+*.env.local
+
+# Generated source code
+/generated/
+/src/generated/
