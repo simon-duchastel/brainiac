@@ -1,4 +1,4 @@
-rootProject.name = "braniac"
+rootProject.name = "brainiac"
 
 include(
     "app",

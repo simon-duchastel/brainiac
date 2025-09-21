@@ -1,6 +1,6 @@
 # Core Model Module
 
-Domain models and data structures for the Braniac AI Memory System, implementing the specification's memory architecture.
+Domain models and data structures for the Brainiac AI Memory System, implementing the specification's memory architecture.
 
 ## Why Domain Models
 

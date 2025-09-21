@@ -1,6 +1,6 @@
 # Core LLM Module
 
-LLM interaction abstractions and working memory management for the Braniac AI Memory System.
+LLM interaction abstractions and working memory management for the Brainiac AI Memory System.
 
 ## Why Separate LLM Module
 

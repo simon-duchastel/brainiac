@@ -3,7 +3,7 @@ plugins {
 }
 
 allprojects {
-    group = "com.braniac"
+    group = "com.brainiac"
     version = "1.0.0"
     
     repositories {

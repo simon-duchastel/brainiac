@@ -1,6 +1,6 @@
 # LLM Adapter Module
 
-Provider abstraction layer for Large Language Model integrations in the Braniac AI Memory System.
+Provider abstraction layer for Large Language Model integrations in the Brainiac AI Memory System.
 
 ## Why Adapter Pattern
 

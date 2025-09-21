@@ -1,6 +1,6 @@
-package com.braniac.core.fs
+package com.brainiac.core.fs
 
-import com.braniac.core.model.*
+import com.brainiac.core.model.*
 import java.nio.file.Path
 import java.nio.file.Files
 import java.nio.channels.FileChannel

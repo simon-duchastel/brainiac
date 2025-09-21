@@ -1,6 +1,6 @@
 # Core Module
 
-The foundational modules implementing the core AI memory system functionality as specified in the Braniac architecture.
+The foundational modules implementing the core AI memory system functionality as specified in the Brainiac architecture.
 
 ## Why Core Module Division
 

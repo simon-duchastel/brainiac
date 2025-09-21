@@ -1,13 +1,13 @@
-# Braniac Implementation Plan
+# Brainiac Implementation Plan
 
-This document outlines the implementation plan for the Braniac AI Memory System, based on `spec-v1.md`. The system will be built in Kotlin, focusing on modularity and decoupling.
+This document outlines the implementation plan for the Brainiac AI Memory System, based on `spec-v1.md`. The system will be built in Kotlin, focusing on modularity and decoupling.
 
 ## 1. Project Structure
 
 The project will be organized into a hierarchical multi-module Gradle project to ensure clear separation of concerns.
 
 ```
-braniac/
+brainiac/
 ├── build.gradle.kts
 ├── settings.gradle.kts
 ├── app/                  # Main application runner (e.g., for a REST API)
@@ -171,5 +171,5 @@ A simple configuration file (e.g., `config.properties` or `config.yml`) will be 
 *   LLM provider details (API keys, model names).
 *   Trigger thresholds (e.g., STM token limit, inactivity timeouts).
 
-This plan provides a solid foundation for building the Braniac system. The next step would be to start implementing the `core/model` and `core/service` components.
+This plan provides a solid foundation for building the Brainiac system. The next step would be to start implementing the `core/model` and `core/service` components.
 

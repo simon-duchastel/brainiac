@@ -1,6 +1,6 @@
 # Core Process Module
 
-Implementation of the four core processes that manage information flow in the Braniac AI Memory System.
+Implementation of the four core processes that manage information flow in the Brainiac AI Memory System.
 
 ## Why Process-Based Architecture
 

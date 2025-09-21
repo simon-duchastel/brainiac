@@ -1,4 +1,4 @@
-package com.braniac.core.model
+package com.brainiac.core.model
 
 import kotlinx.serialization.Serializable
 

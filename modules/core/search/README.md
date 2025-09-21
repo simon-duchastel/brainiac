@@ -1,6 +1,6 @@
 # Core Search Module
 
-Memory retrieval and indexing functionality for efficient long-term memory access in the Braniac AI Memory System.
+Memory retrieval and indexing functionality for efficient long-term memory access in the Brainiac AI Memory System.
 
 ## Why Dedicated Search Module
 

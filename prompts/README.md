@@ -1,6 +1,6 @@
 # Prompts
 
-Structured prompt templates and documentation for the Braniac AI Memory System development.
+Structured prompt templates and documentation for the Brainiac AI Memory System development.
 
 ## Why Prompt Organization
 
@@ -15,4 +15,4 @@ Structured prompt templates and documentation for the Braniac AI Memory System d
 - **Implementation Prompts**: Code generation and module development guidance
 - **Process Prompts**: Memory process implementation and testing
 
-These prompts serve as both development tools and documentation, capturing the design philosophy and implementation approach for the Braniac AI Memory System.
+These prompts serve as both development tools and documentation, capturing the design philosophy and implementation approach for the Brainiac AI Memory System.

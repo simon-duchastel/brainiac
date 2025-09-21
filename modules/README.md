@@ -1,6 +1,6 @@
 # Modules
 
-The modular architecture of Braniac AI Memory System, implementing a clean separation of concerns across functional domains.
+The modular architecture of Brainiac AI Memory System, implementing a clean separation of concerns across functional domains.
 
 ## Why Modular Architecture
 

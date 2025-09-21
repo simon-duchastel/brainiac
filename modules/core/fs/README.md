@@ -1,6 +1,6 @@
 # Core FS Module
 
-File system operations module implementing transparent, hierarchical memory storage for the Braniac AI Memory System.
+File system operations module implementing transparent, hierarchical memory storage for the Brainiac AI Memory System.
 
 ## Why File-System Centric Design
 

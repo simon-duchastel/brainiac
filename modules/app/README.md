@@ -1,6 +1,6 @@
 # App Module
 
-Main application entry point and orchestration layer for the Braniac AI Memory System.
+Main application entry point and orchestration layer for the Brainiac AI Memory System.
 
 ## Why Separate App Module
 

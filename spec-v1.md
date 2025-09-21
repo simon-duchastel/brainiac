@@ -1,8 +1,8 @@
-# Braniac: An AI Memory System Specification
+# Brainiac: An AI Memory System Specification
 
 ## 1. Overview & Guiding Principles
 
-This document specifies the architecture for Braniac, an artificial intelligence system designed for persistent memory and continuous learning. The primary goal is to create an intelligence that evolves through its interactions, building a unique and useful internal model of its world and its purpose.
+This document specifies the architecture for Brainiac, an artificial intelligence system designed for persistent memory and continuous learning. The primary goal is to create an intelligence that evolves through its interactions, building a unique and useful internal model of its world and its purpose.
 
 The design of this system is guided by the following core principles:
 
