@@ -16,11 +16,4 @@ Implementation of the four core processes that manage information flow in the Br
 - **Promotion (Idle)**: Consolidates STM events into structured LTM during inactivity periods
 - **Organization (Far-Background)**: Evolves LTM structure based on access patterns and usage analytics
 
-## Dependencies
-
-- **CoreIdentityService**: Extensible identity management
-- **FileSystemService**: STM reading and LTM access logging
-- **LLMService**: Search query generation and response generation
-- **SearchService**: LTM retrieval based on queries
-
 This process architecture implements the specification's human-inspired memory system with autonomous memory management and emergent organizational intelligence.
