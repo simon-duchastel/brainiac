@@ -18,6 +18,5 @@ The app module integrates all core system components:
 - `core:llm` - LLM interaction abstractions
 - `core:search` - Memory search and retrieval
 - `llm-adapter` - LLM provider implementations
-- `utils` - Shared utilities
 
 This module contains no business logic itself, serving purely as the application composition and startup layer.

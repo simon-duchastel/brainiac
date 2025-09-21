@@ -14,4 +14,3 @@ The modular architecture of Braniac AI Memory System, implementing a clean separ
 - `app/`: Application entry point and configuration
 - `core/`: Foundation modules for the AI memory system core functionality  
 - `llm-adapter/`: Abstraction layer for different LLM providers
-- `utils/`: Shared utilities and helper functions

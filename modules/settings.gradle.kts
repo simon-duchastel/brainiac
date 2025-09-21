@@ -8,5 +8,4 @@ include(
     "core:search",
     "core:process",
     "llm-adapter",
-    "utils"
 )
