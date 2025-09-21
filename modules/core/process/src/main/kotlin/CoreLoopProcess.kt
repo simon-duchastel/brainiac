@@ -3,16 +3,16 @@ package com.brainiac.core.process
 import com.brainiac.core.fs.FileSystemService
 import com.brainiac.core.llm.LLMService
 import com.brainiac.core.search.SearchService
+import com.brainiac.core.identity.CoreIdentityService
 import com.brainiac.core.model.CoreIdentity
 import com.brainiac.core.model.ShortTermMemory
 import com.brainiac.core.model.LTMFile
-import java.nio.file.Path
 
 class CoreLoopProcess(
     private val fileSystemService: FileSystemService,
     private val llmService: LLMService,
     private val searchService: SearchService,
-    private val coreIdentityPath: Path
+    private val coreIdentityService: CoreIdentityService
 ) {
     
     fun processUserPrompt(userPrompt: String): String {
@@ -59,7 +59,7 @@ class CoreLoopProcess(
         stm: ShortTermMemory,
         ltmExcerpts: List<LTMFile>
     ): String {
-        val coreIdentity = fileSystemService.read(coreIdentityPath)
+        val coreIdentity = coreIdentityService.getCoreIdentityContent()
         
         return buildString {
             appendLine("# Working Memory")

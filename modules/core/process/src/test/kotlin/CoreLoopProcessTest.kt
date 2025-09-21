@@ -3,6 +3,7 @@ package com.brainiac.core.process
 import com.brainiac.core.fs.FileSystemService
 import com.brainiac.core.llm.LLMService
 import com.brainiac.core.search.SearchService
+import com.brainiac.core.identity.CoreIdentityService
 import com.brainiac.core.model.*
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -11,7 +12,6 @@ import io.kotest.matchers.comparables.shouldBeLessThan
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import java.nio.file.Paths
 import java.time.Instant
 
 class CoreLoopProcessTest : StringSpec({
@@ -20,7 +20,7 @@ class CoreLoopProcessTest : StringSpec({
         val mockFileSystemService = mockk<FileSystemService>()
         val mockLLMService = mockk<LLMService>()
         val mockSearchService = mockk<SearchService>()
-        val coreIdentityPath = Paths.get("/system/core_identity.md")
+        val mockCoreIdentityService = mockk<CoreIdentityService>()
         
         val testStm = ShortTermMemory(
             summary = "Recent conversation about programming concepts",
@@ -53,7 +53,7 @@ class CoreLoopProcessTest : StringSpec({
         val coreIdentityContent = "# Core Identity\n\nI am Brainiac, an AI assistant designed to help with programming and learning."
         
         every { mockFileSystemService.readStm() } returns testStm
-        every { mockFileSystemService.read(coreIdentityPath) } returns coreIdentityContent
+        every { mockCoreIdentityService.getCoreIdentityContent() } returns coreIdentityContent
         every { mockLLMService.generateSearchQueries(any(), any()) } returns listOf("kotlin programming", "language features")
         every { mockSearchService.searchLTM(any()) } returns listOf(testLTMFile)
         every { mockLLMService.generateResponse(any()) } returns "Based on the information provided, Kotlin is indeed a modern programming language..."
@@ -62,7 +62,7 @@ class CoreLoopProcessTest : StringSpec({
             mockFileSystemService,
             mockLLMService,
             mockSearchService,
-            coreIdentityPath
+            mockCoreIdentityService
         )
         
         val result = coreLoopProcess.processUserPrompt("Tell me more about Kotlin")
@@ -70,7 +70,7 @@ class CoreLoopProcessTest : StringSpec({
         result shouldBe "Based on the information provided, Kotlin is indeed a modern programming language..."
         
         verify { mockFileSystemService.readStm() }
-        verify { mockFileSystemService.read(coreIdentityPath) }
+        verify { mockCoreIdentityService.getCoreIdentityContent() }
         verify { mockLLMService.generateSearchQueries("Tell me more about Kotlin", any()) }
         verify { mockSearchService.searchLTM(listOf("kotlin programming", "language features")) }
         verify { mockLLMService.generateResponse(any()) }
@@ -80,7 +80,7 @@ class CoreLoopProcessTest : StringSpec({
         val mockFileSystemService = mockk<FileSystemService>()
         val mockLLMService = mockk<LLMService>()
         val mockSearchService = mockk<SearchService>()
-        val coreIdentityPath = Paths.get("/system/core_identity.md")
+        val mockCoreIdentityService = mockk<CoreIdentityService>()
         
         val emptyStm = ShortTermMemory(
             summary = "",
@@ -95,7 +95,7 @@ class CoreLoopProcessTest : StringSpec({
         val coreIdentityContent = "# Core Identity\n\nI am Brainiac."
         
         every { mockFileSystemService.readStm() } returns emptyStm
-        every { mockFileSystemService.read(coreIdentityPath) } returns coreIdentityContent
+        every { mockCoreIdentityService.getCoreIdentityContent() } returns coreIdentityContent
         every { mockLLMService.generateSearchQueries(any(), any()) } returns listOf("general query")
         every { mockSearchService.searchLTM(any()) } returns emptyList()
         every { mockLLMService.generateResponse(any()) } returns "I understand your question."
@@ -104,7 +104,7 @@ class CoreLoopProcessTest : StringSpec({
             mockFileSystemService,
             mockLLMService,
             mockSearchService,
-            coreIdentityPath
+            mockCoreIdentityService
         )
         
         val result = coreLoopProcess.processUserPrompt("Hello")
@@ -120,7 +120,7 @@ class CoreLoopProcessTest : StringSpec({
         val mockFileSystemService = mockk<FileSystemService>()
         val mockLLMService = mockk<LLMService>()
         val mockSearchService = mockk<SearchService>()
-        val coreIdentityPath = Paths.get("/system/core_identity.md")
+        val mockCoreIdentityService = mockk<CoreIdentityService>()
         
         val testStm = ShortTermMemory(
             summary = "Learning about AI systems",
@@ -133,7 +133,7 @@ class CoreLoopProcessTest : StringSpec({
         )
         
         every { mockFileSystemService.readStm() } returns testStm
-        every { mockFileSystemService.read(coreIdentityPath) } returns "Core identity"
+        every { mockCoreIdentityService.getCoreIdentityContent() } returns "Core identity"
         every { mockSearchService.searchLTM(any()) } returns emptyList()
         every { mockLLMService.generateResponse(any()) } returns "Response"
         
@@ -147,7 +147,7 @@ class CoreLoopProcessTest : StringSpec({
             mockFileSystemService,
             mockLLMService,
             mockSearchService,
-            coreIdentityPath
+            mockCoreIdentityService
         )
         
         coreLoopProcess.processUserPrompt("Test prompt")
@@ -163,7 +163,7 @@ class CoreLoopProcessTest : StringSpec({
         val mockFileSystemService = mockk<FileSystemService>()
         val mockLLMService = mockk<LLMService>()
         val mockSearchService = mockk<SearchService>()
-        val coreIdentityPath = Paths.get("/system/core_identity.md")
+        val mockCoreIdentityService = mockk<CoreIdentityService>()
         
         val testStm = ShortTermMemory(
             summary = "Test summary",
@@ -194,7 +194,7 @@ class CoreLoopProcessTest : StringSpec({
         )
         
         every { mockFileSystemService.readStm() } returns testStm
-        every { mockFileSystemService.read(coreIdentityPath) } returns "Test core identity"
+        every { mockCoreIdentityService.getCoreIdentityContent() } returns "Test core identity"
         every { mockLLMService.generateSearchQueries(any(), any()) } returns listOf("test")
         every { mockSearchService.searchLTM(any()) } returns listOf(testLTMFile)
         
@@ -208,7 +208,7 @@ class CoreLoopProcessTest : StringSpec({
             mockFileSystemService,
             mockLLMService,
             mockSearchService,
-            coreIdentityPath
+            mockCoreIdentityService
         )
         
         coreLoopProcess.processUserPrompt("Test")
@@ -242,7 +242,7 @@ class CoreLoopProcessTest : StringSpec({
         val mockFileSystemService = mockk<FileSystemService>()
         val mockLLMService = mockk<LLMService>()
         val mockSearchService = mockk<SearchService>()
-        val coreIdentityPath = Paths.get("/system/core_identity.md")
+        val mockCoreIdentityService = mockk<CoreIdentityService>()
         
         val testStm = ShortTermMemory(
             summary = "Test summary",
@@ -255,7 +255,7 @@ class CoreLoopProcessTest : StringSpec({
         )
         
         every { mockFileSystemService.readStm() } returns testStm
-        every { mockFileSystemService.read(coreIdentityPath) } returns "Core identity"
+        every { mockCoreIdentityService.getCoreIdentityContent() } returns "Core identity"
         every { mockLLMService.generateSearchQueries(any(), any()) } returns listOf("no results")
         every { mockSearchService.searchLTM(any()) } returns emptyList()
         
@@ -269,7 +269,7 @@ class CoreLoopProcessTest : StringSpec({
             mockFileSystemService,
             mockLLMService,
             mockSearchService,
-            coreIdentityPath
+            mockCoreIdentityService
         )
         
         coreLoopProcess.processUserPrompt("Test")
