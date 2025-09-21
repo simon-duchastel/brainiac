@@ -31,11 +31,11 @@ class FileSystemService {
     )
     private val locks = mutableMapOf<Path, FileChannel>()
 
-    private fun read(path: Path): String {
+    fun read(path: Path): String {
         return Files.readString(path)
     }
 
-    private fun write(path: Path, content: String) {
+    fun write(path: Path, content: String) {
         Files.createDirectories(path.parent)
         Files.writeString(path, content)
     }
