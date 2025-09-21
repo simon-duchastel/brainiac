@@ -12,6 +12,7 @@ The foundational modules implementing the core AI memory system functionality as
 ## Sub-modules
 
 - `fs/`: File system operations for transparent, hierarchical memory storage
+- `identity/`: Core identity service for extensible AI personality management
 - `llm/`: LLM interaction abstractions and working memory management
 - `model/`: Domain models for memory structures, metadata, and system entities
 - `process/`: The four core processes (Core Loop, Reflection, Promotion, Organization)
