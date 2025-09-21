@@ -31,11 +31,11 @@ class FileSystemService {
     )
     private val locks = mutableMapOf<Path, FileChannel>()
 
-    fun read(path: Path): String {
+    private fun read(path: Path): String {
         return Files.readString(path)
     }
 
-    fun write(path: Path, content: String) {
+    private fun write(path: Path, content: String) {
         Files.createDirectories(path.parent)
         Files.writeString(path, content)
     }
@@ -61,7 +61,8 @@ class FileSystemService {
     }
 
     fun readStm(): ShortTermMemory {
-        // Placeholder - would read from configured STM path
+        TODO("Not yet implemented")
+
         return ShortTermMemory(
             summary = "",
             structuredData = StructuredData(emptyList(), emptyList(), emptyList()),
@@ -70,7 +71,7 @@ class FileSystemService {
     }
 
     fun writeStm(stm: ShortTermMemory) {
-        // Placeholder - would write to configured STM path
+        TODO("Not yet implemented")
     }
 
     @Synchronized
@@ -94,12 +95,13 @@ class FileSystemService {
         }
     }
 
-    fun logAccess(action: String, path: Path) {
+    private fun logAccess(action: String, path: Path) {
         val entry = AccessLogEntry(
             timestamp = Instant.now(),
             action = action,
             path = path.toString()
         )
-        // Placeholder - would append to access.log file
+
+        TODO("Not yet implemented")
     }
 }
