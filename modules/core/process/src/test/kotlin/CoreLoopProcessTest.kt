@@ -7,6 +7,7 @@ import com.brainiac.core.model.*
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.comparables.shouldBeLessThan
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -225,6 +226,16 @@ class CoreLoopProcessTest : StringSpec({
         capturedWorkingMemory shouldContain "**User:** \"Hello\""
         capturedWorkingMemory shouldContain "**AI:** \"Hi there\""
         capturedWorkingMemory shouldContain "**Thoughts:** Greeting"
+        
+        // Verify correct ordering: Core Identity → STM → LTM → User Prompt
+        val coreIdentityIndex = capturedWorkingMemory.indexOf("## Core Identity")
+        val stmIndex = capturedWorkingMemory.indexOf("## Short-Term Memory")
+        val ltmIndex = capturedWorkingMemory.indexOf("## Relevant Long-Term Memory")
+        val promptIndex = capturedWorkingMemory.indexOf("## User Prompt")
+        
+        coreIdentityIndex shouldBeLessThan stmIndex
+        stmIndex shouldBeLessThan ltmIndex
+        ltmIndex shouldBeLessThan promptIndex
     }
     
     "should handle no LTM excerpts found" {
@@ -268,5 +279,13 @@ class CoreLoopProcessTest : StringSpec({
         capturedWorkingMemory shouldContain "## Short-Term Memory"
         // Should not contain LTM section when no excerpts found
         capturedWorkingMemory.contains("## Relevant Long-Term Memory") shouldBe false
+        
+        // Verify correct ordering: Core Identity → STM → User Prompt (no LTM)
+        val coreIdentityIndex = capturedWorkingMemory.indexOf("## Core Identity")
+        val stmIndex = capturedWorkingMemory.indexOf("## Short-Term Memory")
+        val promptIndex = capturedWorkingMemory.indexOf("## User Prompt")
+        
+        coreIdentityIndex shouldBeLessThan stmIndex
+        stmIndex shouldBeLessThan promptIndex
     }
 })

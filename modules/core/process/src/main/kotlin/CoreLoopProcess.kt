@@ -67,9 +67,6 @@ class CoreLoopProcess(
             appendLine("## Core Identity")
             appendLine(coreIdentity)
             appendLine()
-            appendLine("## User Prompt")
-            appendLine(userPrompt)
-            appendLine()
             appendLine("## Short-Term Memory")
             appendLine("### Summary")
             appendLine(stm.summary)
@@ -113,6 +110,9 @@ class CoreLoopProcess(
                     appendLine()
                 }
             }
+            
+            appendLine("## User Prompt")
+            appendLine(userPrompt)
         }
     }
 }
