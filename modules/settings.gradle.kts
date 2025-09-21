@@ -6,6 +6,7 @@ include(
     "core:fs", 
     "core:llm",
     "core:search",
+    "core:identity",
     "core:process",
     "llm-adapter",
 )

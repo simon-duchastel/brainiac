@@ -15,6 +15,7 @@ brainiac/
 ├── core/                 # Parent module for all core logic
 │   ├── model/            # Core data classes (Memory, LTMFile, etc.)
 │   ├── fs/               # Filesystem service
+│   ├── identity/         # Core identity service ✅ IMPLEMENTED
 │   ├── llm/              # LLM service
 │   ├── search/           # Search service
 │   └── process/          # The four core processes
@@ -105,20 +106,38 @@ Located in the `core/search` module, this service is responsible for searching t
     *   Initially, this can be implemented with a simple file-based search (e.g., using `ripgrep` or a similar tool via `run_shell_command`, or a native Kotlin implementation).
     *   For a more advanced implementation, this service could build and query an in-memory index of the LTM `_index.md` files.
 
+### 2.5. Core Identity Service (`core:identity`) ✅ **IMPLEMENTED**
+
+Located in the `core/identity` module, this service manages the AI system's core identity with extensible architecture.
+
+*   **`CoreIdentityService.kt`** (Interface)
+    *   `getCoreIdentity(): CoreIdentity` - Returns structured identity object
+    *   `getCoreIdentityContent(): String` - Returns raw identity content
+*   **`DefaultCoreIdentityService.kt`** (Implementation)
+    *   Uses `FileSystemService` for file access
+    *   Configurable identity file path
+    *   Simple parsing logic ready for future sophistication
+*   **Future Capabilities:** Dynamic identity evolution, multi-persona support, context-aware adaptation
+
 ## 3. Core Processes (`core:process`)
 
 Each of the four processes from the spec will be implemented as a class in the `core/process` module.
 
-### 3.1. `CoreLoopProcess.kt`
+### 3.1. `CoreLoopProcess.kt` ✅ **IMPLEMENTED**
 
 *   **Execution:** Synchronous.
-*   **Dependencies:** `FileSystemService`, `LLMService`, `SearchService`.
+*   **Dependencies:** `FileSystemService`, `LLMService`, `SearchService`, `CoreIdentityService`.
+*   **Implementation Status:** Complete with comprehensive tests
+*   **Key Features:**
+    *   Proper context ordering (least → most volatile)
+    *   CoreIdentityService integration for extensible identity management
+    *   Comprehensive test coverage with edge cases
 *   **Logic:**
     1.  Receives a user prompt.
     2.  Constructs the initial context for search query generation.
     3.  Uses `LLMService` to generate search queries.
     4.  Uses `SearchService` to retrieve LTM excerpts.
-    5.  Assembles the final Working Memory.
+    5.  Assembles the final Working Memory with proper ordering.
     6.  Uses `LLMService` to generate the AI response.
     7.  Returns the response.
 
