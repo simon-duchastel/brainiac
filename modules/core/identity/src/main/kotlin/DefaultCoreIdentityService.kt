@@ -11,20 +11,10 @@ class DefaultCoreIdentityService(
     
     override fun getCoreIdentity(): CoreIdentity {
         val content = fileSystemService.read(coreIdentityPath)
-        return parseCoreIdentityContent(content)
+        return CoreIdentity(content)
     }
     
     override fun getCoreIdentityContent(): String {
         return fileSystemService.read(coreIdentityPath)
-    }
-    
-    private fun parseCoreIdentityContent(content: String): CoreIdentity {
-        return CoreIdentity(
-            name = "Brainiac",
-            role = "AI Memory Assistant",
-            personality = "Helpful and knowledgeable",
-            capabilities = listOf("Memory management", "Information retrieval", "Learning"),
-            limitations = listOf("Cannot access external systems", "Relies on provided memory")
-        )
     }
 }
