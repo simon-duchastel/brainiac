@@ -87,7 +87,7 @@ class FileSystemService(
         val builder = StringBuilder()
         
         // Header
-        builder.appendLine("# Short-Term Memory Scratchpad")
+        builder.appendLine("# Short-Term Memory")
         builder.appendLine()
         
         // Summary section
@@ -100,7 +100,6 @@ class FileSystemService(
         
         // Structured Data section
         builder.appendLine("## Structured Data")
-        builder.appendLine("This section contains discrete, machine-readable data for immediate use.")
         builder.appendLine()
         
         // Goals subsection
