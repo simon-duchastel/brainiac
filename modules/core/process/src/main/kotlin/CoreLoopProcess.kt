@@ -16,47 +16,34 @@ class CoreLoopProcess(
 ) {
     
     fun processUserPrompt(userPrompt: String): String {
-        val stm = fileSystemService.readStm()
+        val stmContent = fileSystemService.readStm()
         
-        val initialContext = buildInitialContext(userPrompt, stm)
+        val initialContext = buildInitialContext(userPrompt, stmContent)
         
         val searchQueries = llmService.generateSearchQueries(userPrompt, initialContext)
         
         val ltmExcerpts = searchService.searchLTM(searchQueries)
         
-        val workingMemory = assembleWorkingMemory(userPrompt, stm, ltmExcerpts)
+        val workingMemory = assembleWorkingMemory(userPrompt, stmContent, ltmExcerpts)
         
         return llmService.generateResponse(workingMemory)
     }
     
-    private fun buildInitialContext(userPrompt: String, stm: ShortTermMemory): String {
+    private fun buildInitialContext(userPrompt: String, stmContent: String): String {
         return buildString {
             appendLine("User Prompt: $userPrompt")
             appendLine()
-            appendLine("## Summary")
-            appendLine(stm.summary)
-            appendLine()
-            appendLine("## Structured Data")
-            appendLine("### Goals")
-            stm.structuredData.goals.forEach { goal ->
-                appendLine("- $goal")
-            }
-            appendLine()
-            appendLine("### Key Facts & Decisions")
-            stm.structuredData.keyFacts.forEach { fact ->
-                appendLine("- $fact")
-            }
-            appendLine()
-            appendLine("### Tasks")
-            stm.structuredData.tasks.forEach { task ->
-                appendLine("- $task")
+            if (stmContent.isNotEmpty()) {
+                appendLine("## Short-Term Memory")
+                appendLine(stmContent)
+                appendLine()
             }
         }
     }
     
     private fun assembleWorkingMemory(
         userPrompt: String,
-        stm: ShortTermMemory,
+        stmContent: String,
         ltmExcerpts: List<LTMFile>
     ): String {
         val coreIdentity = coreIdentityService.getCoreIdentityContent()
@@ -67,32 +54,9 @@ class CoreLoopProcess(
             appendLine("## Core Identity")
             appendLine(coreIdentity)
             appendLine()
-            appendLine("## Short-Term Memory")
-            appendLine("### Summary")
-            appendLine(stm.summary)
-            appendLine()
-            appendLine("### Structured Data")
-            appendLine("#### Goals")
-            stm.structuredData.goals.forEach { goal ->
-                appendLine("- $goal")
-            }
-            appendLine()
-            appendLine("#### Key Facts & Decisions")
-            stm.structuredData.keyFacts.forEach { fact ->
-                appendLine("- $fact")
-            }
-            appendLine()
-            appendLine("#### Tasks")
-            stm.structuredData.tasks.forEach { task ->
-                appendLine("- $task")
-            }
-            appendLine()
-            appendLine("#### Event Log")
-            stm.eventLog.forEach { event ->
-                appendLine("### ${event.timestamp}")
-                appendLine("**User:** \"${event.user}\"")
-                appendLine("**AI:** \"${event.ai}\"")
-                appendLine("**Thoughts:** ${event.thoughts}")
+            if (stmContent.isNotEmpty()) {
+                appendLine("## Short-Term Memory")
+                appendLine(stmContent)
                 appendLine()
             }
             

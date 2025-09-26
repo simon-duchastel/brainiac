@@ -2,6 +2,7 @@ package com.brainiac.core.fs
 
 import com.brainiac.core.model.*
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.nio.file.Files
 import java.nio.channels.FileChannel
 import java.nio.channels.FileLock
@@ -23,7 +24,9 @@ object InstantSerializer : KSerializer<Instant> {
     override fun deserialize(decoder: Decoder): Instant = Instant.parse(decoder.decodeString())
 }
 
-class FileSystemService {
+class FileSystemService(
+    private val stmFilePath: Path = Paths.get("memory", "short_term.md")
+) {
     private val yaml = Yaml(
         serializersModule = SerializersModule {
             contextual(InstantSerializer)
@@ -60,18 +63,91 @@ class FileSystemService {
         write(path, content)
     }
 
-    fun readStm(): ShortTermMemory {
-        TODO("Not yet implemented")
-
-        return ShortTermMemory(
-            summary = "",
-            structuredData = StructuredData(emptyList(), emptyList(), emptyList()),
-            eventLog = emptyList()
-        )
+    fun readStm(): String {
+        return try {
+            if (!Files.exists(stmFilePath)) {
+                return ""
+            }
+            read(stmFilePath)
+        } catch (e: Exception) {
+            ""
+        }
     }
 
     fun writeStm(stm: ShortTermMemory) {
-        TODO("Not yet implemented")
+        try {
+            val markdownContent = generateStmMarkdown(stm)
+            write(stmFilePath, markdownContent)
+        } catch (e: Exception) {
+            throw RuntimeException("Failed to write STM file", e)
+        }
+    }
+    
+    private fun generateStmMarkdown(stm: ShortTermMemory): String {
+        val builder = StringBuilder()
+        
+        // Header
+        builder.appendLine("# Short-Term Memory")
+        builder.appendLine()
+        
+        // Summary section
+        builder.appendLine("## Summary")
+        if (stm.summary.isNotEmpty()) {
+            builder.appendLine(stm.summary)
+        }
+        builder.appendLine()
+        builder.appendLine("---")
+        
+        // Structured Data section
+        builder.appendLine("## Structured Data")
+        builder.appendLine()
+        
+        // Goals subsection
+        builder.appendLine("### Goals")
+        if (stm.structuredData.goals.isNotEmpty()) {
+            stm.structuredData.goals.forEach { goal ->
+                builder.appendLine("- [ ] $goal")
+            }
+        }
+        builder.appendLine()
+        
+        // Key Facts & Decisions subsection
+        builder.appendLine("### Key Facts & Decisions")
+        if (stm.structuredData.keyFacts.isNotEmpty()) {
+            stm.structuredData.keyFacts.forEach { fact ->
+                builder.appendLine("- $fact")
+            }
+        }
+        builder.appendLine()
+        
+        // Tasks subsection
+        builder.appendLine("### Tasks")
+        if (stm.structuredData.tasks.isNotEmpty()) {
+            stm.structuredData.tasks.forEach { task ->
+                builder.appendLine("- [ ] $task")
+            }
+        }
+        builder.appendLine()
+        builder.appendLine("---")
+        
+        // Event Log section
+        builder.appendLine("## Event Log")
+        builder.appendLine("A reverse-chronological log of recent interactions. New events are appended to the top.")
+        builder.appendLine()
+        
+        if (stm.eventLog.isNotEmpty()) {
+            stm.eventLog.forEach { event ->
+                builder.appendLine("### ${event.timestamp}")
+                builder.appendLine("**User:** \"${event.user}\"")
+                builder.appendLine("**AI:** \"${event.ai}\"")
+                if (event.thoughts.isNotEmpty()) {
+                    builder.appendLine("**Thoughts:** ${event.thoughts}")
+                }
+                builder.appendLine()
+            }
+        }
+        
+        return builder.toString()
     }
 
     @Synchronized
@@ -96,12 +172,11 @@ class FileSystemService {
     }
 
     private fun logAccess(action: String, path: Path) {
-        val entry = AccessLogEntry(
-            timestamp = Instant.now(),
-            action = action,
-            path = path.toString()
-        )
-
-        TODO("Not yet implemented")
+        // TODO: Implement access logging for Organization process
+        // val entry = AccessLogEntry(
+        //     timestamp = Instant.now(),
+        //     action = action,
+        //     path = path.toString()
+        // )
     }
 }

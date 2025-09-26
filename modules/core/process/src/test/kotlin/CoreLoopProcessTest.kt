@@ -22,22 +22,32 @@ class CoreLoopProcessTest : StringSpec({
         val mockSearchService = mockk<SearchService>()
         val mockCoreIdentityService = mockk<CoreIdentityService>()
         
-        val testStm = ShortTermMemory(
-            summary = "Recent conversation about programming concepts",
-            structuredData = StructuredData(
-                goals = listOf("Learn Kotlin", "Build memory system"),
-                keyFacts = listOf("User prefers functional programming"),
-                tasks = listOf("Complete CoreLoopProcess implementation")
-            ),
-            eventLog = listOf(
-                Event(
-                    timestamp = Instant.parse("2023-01-01T10:00:00Z"),
-                    user = "What is Kotlin?",
-                    ai = "Kotlin is a modern programming language...",
-                    thoughts = "User asking about basics"
-                )
-            )
-        )
+        val testStmContent = """# Short-Term Memory Scratchpad
+
+## Summary
+Recent conversation about programming concepts
+
+---
+## Structured Data
+
+### Goals
+- [ ] Learn Kotlin
+- [ ] Build memory system
+
+### Key Facts & Decisions
+- User prefers functional programming
+
+### Tasks
+- [ ] Complete CoreLoopProcess implementation
+
+---
+## Event Log
+
+### 2023-01-01T10:00:00Z
+**User:** "What is Kotlin?"
+**AI:** "Kotlin is a modern programming language..."
+**Thoughts:** User asking about basics
+"""
         
         val testLTMFile = LTMFile(
             frontmatter = LTMFrontmatter(
@@ -52,7 +62,7 @@ class CoreLoopProcessTest : StringSpec({
         
         val coreIdentityContent = "# Core Identity\n\nI am Brainiac, an AI assistant designed to help with programming and learning."
         
-        every { mockFileSystemService.readStm() } returns testStm
+        every { mockFileSystemService.readStm() } returns testStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns coreIdentityContent
         every { mockLLMService.generateSearchQueries(any(), any()) } returns listOf("kotlin programming", "language features")
         every { mockSearchService.searchLTM(any()) } returns listOf(testLTMFile)
@@ -82,19 +92,11 @@ class CoreLoopProcessTest : StringSpec({
         val mockSearchService = mockk<SearchService>()
         val mockCoreIdentityService = mockk<CoreIdentityService>()
         
-        val emptyStm = ShortTermMemory(
-            summary = "",
-            structuredData = StructuredData(
-                goals = emptyList(),
-                keyFacts = emptyList(),
-                tasks = emptyList()
-            ),
-            eventLog = emptyList()
-        )
+        val emptyStmContent = ""
         
         val coreIdentityContent = "# Core Identity\n\nI am Brainiac."
         
-        every { mockFileSystemService.readStm() } returns emptyStm
+        every { mockFileSystemService.readStm() } returns emptyStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns coreIdentityContent
         every { mockLLMService.generateSearchQueries(any(), any()) } returns listOf("general query")
         every { mockSearchService.searchLTM(any()) } returns emptyList()
@@ -122,17 +124,25 @@ class CoreLoopProcessTest : StringSpec({
         val mockSearchService = mockk<SearchService>()
         val mockCoreIdentityService = mockk<CoreIdentityService>()
         
-        val testStm = ShortTermMemory(
-            summary = "Learning about AI systems",
-            structuredData = StructuredData(
-                goals = listOf("Understand memory systems"),
-                keyFacts = listOf("AI needs persistent memory"),
-                tasks = listOf("Read documentation")
-            ),
-            eventLog = emptyList()
-        )
+        val testStmContent = """# Short-Term Memory Scratchpad
+
+## Summary
+Learning about AI systems
+
+---
+## Structured Data
+
+### Goals
+- [ ] Understand memory systems
+
+### Key Facts & Decisions
+- AI needs persistent memory
+
+### Tasks
+- [ ] Read documentation
+"""
         
-        every { mockFileSystemService.readStm() } returns testStm
+        every { mockFileSystemService.readStm() } returns testStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns "Core identity"
         every { mockSearchService.searchLTM(any()) } returns emptyList()
         every { mockLLMService.generateResponse(any()) } returns "Response"
@@ -165,22 +175,31 @@ class CoreLoopProcessTest : StringSpec({
         val mockSearchService = mockk<SearchService>()
         val mockCoreIdentityService = mockk<CoreIdentityService>()
         
-        val testStm = ShortTermMemory(
-            summary = "Test summary",
-            structuredData = StructuredData(
-                goals = listOf("Test goal"),
-                keyFacts = listOf("Test fact"),
-                tasks = listOf("Test task")
-            ),
-            eventLog = listOf(
-                Event(
-                    timestamp = Instant.parse("2023-01-01T10:00:00Z"),
-                    user = "Hello",
-                    ai = "Hi there",
-                    thoughts = "Greeting"
-                )
-            )
-        )
+        val testStmContent = """# Short-Term Memory Scratchpad
+
+## Summary
+Test summary
+
+---
+## Structured Data
+
+### Goals
+- [ ] Test goal
+
+### Key Facts & Decisions
+- Test fact
+
+### Tasks
+- [ ] Test task
+
+---
+## Event Log
+
+### 2023-01-01T10:00:00Z
+**User:** "Hello"
+**AI:** "Hi there"
+**Thoughts:** Greeting
+"""
         
         val testLTMFile = LTMFile(
             frontmatter = LTMFrontmatter(
@@ -193,7 +212,7 @@ class CoreLoopProcessTest : StringSpec({
             content = "Test LTM content"
         )
         
-        every { mockFileSystemService.readStm() } returns testStm
+        every { mockFileSystemService.readStm() } returns testStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns "Test core identity"
         every { mockLLMService.generateSearchQueries(any(), any()) } returns listOf("test")
         every { mockSearchService.searchLTM(any()) } returns listOf(testLTMFile)
@@ -244,17 +263,13 @@ class CoreLoopProcessTest : StringSpec({
         val mockSearchService = mockk<SearchService>()
         val mockCoreIdentityService = mockk<CoreIdentityService>()
         
-        val testStm = ShortTermMemory(
-            summary = "Test summary",
-            structuredData = StructuredData(
-                goals = emptyList(),
-                keyFacts = emptyList(),
-                tasks = emptyList()
-            ),
-            eventLog = emptyList()
-        )
+        val testStmContent = """# Short-Term Memory Scratchpad
+
+## Summary
+Test summary
+"""
         
-        every { mockFileSystemService.readStm() } returns testStm
+        every { mockFileSystemService.readStm() } returns testStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns "Core identity"
         every { mockLLMService.generateSearchQueries(any(), any()) } returns listOf("no results")
         every { mockSearchService.searchLTM(any()) } returns emptyList()
