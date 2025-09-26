@@ -8,13 +8,13 @@ import io.kotest.matchers.collections.shouldContain
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import java.nio.file.Paths
+import okio.Path.Companion.toPath
 
 class CoreIdentityServiceTest : StringSpec({
     
     "should return core identity content from file system" {
         val mockFileSystemService = mockk<FileSystemService>()
-        val coreIdentityPath = Paths.get("/system/core_identity.md")
+        val coreIdentityPath = "/system/core_identity.md".toPath()
         val expectedContent =
             "# Core Identity\n\nI am Brainiac, an AI assistant designed to help with memory management."
 

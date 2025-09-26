@@ -1,13 +1,10 @@
 package com.brainiac.core.fs
 
 import com.brainiac.core.model.*
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.Files
-import java.nio.channels.FileChannel
-import java.nio.channels.FileLock
-import java.nio.file.StandardOpenOption
-import java.time.Instant
+import okio.Path
+import okio.Path.Companion.toPath
+import okio.FileSystem
+import kotlinx.datetime.Instant
 import com.charleskorn.kaml.Yaml
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
@@ -18,6 +15,31 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
+/**
+ * Multiplatform file lock interface
+ */
+interface FileLock {
+    fun release()
+    fun isValid(): Boolean
+}
+
+/**
+ * In-memory implementation of file locking for multiplatform compatibility
+ */
+private class InMemoryFileLock(private val path: Path, private val lockMap: MutableMap<Path, InMemoryFileLock>) : FileLock {
+    @Volatile
+    private var released = false
+    
+    override fun release() {
+        if (!released) {
+            released = true
+            lockMap.remove(path)
+        }
+    }
+    
+    override fun isValid(): Boolean = !released
+}
+
 object InstantSerializer : KSerializer<Instant> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Instant", PrimitiveKind.STRING)
     override fun serialize(encoder: Encoder, value: Instant) = encoder.encodeString(value.toString())
@@ -25,22 +47,23 @@ object InstantSerializer : KSerializer<Instant> {
 }
 
 class FileSystemService(
-    private val stmFilePath: Path = Paths.get("memory", "short_term.md")
+    private val stmFilePath: Path = "memory/short_term.md".toPath(),
+    private val fileSystem: FileSystem = FileSystem.SYSTEM
 ) {
     private val yaml = Yaml(
         serializersModule = SerializersModule {
             contextual(InstantSerializer)
         }
     )
-    private val locks = mutableMapOf<Path, FileChannel>()
+    private val locks = mutableMapOf<Path, InMemoryFileLock>()
 
     fun read(path: Path): String {
-        return Files.readString(path)
+        return fileSystem.read(path) { readUtf8() }
     }
 
     fun write(path: Path, content: String) {
-        Files.createDirectories(path.parent)
-        Files.writeString(path, content)
+        path.parent?.let { fileSystem.createDirectories(it) }
+        fileSystem.write(path) { writeUtf8(content) }
     }
 
     fun readLtmFile(path: Path): LTMFile {
@@ -156,19 +179,17 @@ class FileSystemService(
             throw IllegalStateException("Lock already acquired for path: $path")
         }
         
-        Files.createDirectories(path.parent)
-        val channel = FileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE)
-        val lock = channel.lock()
-        locks[path] = channel
+        // Ensure parent directories exist
+        path.parent?.let { fileSystem.createDirectories(it) }
+        
+        val lock = InMemoryFileLock(path, locks)
+        locks[path] = lock
         return lock
     }
 
     @Synchronized
     fun releaseLock(path: Path) {
-        locks[path]?.let { channel ->
-            channel.close()
-            locks.remove(path)
-        }
+        locks[path]?.release()
     }
 
     private fun logAccess(action: String, path: Path) {

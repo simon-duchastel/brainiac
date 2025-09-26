@@ -12,7 +12,7 @@ import io.kotest.matchers.comparables.shouldBeLessThan
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import java.time.Instant
+import kotlinx.datetime.Instant
 
 class CoreLoopProcessTest : StringSpec({
     
