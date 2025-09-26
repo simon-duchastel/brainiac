@@ -2,7 +2,7 @@ package com.brainiac.core.identity
 
 import com.brainiac.core.fs.FileSystemService
 import com.brainiac.core.model.CoreIdentity
-import java.nio.file.Path
+import okio.Path
 
 class DefaultCoreIdentityService(
     private val fileSystemService: FileSystemService,

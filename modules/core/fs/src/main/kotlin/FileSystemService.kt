@@ -1,13 +1,13 @@
 package com.brainiac.core.fs
 
 import com.brainiac.core.model.*
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.Files
+import okio.Path
+import okio.Path.Companion.toPath
+import okio.FileSystem
+import kotlinx.datetime.Instant
 import java.nio.channels.FileChannel
 import java.nio.channels.FileLock
 import java.nio.file.StandardOpenOption
-import java.time.Instant
 import com.charleskorn.kaml.Yaml
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
@@ -25,7 +25,8 @@ object InstantSerializer : KSerializer<Instant> {
 }
 
 class FileSystemService(
-    private val stmFilePath: Path = Paths.get("memory", "short_term.md")
+    private val stmFilePath: Path = "memory/short_term.md".toPath(),
+    private val fileSystem: FileSystem = FileSystem.SYSTEM
 ) {
     private val yaml = Yaml(
         serializersModule = SerializersModule {
@@ -35,12 +36,12 @@ class FileSystemService(
     private val locks = mutableMapOf<Path, FileChannel>()
 
     fun read(path: Path): String {
-        return Files.readString(path)
+        return fileSystem.read(path) { readUtf8() }
     }
 
     fun write(path: Path, content: String) {
-        Files.createDirectories(path.parent)
-        Files.writeString(path, content)
+        path.parent?.let { fileSystem.createDirectories(it) }
+        fileSystem.write(path) { writeUtf8(content) }
     }
 
     fun readLtmFile(path: Path): LTMFile {
@@ -156,8 +157,10 @@ class FileSystemService(
             throw IllegalStateException("Lock already acquired for path: $path")
         }
         
-        Files.createDirectories(path.parent)
-        val channel = FileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE)
+        // Convert okio.Path to java.nio.file.Path for file locking
+        val javaPath = java.nio.file.Paths.get(path.toString())
+        java.nio.file.Files.createDirectories(javaPath.parent)
+        val channel = FileChannel.open(javaPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE)
         val lock = channel.lock()
         locks[path] = channel
         return lock

@@ -17,6 +17,8 @@ Brainiac creates an intelligence that evolves through its interactions, building
 - **Long-Term Memory**: Permanent, structured knowledge base (`memory/long_term/`)
 - **Core Processes**: Four autonomous processes managing memory flow
 
+Built with **Kotlin Multiplatform** for cross-platform compatibility while maintaining JVM performance.
+
 ## Implementation Status
 
 ✅ **CoreLoopProcess**: Complete synchronous user interaction with proper context ordering  
