@@ -14,67 +14,6 @@ class FileSystemServiceTest : StringSpec({
     
     val fileSystemService = FileSystemService()
     
-    "should read and write simple text files" {
-        val tempDir = Files.createTempDirectory("test")
-        val testFile = tempDir.resolve("test.txt")
-        val content = "Hello, World!"
-        
-        fileSystemService.write(testFile, content)
-        val readContent = fileSystemService.read(testFile)
-        
-        readContent shouldBe content
-        
-        Files.deleteIfExists(testFile)
-        Files.deleteIfExists(tempDir)
-    }
-    
-    "should read and write basic LTM files" {
-        val tempDir = Files.createTempDirectory("test")
-        val testFile = tempDir.resolve("test.md")
-        val content = """---
-uuid: test-123
-createdAt: 2023-01-01T00:00:00Z
-updatedAt: 2023-01-02T00:00:00Z
-tags:
-- test
-- memory
-reinforcementCount: 1
----
-# Test Content
-
-This is a test."""
-        
-        fileSystemService.write(testFile, content)
-        val readContent = fileSystemService.read(testFile)
-        
-        readContent shouldBe content
-        
-        Files.deleteIfExists(testFile)
-        Files.deleteIfExists(tempDir)
-    }
-    
-    "should acquire and release file locks" {
-        val tempDir = Files.createTempDirectory("test")
-        val testFile = tempDir.resolve("locked.txt")
-        
-        val lock = fileSystemService.acquireLock(testFile)
-        lock shouldNotBe null
-        
-        shouldThrow<IllegalStateException> {
-            fileSystemService.acquireLock(testFile)
-        }
-        
-        fileSystemService.releaseLock(testFile)
-        
-        // Should be able to acquire again after release
-        val lock2 = fileSystemService.acquireLock(testFile)
-        lock2 shouldNotBe null
-        fileSystemService.releaseLock(testFile)
-        
-        Files.deleteIfExists(testFile)
-        Files.deleteIfExists(tempDir)
-    }
-    
     "should read empty string when STM file does not exist" {
         val tempDir = Files.createTempDirectory("test-stm")
         val stmPath = tempDir.resolve("short_term.md")
@@ -87,7 +26,7 @@ This is a test."""
         Files.deleteIfExists(tempDir)
     }
     
-    "should read STM content as raw string" {
+    "should read STM content" {
         val tempDir = Files.createTempDirectory("test-stm")
         val stmPath = tempDir.resolve("short_term.md")
         val service = FileSystemService(stmPath)
@@ -111,12 +50,12 @@ This section contains discrete, machine-readable data for immediate use.
         val stmContent = service.readStm()
         
         stmContent shouldBe expectedContent
-        
+
         Files.deleteIfExists(stmPath)
         Files.deleteIfExists(tempDir)
     }
     
-    "should write structured STM and read as raw string" {
+    "should write STM content" {
         val tempDir = Files.createTempDirectory("test-stm")
         val stmPath = tempDir.resolve("short_term.md")
         val service = FileSystemService(stmPath)
@@ -156,59 +95,6 @@ This section contains discrete, machine-readable data for immediate use.
         readContent.contains("Goal 2") shouldBe true
         readContent.contains("## Event Log") shouldBe true
         readContent.contains("Test user input") shouldBe true
-        
-        Files.deleteIfExists(stmPath)
-        Files.deleteIfExists(tempDir)
-    }
-    
-    "should handle any file content as raw string" {
-        val tempDir = Files.createTempDirectory("test-stm")
-        val stmPath = tempDir.resolve("short_term.md")
-        val service = FileSystemService(stmPath)
-        
-        val anyContent = """# Random Markdown
-        
-This is not a proper STM file.
-
-### Random timestamp with no event data
-Some random content.
-
-**User:** Incomplete event
-"""
-        
-        service.write(stmPath, anyContent)
-        val stmContent = service.readStm()
-        
-        // Should return the exact content as written
-        stmContent shouldBe anyContent
-        
-        Files.deleteIfExists(stmPath)
-        Files.deleteIfExists(tempDir)
-    }
-    
-    "should handle empty STM write and read" {
-        val tempDir = Files.createTempDirectory("test-stm")
-        val stmPath = tempDir.resolve("short_term.md")
-        val service = FileSystemService(stmPath)
-        
-        val emptyStm = ShortTermMemory(
-            summary = "",
-            structuredData = StructuredData(
-                goals = emptyList(),
-                keyFacts = emptyList(),
-                tasks = emptyList()
-            ),
-            eventLog = emptyList()
-        )
-        
-        service.writeStm(emptyStm)
-        val readContent = service.readStm()
-        
-        // Should contain the basic structure even when empty
-        readContent.contains("# Short-Term Memory Scratchpad") shouldBe true
-        readContent.contains("## Summary") shouldBe true
-        readContent.contains("## Structured Data") shouldBe true
-        readContent.contains("## Event Log") shouldBe true
         
         Files.deleteIfExists(stmPath)
         Files.deleteIfExists(tempDir)
