@@ -5,9 +5,6 @@ import okio.Path
 import okio.Path.Companion.toPath
 import okio.FileSystem
 import kotlinx.datetime.Instant
-import java.nio.channels.FileChannel
-import java.nio.channels.FileLock
-import java.nio.file.StandardOpenOption
 import com.charleskorn.kaml.Yaml
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
@@ -17,6 +14,31 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+
+/**
+ * Multiplatform file lock interface
+ */
+interface FileLock {
+    fun release()
+    fun isValid(): Boolean
+}
+
+/**
+ * In-memory implementation of file locking for multiplatform compatibility
+ */
+private class InMemoryFileLock(private val path: Path, private val lockMap: MutableMap<Path, InMemoryFileLock>) : FileLock {
+    @Volatile
+    private var released = false
+    
+    override fun release() {
+        if (!released) {
+            released = true
+            lockMap.remove(path)
+        }
+    }
+    
+    override fun isValid(): Boolean = !released
+}
 
 object InstantSerializer : KSerializer<Instant> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Instant", PrimitiveKind.STRING)
@@ -33,7 +55,7 @@ class FileSystemService(
             contextual(InstantSerializer)
         }
     )
-    private val locks = mutableMapOf<Path, FileChannel>()
+    private val locks = mutableMapOf<Path, InMemoryFileLock>()
 
     fun read(path: Path): String {
         return fileSystem.read(path) { readUtf8() }
@@ -157,21 +179,17 @@ class FileSystemService(
             throw IllegalStateException("Lock already acquired for path: $path")
         }
         
-        // Convert okio.Path to java.nio.file.Path for file locking
-        val javaPath = java.nio.file.Paths.get(path.toString())
-        java.nio.file.Files.createDirectories(javaPath.parent)
-        val channel = FileChannel.open(javaPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE)
-        val lock = channel.lock()
-        locks[path] = channel
+        // Ensure parent directories exist
+        path.parent?.let { fileSystem.createDirectories(it) }
+        
+        val lock = InMemoryFileLock(path, locks)
+        locks[path] = lock
         return lock
     }
 
     @Synchronized
     fun releaseLock(path: Path) {
-        locks[path]?.let { channel ->
-            channel.close()
-            locks.remove(path)
-        }
+        locks[path]?.release()
     }
 
     private fun logAccess(action: String, path: Path) {
