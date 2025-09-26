@@ -31,7 +31,7 @@ class FileSystemServiceTest : StringSpec({
         val stmPath = tempDir.resolve("short_term.md")
         val service = FileSystemService(stmPath)
         
-        val expectedContent = """# Short-Term Memory Scratchpad
+        val expectedContent = """# Short-Term Memory
 
 ## Summary
 Recent conversation about programming concepts. User is learning Kotlin and building a memory system.
@@ -87,7 +87,7 @@ This section contains discrete, machine-readable data for immediate use.
         val readContent = service.readStm()
         
         // Verify it contains expected sections but as raw string
-        readContent.contains("# Short-Term Memory Scratchpad") shouldBe true
+        readContent.contains("# Short-Term Memory") shouldBe true
         readContent.contains("## Summary") shouldBe true
         readContent.contains("Test summary with multiple lines.") shouldBe true
         readContent.contains("## Structured Data") shouldBe true
