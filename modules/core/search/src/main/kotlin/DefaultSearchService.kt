@@ -52,20 +52,21 @@ class DefaultSearchService(
             return emptyList()
         }
 
-        return Files.walk(ltmRootPath)
-            .filter { Files.isRegularFile(it) }
-            .filter { it.fileName.toString().endsWith(".md") }
-            .filter { !it.fileName.toString().startsWith("_index") }
-            .mapNotNull { path ->
-                try {
-                    val ltmFile = fileSystemService.readLtmFile(path)
-                    Pair(ltmFile, path)
-                } catch (e: Exception) {
-                    // Skip files that can't be parsed as LTM files
-                    null
+        return Files.walk(ltmRootPath).use { stream ->
+            stream.filter { Files.isRegularFile(it) }
+                .filter { it.fileName.toString().endsWith(".md") }
+                .filter { !it.fileName.toString().startsWith("_index") }
+                .toList()
+                .mapNotNull { path ->
+                    try {
+                        val ltmFile = fileSystemService.readLtmFile(path)
+                        Pair(ltmFile, path)
+                    } catch (e: Exception) {
+                        // Skip files that can't be parsed as LTM files
+                        null
+                    }
                 }
-            }
-            .toList()
+        }
     }
 
     private fun findAllIndexEntries(): Map<Path, IndexEntry> {
@@ -73,20 +74,22 @@ class DefaultSearchService(
             return emptyMap()
         }
 
-        return Files.walk(ltmRootPath)
-            .filter { Files.isRegularFile(it) }
-            .filter { it.fileName.toString() == "_index.md" }
-            .mapNotNull { path ->
-                try {
-                    val content = fileSystemService.read(path)
-                    val indexEntry = parseIndexFile(content)
-                    Pair(path.parent, indexEntry)
-                } catch (e: Exception) {
-                    // Skip index files that can't be parsed
-                    null
+        return Files.walk(ltmRootPath).use { stream ->
+            stream.filter { Files.isRegularFile(it) }
+                .filter { it.fileName.toString() == "_index.md" }
+                .toList()
+                .mapNotNull { path ->
+                    try {
+                        val content = fileSystemService.read(path)
+                        val indexEntry = parseIndexFile(content)
+                        Pair(path.parent, indexEntry)
+                    } catch (e: Exception) {
+                        // Skip index files that can't be parsed
+                        null
+                    }
                 }
-            }
-            .toMap()
+                .toMap()
+        }
     }
 
     private fun parseIndexFile(content: String): IndexEntry {
