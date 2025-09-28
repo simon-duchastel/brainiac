@@ -64,7 +64,6 @@ Recent conversation about programming concepts
         
         every { mockFileSystemService.readStm() } returns testStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns coreIdentityContent
-        every { mockLLMService.generateSearchQueries(any(), any()) } returns listOf("kotlin programming", "language features")
         every { mockSearchService.searchLTM(any()) } returns listOf(testLTMFile)
         every { mockLLMService.generateResponse(any()) } returns "Based on the information provided, Kotlin is indeed a modern programming language..."
         
@@ -81,8 +80,7 @@ Recent conversation about programming concepts
         
         verify { mockFileSystemService.readStm() }
         verify { mockCoreIdentityService.getCoreIdentityContent() }
-        verify { mockLLMService.generateSearchQueries("Tell me more about Kotlin", any()) }
-        verify { mockSearchService.searchLTM(listOf("kotlin programming", "language features")) }
+        verify { mockSearchService.searchLTM(any()) }
         verify { mockLLMService.generateResponse(any()) }
     }
     
@@ -98,7 +96,6 @@ Recent conversation about programming concepts
         
         every { mockFileSystemService.readStm() } returns emptyStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns coreIdentityContent
-        every { mockLLMService.generateSearchQueries(any(), any()) } returns listOf("general query")
         every { mockSearchService.searchLTM(any()) } returns emptyList()
         every { mockLLMService.generateResponse(any()) } returns "I understand your question."
         
@@ -114,8 +111,7 @@ Recent conversation about programming concepts
         result shouldBe "I understand your question."
         
         verify { mockFileSystemService.readStm() }
-        verify { mockLLMService.generateSearchQueries("Hello", any()) }
-        verify { mockSearchService.searchLTM(listOf("general query")) }
+        verify { mockSearchService.searchLTM(any()) }
     }
     
     "should include all STM components in initial context" {
@@ -144,13 +140,12 @@ Learning about AI systems
         
         every { mockFileSystemService.readStm() } returns testStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns "Core identity"
-        every { mockSearchService.searchLTM(any()) } returns emptyList()
         every { mockLLMService.generateResponse(any()) } returns "Response"
         
-        var capturedContext = ""
-        every { mockLLMService.generateSearchQueries(any(), any()) } answers {
-            capturedContext = secondArg()
-            listOf("test query")
+        var capturedSearchQuery = ""
+        every { mockSearchService.searchLTM(any()) } answers {
+            capturedSearchQuery = firstArg()
+            emptyList()
         }
         
         val coreLoopProcess = CoreLoopProcess(
@@ -162,11 +157,10 @@ Learning about AI systems
         
         coreLoopProcess.processUserPrompt("Test prompt")
         
-        capturedContext shouldContain "User Prompt: Test prompt"
-        capturedContext shouldContain "Learning about AI systems"
-        capturedContext shouldContain "Understand memory systems"
-        capturedContext shouldContain "AI needs persistent memory"
-        capturedContext shouldContain "Read documentation"
+        // Verify that search is called with combined user prompt and initial context
+        capturedSearchQuery shouldContain "Test prompt"
+        capturedSearchQuery shouldContain "User Prompt: Test prompt"
+        capturedSearchQuery shouldContain "Learning about AI systems"
     }
     
     "should format working memory correctly with LTM excerpts" {
@@ -214,7 +208,6 @@ Test summary
         
         every { mockFileSystemService.readStm() } returns testStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns "Test core identity"
-        every { mockLLMService.generateSearchQueries(any(), any()) } returns listOf("test")
         every { mockSearchService.searchLTM(any()) } returns listOf(testLTMFile)
         
         var capturedWorkingMemory = ""
@@ -271,7 +264,6 @@ Test summary
         
         every { mockFileSystemService.readStm() } returns testStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns "Core identity"
-        every { mockLLMService.generateSearchQueries(any(), any()) } returns listOf("no results")
         every { mockSearchService.searchLTM(any()) } returns emptyList()
         
         var capturedWorkingMemory = ""
