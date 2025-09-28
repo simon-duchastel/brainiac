@@ -2,8 +2,8 @@ package com.brainiac.core.search
 
 import com.brainiac.core.model.LTMFile
 import com.brainiac.core.model.LTMFrontmatter
-import com.brainiac.core.model.SearchToolProvider
 import com.brainiac.core.llm.LLMService
+import com.brainiac.core.fs.FileSystemService
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -14,62 +14,134 @@ import io.mockk.every
 import io.mockk.verify
 import io.mockk.slot
 import java.time.Instant
+import java.nio.file.Paths
+import java.nio.file.Files
 
 class LLMSearchServiceTest : StringSpec({
 
     "should return empty list when queries are empty" {
         val mockLLMService = mockk<LLMService>()
-        val mockToolProvider = mockk<SearchToolProvider>()
-        val searchService = LLMSearchService(mockLLMService, mockToolProvider)
+        val mockFileSystemService = mockk<FileSystemService>()
+        val searchService = LLMSearchService(mockLLMService, mockFileSystemService, Paths.get("test/ltm"))
         
         val result = searchService.searchLTM(emptyList())
         result.shouldBeEmpty()
     }
 
-    "should delegate search to LLM with combined query" {
+    "should return empty list when LTM directory does not exist" {
         val mockLLMService = mockk<LLMService>()
-        val mockToolProvider = mockk<SearchToolProvider>()
-        val searchService = LLMSearchService(mockLLMService, mockToolProvider)
+        val mockFileSystemService = mockk<FileSystemService>()
+        val searchService = LLMSearchService(mockLLMService, mockFileSystemService, Paths.get("nonexistent/ltm"))
         
-        val expectedResult = listOf(
-            LTMFile(
-                frontmatter = LTMFrontmatter(
-                    uuid = "test-uuid",
-                    tags = listOf("test"),
-                    createdAt = Instant.now(),
-                    updatedAt = Instant.now(),
-                    reinforcementCount = 1
-                ),
-                content = "Test content"
-            )
-        )
-        
-        every { 
-            mockLLMService.searchWithTools(any(), mockToolProvider) 
-        } returns expectedResult
-        
-        val queries = listOf("test query", "another query")
-        val result = searchService.searchLTM(queries)
-        
-        result shouldBe expectedResult
-        verify { mockLLMService.searchWithTools(any(), mockToolProvider) }
+        val result = searchService.searchLTM(listOf("test query"))
+        result.shouldBeEmpty()
     }
 
-    "should format queries properly for LLM" {
+    "should combine queries and include XML structure in LLM prompt" {
         val mockLLMService = mockk<LLMService>()
-        val mockToolProvider = mockk<SearchToolProvider>()
-        val searchService = LLMSearchService(mockLLMService, mockToolProvider)
+        val mockFileSystemService = mockk<FileSystemService>()
+        val tempDir = Files.createTempDirectory("test-ltm")
+        val searchService = LLMSearchService(mockLLMService, mockFileSystemService, tempDir)
         
-        val querySlot = slot<String>()
-        every { 
-            mockLLMService.searchWithTools(capture(querySlot), mockToolProvider) 
-        } returns emptyList()
+        val promptSlot = slot<String>()
+        every { mockLLMService.generateResponse(capture(promptSlot)) } returns ""
         
-        val queries = listOf("query one", "query two")
+        val queries = listOf("machine learning", "neural networks")
         searchService.searchLTM(queries)
         
-        querySlot.captured shouldContain "1. query one"
-        querySlot.captured shouldContain "2. query two"
-        querySlot.captured shouldContain "Search the long-term memory"
+        promptSlot.captured shouldContain "machine learning neural networks"
+        promptSlot.captured shouldContain "<ltm_directory>"
+        promptSlot.captured shouldContain "Please select the most relevant memory files"
+    }
+
+    "should parse LLM response and read selected files" {
+        val mockLLMService = mockk<LLMService>()
+        val mockFileSystemService = mockk<FileSystemService>()
+        val tempDir = Files.createTempDirectory("test-ltm")
+        
+        // Create a test file
+        val testFile = tempDir.resolve("test-memory.md")
+        Files.write(testFile, "# Test Memory\nThis is a test memory file.".toByteArray())
+        
+        val searchService = LLMSearchService(mockLLMService, mockFileSystemService, tempDir)
+        
+        val expectedLTMFile = LTMFile(
+            frontmatter = LTMFrontmatter(
+                uuid = "test-uuid",
+                tags = listOf("test"),
+                createdAt = Instant.now(),
+                updatedAt = Instant.now(),
+                reinforcementCount = 1
+            ),
+            content = "Test content"
+        )
+        
+        every { mockLLMService.generateResponse(any()) } returns "test-memory.md"
+        every { mockFileSystemService.readLtmFile(testFile) } returns expectedLTMFile
+        
+        val result = searchService.searchLTM(listOf("test query"))
+        
+        result shouldHaveSize 1
+        result[0] shouldBe expectedLTMFile
+        verify { mockFileSystemService.readLtmFile(testFile) }
+    }
+
+    "should handle LLM response with multiple file paths" {
+        val mockLLMService = mockk<LLMService>()
+        val mockFileSystemService = mockk<FileSystemService>()
+        val tempDir = Files.createTempDirectory("test-ltm")
+        
+        // Create test files
+        val testFile1 = tempDir.resolve("memory1.md")
+        val testFile2 = tempDir.resolve("memory2.md")
+        Files.write(testFile1, "# Memory 1".toByteArray())
+        Files.write(testFile2, "# Memory 2".toByteArray())
+        
+        val searchService = LLMSearchService(mockLLMService, mockFileSystemService, tempDir)
+        
+        val ltmFile1 = LTMFile(
+            frontmatter = LTMFrontmatter(
+                uuid = "uuid1",
+                tags = listOf("tag1"),
+                createdAt = Instant.now(),
+                updatedAt = Instant.now(),
+                reinforcementCount = 1
+            ),
+            content = "Content 1"
+        )
+        val ltmFile2 = LTMFile(
+            frontmatter = LTMFrontmatter(
+                uuid = "uuid2",
+                tags = listOf("tag2"),
+                createdAt = Instant.now(),
+                updatedAt = Instant.now(),
+                reinforcementCount = 1
+            ),
+            content = "Content 2"
+        )
+        
+        every { mockLLMService.generateResponse(any()) } returns "memory1.md\nmemory2.md"
+        every { mockFileSystemService.readLtmFile(testFile1) } returns ltmFile1
+        every { mockFileSystemService.readLtmFile(testFile2) } returns ltmFile2
+        
+        val result = searchService.searchLTM(listOf("test query"))
+        
+        result shouldHaveSize 2
+        result[0] shouldBe ltmFile1
+        result[1] shouldBe ltmFile2
+    }
+
+    "should ignore invalid file paths in LLM response" {
+        val mockLLMService = mockk<LLMService>()
+        val mockFileSystemService = mockk<FileSystemService>()
+        val tempDir = Files.createTempDirectory("test-ltm")
+        
+        val searchService = LLMSearchService(mockLLMService, mockFileSystemService, tempDir)
+        
+        every { mockLLMService.generateResponse(any()) } returns "nonexistent.md\n# Some comment\n<xml>tag</xml>"
+        
+        val result = searchService.searchLTM(listOf("test query"))
+        
+        result.shouldBeEmpty()
     }
 })
