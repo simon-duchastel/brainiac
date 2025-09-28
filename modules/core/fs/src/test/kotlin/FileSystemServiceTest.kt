@@ -6,9 +6,9 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.collections.shouldHaveSize
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.time.Instant
+import okio.Path.Companion.toPath
+import okio.FileSystem
+import kotlinx.datetime.Instant
 
 class FileSystemServiceTest : StringSpec({
     

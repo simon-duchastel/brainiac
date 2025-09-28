@@ -1,5 +1,6 @@
 plugins {
-    kotlin("jvm") version "1.9.20" apply false
+    alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.kotlin.serialization) apply false
 }
 
 allprojects {
@@ -12,19 +13,25 @@ allprojects {
 }
 
 subprojects {
-    apply(plugin = "org.jetbrains.kotlin.jvm")
-    
-    dependencies {
-        val implementation by configurations
-        val testImplementation by configurations
-        
-        implementation(kotlin("stdlib"))
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-        testImplementation(kotlin("test"))
-        testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+    repositories {
+        mavenCentral()
     }
+}
+
+// Add test task that delegates to multiplatform test tasks
+tasks.register("test") {
+    group = "verification"
+    description = "Runs all tests across all platforms"
     
-    tasks.withType<Test> {
-        useJUnitPlatform()
-    }
+    // Find all subprojects that have KMP configuration
+    val testableProjects = subprojects
+        .filter { project -> 
+            // Only include projects that have build files
+            project.buildFile.exists() 
+        }
+        .map { project -> 
+            "${project.path}:jvmTest" 
+        }
+    
+    dependsOn(testableProjects)
 }

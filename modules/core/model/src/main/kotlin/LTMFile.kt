@@ -2,7 +2,7 @@ package com.brainiac.core.model
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Contextual
-import java.time.Instant
+import kotlinx.datetime.Instant
 
 @Serializable
 data class LTMFrontmatter(
