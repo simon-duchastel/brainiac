@@ -3,15 +3,15 @@ package com.brainiac.core.search
 import com.brainiac.core.model.LTMFile
 import com.brainiac.core.llm.LLMService
 import com.brainiac.core.fs.FileSystemService
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.Files
-import kotlin.streams.toList
+import okio.Path
+import okio.Path.Companion.toPath
+import okio.FileSystem
 
 class LLMSearchService(
     private val llmService: LLMService,
     private val fileSystemService: FileSystemService,
-    private val ltmRootPath: Path = Paths.get("memory", "long_term")
+    private val ltmRootPath: Path = "memory/long_term".toPath(),
+    private val fileSystem: FileSystem = FileSystem.SYSTEM
 ) : SearchService {
 
     override fun searchLTM(query: String): List<LTMFile> {
@@ -44,7 +44,7 @@ class LLMSearchService(
     }
 
     private fun generateLTMXmlTree(): String {
-        if (!Files.exists(ltmRootPath)) {
+        if (!fileSystem.exists(ltmRootPath)) {
             return ""
         }
 
@@ -52,10 +52,8 @@ class LLMSearchService(
         xmlBuilder.appendLine("<ltm_directory>")
         
         try {
-            Files.walk(ltmRootPath).use { stream ->
-                val paths = stream.sorted().toList()
-                buildXmlStructure(paths, ltmRootPath, xmlBuilder, 1)
-            }
+            val allPaths = collectAllPaths(ltmRootPath)
+            buildXmlStructure(allPaths, ltmRootPath, xmlBuilder, 1)
         } catch (e: Exception) {
             return ""
         }
@@ -64,26 +62,54 @@ class LLMSearchService(
         return xmlBuilder.toString()
     }
 
+    private fun collectAllPaths(rootPath: Path): List<Path> {
+        val result = mutableListOf<Path>()
+        
+        fun collectRecursively(path: Path) {
+            result.add(path)
+            try {
+                if (fileSystem.metadata(path).isDirectory) {
+                    fileSystem.list(path).sorted().forEach { childPath ->
+                        collectRecursively(childPath)
+                    }
+                }
+            } catch (e: Exception) {
+                // Skip directories that can't be read
+            }
+        }
+        
+        collectRecursively(rootPath)
+        return result
+    }
+
     private fun buildXmlStructure(paths: List<Path>, basePath: Path, xmlBuilder: StringBuilder, depth: Int) {
         val indent = "  ".repeat(depth)
         val groupedByParent = paths.groupBy { it.parent }
         
         fun processDirectory(dirPath: Path) {
-            val relativeDirPath = basePath.relativize(dirPath)
-            val dirName = if (relativeDirPath.toString().isEmpty()) "." else relativeDirPath.fileName.toString()
+            val relativeDirPath = relativizePath(basePath, dirPath)
+            val dirName = if (relativeDirPath.isEmpty()) "." else dirPath.name
             
             if (dirPath != basePath) {
                 xmlBuilder.appendLine("$indent<directory name=\"$dirName\">")
             }
             
             val children = groupedByParent[dirPath] ?: emptyList()
-            val directories = children.filter { Files.isDirectory(it) }
-            val files = children.filter { Files.isRegularFile(it) && it.fileName.toString().endsWith(".md") && !it.fileName.toString().startsWith("_index") }
+            val directories = children.filter { 
+                try { fileSystem.metadata(it).isDirectory } catch (e: Exception) { false }
+            }
+            val files = children.filter { 
+                try {
+                    fileSystem.metadata(it).isRegularFile && 
+                    it.name.endsWith(".md") && 
+                    !it.name.startsWith("_index")
+                } catch (e: Exception) { false }
+            }
             
             // Add files first
             files.forEach { file ->
-                val fileName = file.fileName.toString()
-                val relativeFilePath = basePath.relativize(file)
+                val fileName = file.name
+                val relativeFilePath = relativizePath(basePath, file)
                 xmlBuilder.appendLine("$indent  <file path=\"$relativeFilePath\">$fileName</file>")
             }
             
@@ -100,6 +126,17 @@ class LLMSearchService(
         processDirectory(basePath)
     }
 
+    private fun relativizePath(basePath: Path, targetPath: Path): String {
+        val baseSegments = basePath.segments
+        val targetSegments = targetPath.segments
+        
+        if (targetSegments.size <= baseSegments.size) {
+            return ""
+        }
+        
+        return targetSegments.drop(baseSegments.size).joinToString("/")
+    }
+
     private fun parseSelectedFiles(llmResponse: String): List<LTMFile> {
         val result = mutableListOf<LTMFile>()
         
@@ -108,8 +145,8 @@ class LLMSearchService(
             .filter { it.isNotEmpty() && !it.startsWith("<") && !it.startsWith("#") }
             .forEach { filePath ->
                 try {
-                    val fullPath = ltmRootPath.resolve(filePath)
-                    if (Files.exists(fullPath) && Files.isRegularFile(fullPath)) {
+                    val fullPath = ltmRootPath / filePath
+                    if (fileSystem.exists(fullPath) && fileSystem.metadata(fullPath).isRegularFile) {
                         val ltmFile = fileSystemService.readLtmFile(fullPath)
                         result.add(ltmFile)
                     }

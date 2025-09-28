@@ -13,16 +13,18 @@ import io.mockk.mockk
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.slot
-import java.time.Instant
-import java.nio.file.Paths
-import java.nio.file.Files
+import kotlinx.datetime.Instant
+import okio.Path.Companion.toPath
+import okio.FileSystem
+import okio.fakefilesystem.FakeFileSystem
 
 class LLMSearchServiceTest : StringSpec({
 
     "should return empty list when query is empty" {
         val mockLLMService = mockk<LLMService>()
         val mockFileSystemService = mockk<FileSystemService>()
-        val searchService = LLMSearchService(mockLLMService, mockFileSystemService, Paths.get("test/ltm"))
+        val fakeFileSystem = FakeFileSystem()
+        val searchService = LLMSearchService(mockLLMService, mockFileSystemService, "test/ltm".toPath(), fakeFileSystem)
         
         val result = searchService.searchLTM("")
         result.shouldBeEmpty()
@@ -31,7 +33,8 @@ class LLMSearchServiceTest : StringSpec({
     "should return empty list when LTM directory does not exist" {
         val mockLLMService = mockk<LLMService>()
         val mockFileSystemService = mockk<FileSystemService>()
-        val searchService = LLMSearchService(mockLLMService, mockFileSystemService, Paths.get("nonexistent/ltm"))
+        val fakeFileSystem = FakeFileSystem()
+        val searchService = LLMSearchService(mockLLMService, mockFileSystemService, "nonexistent/ltm".toPath(), fakeFileSystem)
         
         val result = searchService.searchLTM("test query")
         result.shouldBeEmpty()
@@ -40,8 +43,10 @@ class LLMSearchServiceTest : StringSpec({
     "should include query and XML structure in LLM prompt" {
         val mockLLMService = mockk<LLMService>()
         val mockFileSystemService = mockk<FileSystemService>()
-        val tempDir = Files.createTempDirectory("test-ltm")
-        val searchService = LLMSearchService(mockLLMService, mockFileSystemService, tempDir)
+        val fakeFileSystem = FakeFileSystem()
+        val ltmPath = "test-ltm".toPath()
+        fakeFileSystem.createDirectories(ltmPath)
+        val searchService = LLMSearchService(mockLLMService, mockFileSystemService, ltmPath, fakeFileSystem)
         
         val promptSlot = slot<String>()
         every { mockLLMService.generateResponse(capture(promptSlot)) } returns ""
@@ -57,13 +62,15 @@ class LLMSearchServiceTest : StringSpec({
     "should parse LLM response and read selected files" {
         val mockLLMService = mockk<LLMService>()
         val mockFileSystemService = mockk<FileSystemService>()
-        val tempDir = Files.createTempDirectory("test-ltm")
+        val fakeFileSystem = FakeFileSystem()
+        val ltmPath = "test-ltm".toPath()
+        fakeFileSystem.createDirectories(ltmPath)
         
         // Create a test file
-        val testFile = tempDir.resolve("test-memory.md")
-        Files.write(testFile, "# Test Memory\nThis is a test memory file.".toByteArray())
+        val testFile = ltmPath / "test-memory.md"
+        fakeFileSystem.write(testFile) { writeUtf8("# Test Memory\nThis is a test memory file.") }
         
-        val searchService = LLMSearchService(mockLLMService, mockFileSystemService, tempDir)
+        val searchService = LLMSearchService(mockLLMService, mockFileSystemService, ltmPath, fakeFileSystem)
         
         val expectedLTMFile = LTMFile(
             frontmatter = LTMFrontmatter(
@@ -89,15 +96,17 @@ class LLMSearchServiceTest : StringSpec({
     "should handle LLM response with multiple file paths" {
         val mockLLMService = mockk<LLMService>()
         val mockFileSystemService = mockk<FileSystemService>()
-        val tempDir = Files.createTempDirectory("test-ltm")
+        val fakeFileSystem = FakeFileSystem()
+        val ltmPath = "test-ltm".toPath()
+        fakeFileSystem.createDirectories(ltmPath)
         
         // Create test files
-        val testFile1 = tempDir.resolve("memory1.md")
-        val testFile2 = tempDir.resolve("memory2.md")
-        Files.write(testFile1, "# Memory 1".toByteArray())
-        Files.write(testFile2, "# Memory 2".toByteArray())
+        val testFile1 = ltmPath / "memory1.md"
+        val testFile2 = ltmPath / "memory2.md"
+        fakeFileSystem.write(testFile1) { writeUtf8("# Memory 1") }
+        fakeFileSystem.write(testFile2) { writeUtf8("# Memory 2") }
         
-        val searchService = LLMSearchService(mockLLMService, mockFileSystemService, tempDir)
+        val searchService = LLMSearchService(mockLLMService, mockFileSystemService, ltmPath, fakeFileSystem)
         
         val ltmFile1 = LTMFile(
             frontmatter = LTMFrontmatter(
@@ -134,9 +143,11 @@ class LLMSearchServiceTest : StringSpec({
     "should ignore invalid file paths in LLM response" {
         val mockLLMService = mockk<LLMService>()
         val mockFileSystemService = mockk<FileSystemService>()
-        val tempDir = Files.createTempDirectory("test-ltm")
+        val fakeFileSystem = FakeFileSystem()
+        val ltmPath = "test-ltm".toPath()
+        fakeFileSystem.createDirectories(ltmPath)
         
-        val searchService = LLMSearchService(mockLLMService, mockFileSystemService, tempDir)
+        val searchService = LLMSearchService(mockLLMService, mockFileSystemService, ltmPath, fakeFileSystem)
         
         every { mockLLMService.generateResponse(any()) } returns "nonexistent.md\n# Some comment\n<xml>tag</xml>"
         
