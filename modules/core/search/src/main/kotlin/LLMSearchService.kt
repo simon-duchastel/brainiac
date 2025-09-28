@@ -14,8 +14,8 @@ class LLMSearchService(
     private val ltmRootPath: Path = Paths.get("memory", "long_term")
 ) : SearchService {
 
-    override fun searchLTM(queries: List<String>): List<LTMFile> {
-        if (queries.isEmpty()) {
+    override fun searchLTM(query: String): List<LTMFile> {
+        if (query.isEmpty()) {
             return emptyList()
         }
 
@@ -24,13 +24,10 @@ class LLMSearchService(
         if (xmlTree.isEmpty()) {
             return emptyList()
         }
-
-        // Combine all queries into a single search request
-        val combinedQuery = queries.joinToString(" ")
         
         // Ask LLM to select relevant files from the XML tree
         val prompt = buildString {
-            appendLine("Given this search query: \"$combinedQuery\"")
+            appendLine("Given this search query: \"$query\"")
             appendLine()
             appendLine("Here is the complete structure of available long-term memory files:")
             appendLine(xmlTree)

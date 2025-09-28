@@ -19,12 +19,12 @@ import java.nio.file.Files
 
 class LLMSearchServiceTest : StringSpec({
 
-    "should return empty list when queries are empty" {
+    "should return empty list when query is empty" {
         val mockLLMService = mockk<LLMService>()
         val mockFileSystemService = mockk<FileSystemService>()
         val searchService = LLMSearchService(mockLLMService, mockFileSystemService, Paths.get("test/ltm"))
         
-        val result = searchService.searchLTM(emptyList())
+        val result = searchService.searchLTM("")
         result.shouldBeEmpty()
     }
 
@@ -33,11 +33,11 @@ class LLMSearchServiceTest : StringSpec({
         val mockFileSystemService = mockk<FileSystemService>()
         val searchService = LLMSearchService(mockLLMService, mockFileSystemService, Paths.get("nonexistent/ltm"))
         
-        val result = searchService.searchLTM(listOf("test query"))
+        val result = searchService.searchLTM("test query")
         result.shouldBeEmpty()
     }
 
-    "should combine queries and include XML structure in LLM prompt" {
+    "should include query and XML structure in LLM prompt" {
         val mockLLMService = mockk<LLMService>()
         val mockFileSystemService = mockk<FileSystemService>()
         val tempDir = Files.createTempDirectory("test-ltm")
@@ -46,10 +46,10 @@ class LLMSearchServiceTest : StringSpec({
         val promptSlot = slot<String>()
         every { mockLLMService.generateResponse(capture(promptSlot)) } returns ""
         
-        val queries = listOf("machine learning", "neural networks")
-        searchService.searchLTM(queries)
+        val query = "machine learning and neural networks"
+        searchService.searchLTM(query)
         
-        promptSlot.captured shouldContain "machine learning neural networks"
+        promptSlot.captured shouldContain "machine learning and neural networks"
         promptSlot.captured shouldContain "<ltm_directory>"
         promptSlot.captured shouldContain "Please select the most relevant memory files"
     }
@@ -79,7 +79,7 @@ class LLMSearchServiceTest : StringSpec({
         every { mockLLMService.generateResponse(any()) } returns "test-memory.md"
         every { mockFileSystemService.readLtmFile(testFile) } returns expectedLTMFile
         
-        val result = searchService.searchLTM(listOf("test query"))
+        val result = searchService.searchLTM("test query")
         
         result shouldHaveSize 1
         result[0] shouldBe expectedLTMFile
@@ -124,7 +124,7 @@ class LLMSearchServiceTest : StringSpec({
         every { mockFileSystemService.readLtmFile(testFile1) } returns ltmFile1
         every { mockFileSystemService.readLtmFile(testFile2) } returns ltmFile2
         
-        val result = searchService.searchLTM(listOf("test query"))
+        val result = searchService.searchLTM("test query")
         
         result shouldHaveSize 2
         result[0] shouldBe ltmFile1
@@ -140,7 +140,7 @@ class LLMSearchServiceTest : StringSpec({
         
         every { mockLLMService.generateResponse(any()) } returns "nonexistent.md\n# Some comment\n<xml>tag</xml>"
         
-        val result = searchService.searchLTM(listOf("test query"))
+        val result = searchService.searchLTM("test query")
         
         result.shouldBeEmpty()
     }

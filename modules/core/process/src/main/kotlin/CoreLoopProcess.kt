@@ -20,8 +20,9 @@ class CoreLoopProcess(
         
         val initialContext = buildInitialContext(userPrompt, stmContent)
         
-        // LLM now performs the search directly using tools
-        val ltmExcerpts = searchService.searchLTM(listOf(userPrompt, initialContext))
+        // Search for relevant LTM using combined context
+        val searchQuery = "$userPrompt $initialContext"
+        val ltmExcerpts = searchService.searchLTM(searchQuery)
         
         val workingMemory = assembleWorkingMemory(userPrompt, stmContent, ltmExcerpts)
         

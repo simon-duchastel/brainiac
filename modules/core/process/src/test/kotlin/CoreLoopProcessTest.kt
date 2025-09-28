@@ -142,9 +142,9 @@ Learning about AI systems
         every { mockCoreIdentityService.getCoreIdentityContent() } returns "Core identity"
         every { mockLLMService.generateResponse(any()) } returns "Response"
         
-        var capturedSearchQueries = emptyList<String>()
+        var capturedSearchQuery = ""
         every { mockSearchService.searchLTM(any()) } answers {
-            capturedSearchQueries = firstArg()
+            capturedSearchQuery = firstArg()
             emptyList()
         }
         
@@ -157,11 +157,10 @@ Learning about AI systems
         
         coreLoopProcess.processUserPrompt("Test prompt")
         
-        // Verify that search is called with both the user prompt and initial context
-        capturedSearchQueries.size shouldBe 2
-        capturedSearchQueries[0] shouldBe "Test prompt"
-        capturedSearchQueries[1] shouldContain "User Prompt: Test prompt"
-        capturedSearchQueries[1] shouldContain "Learning about AI systems"
+        // Verify that search is called with combined user prompt and initial context
+        capturedSearchQuery shouldContain "Test prompt"
+        capturedSearchQuery shouldContain "User Prompt: Test prompt"
+        capturedSearchQuery shouldContain "Learning about AI systems"
     }
     
     "should format working memory correctly with LTM excerpts" {
