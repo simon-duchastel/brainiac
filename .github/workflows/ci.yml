@@ -44,29 +44,25 @@ jobs:
       if: runner.os != 'Windows'
       run: chmod +x modules/gradlew
     
-    - name: Build JVM targets
-      run: cd modules && ./gradlew jvmJar
+    - name: Build and test JVM
+      run: cd modules && ./gradlew jvmJar jvmTest
       shell: bash
     
-    - name: Build native targets (Linux)
+    - name: Build and test Linux native
       if: runner.os == 'Linux'
-      run: cd modules && ./gradlew linuxX64MainKlibrary
+      run: cd modules && ./gradlew linuxX64MainKlibrary linuxX64Test
       shell: bash
     
-    - name: Build native targets (macOS)
+    - name: Build and test macOS native
       if: runner.os == 'macOS'
-      run: cd modules && ./gradlew macosX64MainKlibrary macosArm64MainKlibrary
+      run: cd modules && ./gradlew macosX64MainKlibrary macosArm64MainKlibrary macosX64Test macosArm64Test
       shell: bash
     
-    - name: Build native targets (Windows)
+    - name: Build and test Windows native
       if: runner.os == 'Windows'
-      run: cd modules && ./gradlew mingwX64MainKlibrary
+      run: cd modules && ./gradlew mingwX64MainKlibrary mingwX64Test
       shell: bash
     
-    - name: Run JVM tests
-      run: cd modules && ./gradlew jvmTest
-      shell: bash
-    
-    - name: Run JVM checks
+    - name: Run checks
       run: cd modules && ./gradlew check
       shell: bash
