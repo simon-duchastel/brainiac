@@ -8,7 +8,10 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     
     steps:
     - uses: actions/checkout@v4
@@ -29,14 +32,41 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gradle-
     
-    - name: Grant execute permission for gradlew
+    - name: Cache Kotlin Native
+      uses: actions/cache@v4
+      with:
+        path: ~/.konan
+        key: ${{ runner.os }}-konan-${{ hashFiles('**/gradle.properties', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-konan-
+    
+    - name: Grant execute permission for gradlew (Unix)
+      if: runner.os != 'Windows'
       run: chmod +x modules/gradlew
     
-    - name: Build with Gradle
-      run: cd modules && ./gradlew build
+    - name: Build JVM targets
+      run: cd modules && ./gradlew jvmJar
+      shell: bash
     
-    - name: Run tests
-      run: cd modules && ./gradlew test
+    - name: Build native targets (Linux)
+      if: runner.os == 'Linux'
+      run: cd modules && ./gradlew linuxX64MainKlibrary
+      shell: bash
     
-    - name: Run checks
+    - name: Build native targets (macOS)
+      if: runner.os == 'macOS'
+      run: cd modules && ./gradlew macosX64MainKlibrary macosArm64MainKlibrary
+      shell: bash
+    
+    - name: Build native targets (Windows)
+      if: runner.os == 'Windows'
+      run: cd modules && ./gradlew mingwX64MainKlibrary
+      shell: bash
+    
+    - name: Run JVM tests
+      run: cd modules && ./gradlew jvmTest
+      shell: bash
+    
+    - name: Run JVM checks
       run: cd modules && ./gradlew check
+      shell: bash
