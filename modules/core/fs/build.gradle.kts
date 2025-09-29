@@ -6,6 +6,11 @@ plugins {
 kotlin {
     jvm()
     
+    linuxX64()
+    macosX64()
+    macosArm64()
+    mingwX64()
+    
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -13,6 +18,10 @@ kotlin {
                 implementation(libs.kotlinx.serialization.core)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.okio)
+            }
+        }
+        val jvmMain by getting {
+            dependencies {
                 implementation(libs.kaml)
             }
         }
@@ -25,6 +34,26 @@ kotlin {
         val jvmTest by getting {
             dependencies {
                 implementation(libs.kotest.runner.junit5)
+            }
+        }
+        val linuxX64Test by getting {
+            dependencies {
+                implementation(libs.kotest.assertions.core)
+            }
+        }
+        val macosX64Test by getting {
+            dependencies {
+                implementation(libs.kotest.assertions.core)
+            }
+        }
+        val macosArm64Test by getting {
+            dependencies {
+                implementation(libs.kotest.assertions.core)
+            }
+        }
+        val mingwX64Test by getting {
+            dependencies {
+                implementation(libs.kotest.assertions.core)
             }
         }
     }

@@ -5,6 +5,11 @@ plugins {
 kotlin {
     jvm()
     
+    linuxX64()
+    macosX64()
+    macosArm64()
+    mingwX64()
+    
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -20,6 +25,26 @@ kotlin {
         val jvmTest by getting {
             dependencies {
                 implementation(libs.kotest.runner.junit5)
+                implementation(libs.kotest.assertions.core)
+            }
+        }
+        val linuxX64Test by getting {
+            dependencies {
+                implementation(libs.kotest.assertions.core)
+            }
+        }
+        val macosX64Test by getting {
+            dependencies {
+                implementation(libs.kotest.assertions.core)
+            }
+        }
+        val macosArm64Test by getting {
+            dependencies {
+                implementation(libs.kotest.assertions.core)
+            }
+        }
+        val mingwX64Test by getting {
+            dependencies {
                 implementation(libs.kotest.assertions.core)
             }
         }
