@@ -18,6 +18,7 @@ kotlin {
                 implementation(project(":core:llm"))
                 implementation(project(":core:identity"))
                 implementation(project(":core:search"))
+                implementation(libs.kotlinx.datetime)
             }
         }
         val commonTest by getting {
