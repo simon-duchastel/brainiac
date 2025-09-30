@@ -42,16 +42,19 @@ jobs:
   linux-native-build-and-test:
     name: Linux Native Build and Test
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
-    
+
+    - name: Install libcurl
+      run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+
     - name: Cache Gradle packages
       uses: actions/cache@v4
       with:
@@ -61,7 +64,7 @@ jobs:
         key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
         restore-keys: |
           ${{ runner.os }}-gradle-
-    
+
     - name: Cache Kotlin Native
       uses: actions/cache@v4
       with:
@@ -69,49 +72,61 @@ jobs:
         key: ${{ runner.os }}-konan-${{ hashFiles('**/gradle.properties', '**/gradle-wrapper.properties') }}
         restore-keys: |
           ${{ runner.os }}-konan-
-    
+
     - name: Grant execute permission for gradlew
       run: chmod +x modules/gradlew
-    
+
     - name: Build and test Linux native
       run: cd modules && ./gradlew linuxX64MainKlibrary linuxX64Test
 
   macos-native-build-and-test:
     name: macOS Native Build and Test
-    runs-on: macos-latest
-    
+    strategy:
+      matrix:
+        include:
+          - os: macos-13
+            arch: x64
+            targets: macosX64MainKlibrary macosX64Test
+          - os: macos-latest
+            arch: arm64
+            targets: macosArm64MainKlibrary macosArm64Test
+    runs-on: ${{ matrix.os }}
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
-    
+
+    - name: Install curl
+      run: brew install curl
+
     - name: Cache Gradle packages
       uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches
           ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        key: ${{ matrix.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
         restore-keys: |
-          ${{ runner.os }}-gradle-
-    
+          ${{ matrix.os }}-gradle-
+
     - name: Cache Kotlin Native
       uses: actions/cache@v4
       with:
         path: ~/.konan
-        key: ${{ runner.os }}-konan-${{ hashFiles('**/gradle.properties', '**/gradle-wrapper.properties') }}
+        key: ${{ matrix.os }}-konan-${{ hashFiles('**/gradle.properties', '**/gradle-wrapper.properties') }}
         restore-keys: |
-          ${{ runner.os }}-konan-
-    
+          ${{ matrix.os }}-konan-
+
     - name: Grant execute permission for gradlew
       run: chmod +x modules/gradlew
-    
-    - name: Build and test macOS native
-      run: cd modules && ./gradlew macosX64MainKlibrary macosArm64MainKlibrary macosX64Test macosArm64Test
+
+    - name: Build and test macOS native (${{ matrix.arch }})
+      run: cd modules && ./gradlew ${{ matrix.targets }}
 
   windows-native-build-and-test:
     name: Windows Native Build and Test
