@@ -17,11 +17,8 @@ kotlin {
                 implementation(project(":core:model"))
                 implementation(libs.kotlinx.serialization.core)
                 implementation(libs.kotlinx.datetime)
+                implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.okio)
-            }
-        }
-        val jvmMain by getting {
-            dependencies {
                 implementation(libs.kaml)
             }
         }

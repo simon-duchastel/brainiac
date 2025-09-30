@@ -14,6 +14,9 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.runBlocking
 
 /**
  * Multiplatform file lock interface
@@ -27,7 +30,6 @@ interface FileLock {
  * In-memory implementation of file locking for multiplatform compatibility
  */
 private class InMemoryFileLock(private val path: Path, private val lockMap: MutableMap<Path, InMemoryFileLock>) : FileLock {
-    @Volatile
     private var released = false
     
     override fun release() {
@@ -56,6 +58,7 @@ class FileSystemService(
         }
     )
     private val locks = mutableMapOf<Path, InMemoryFileLock>()
+    private val mutex = Mutex()
 
     fun read(path: Path): String {
         return fileSystem.read(path) { readUtf8() }
@@ -88,7 +91,7 @@ class FileSystemService(
 
     fun readStm(): String {
         return try {
-            if (!Files.exists(stmFilePath)) {
+            if (!fileSystem.exists(stmFilePath)) {
                 return ""
             }
             read(stmFilePath)
@@ -173,23 +176,25 @@ class FileSystemService(
         return builder.toString()
     }
 
-    @Synchronized
-    fun acquireLock(path: Path): FileLock {
-        if (locks.containsKey(path)) {
-            throw IllegalStateException("Lock already acquired for path: $path")
+    fun acquireLock(path: Path): FileLock = runBlocking {
+        mutex.withLock {
+            if (locks.containsKey(path)) {
+                throw IllegalStateException("Lock already acquired for path: $path")
+            }
+
+            // Ensure parent directories exist
+            path.parent?.let { fileSystem.createDirectories(it) }
+
+            val lock = InMemoryFileLock(path, locks)
+            locks[path] = lock
+            lock
         }
-        
-        // Ensure parent directories exist
-        path.parent?.let { fileSystem.createDirectories(it) }
-        
-        val lock = InMemoryFileLock(path, locks)
-        locks[path] = lock
-        return lock
     }
 
-    @Synchronized
-    fun releaseLock(path: Path) {
-        locks[path]?.release()
+    fun releaseLock(path: Path) = runBlocking {
+        mutex.withLock {
+            locks[path]?.release()
+        }
     }
 
     private fun logAccess(action: String, path: Path) {
