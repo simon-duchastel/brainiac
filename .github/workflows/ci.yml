@@ -80,7 +80,7 @@ jobs:
       run: cd modules && ./gradlew linuxX64MainKlibrary linuxX64Test
 
   macos-native-build-and-test:
-    name: macOS Native Build and Test
+    name: macOS Native Build and Test (${{ matrix.arch }})
     strategy:
       matrix:
         include:
