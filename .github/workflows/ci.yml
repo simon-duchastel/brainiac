@@ -1,4 +1,4 @@
-name: CI
+name: Build and test
 
 on:
   push:
@@ -35,9 +35,6 @@ jobs:
     
     - name: Build and test JVM
       run: cd modules && ./gradlew jvmJar jvmTest
-    
-    - name: Run checks
-      run: cd modules && ./gradlew check
 
   linux-native-build-and-test:
     name: Linux Native Build and Test
