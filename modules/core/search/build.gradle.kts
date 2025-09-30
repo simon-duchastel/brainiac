@@ -16,6 +16,7 @@ kotlin {
                 implementation(project(":core:model"))
                 implementation(project(":core:fs"))
                 implementation(project(":core:llm"))
+                implementation(libs.okio)
             }
         }
         val commonTest by getting {

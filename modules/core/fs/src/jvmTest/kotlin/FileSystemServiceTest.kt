@@ -6,31 +6,35 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.collections.shouldHaveSize
+import okio.Path
 import okio.Path.Companion.toPath
 import okio.FileSystem
 import kotlinx.datetime.Instant
 
 class FileSystemServiceTest : StringSpec({
-    
+
     val fileSystemService = FileSystemService()
-    
+    val fs = FileSystem.SYSTEM
+
     "should read empty string when STM file does not exist" {
-        val tempDir = Files.createTempDirectory("test-stm")
-        val stmPath = tempDir.resolve("short_term.md")
+        val tempDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "test-stm-${System.currentTimeMillis()}"
+        fs.createDirectories(tempDir)
+        val stmPath = tempDir / "short_term.md"
         val service = FileSystemService(stmPath)
-        
+
         val stmContent = service.readStm()
-        
+
         stmContent shouldBe ""
-        
-        Files.deleteIfExists(tempDir)
+
+        fs.deleteRecursively(tempDir)
     }
-    
+
     "should read STM content" {
-        val tempDir = Files.createTempDirectory("test-stm")
-        val stmPath = tempDir.resolve("short_term.md")
+        val tempDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "test-stm-${System.currentTimeMillis()}"
+        fs.createDirectories(tempDir)
+        val stmPath = tempDir / "short_term.md"
         val service = FileSystemService(stmPath)
-        
+
         val expectedContent = """# Short-Term Memory
 
 ## Summary
@@ -45,21 +49,21 @@ This section contains discrete, machine-readable data for immediate use.
 - [ ] Build memory system
 - Complete documentation
 """
-        
+
         service.write(stmPath, expectedContent)
         val stmContent = service.readStm()
-        
+
         stmContent shouldBe expectedContent
 
-        Files.deleteIfExists(stmPath)
-        Files.deleteIfExists(tempDir)
+        fs.deleteRecursively(tempDir)
     }
     
     "should write STM content" {
-        val tempDir = Files.createTempDirectory("test-stm")
-        val stmPath = tempDir.resolve("short_term.md")
+        val tempDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "test-stm-${System.currentTimeMillis()}"
+        fs.createDirectories(tempDir)
+        val stmPath = tempDir / "short_term.md"
         val service = FileSystemService(stmPath)
-        
+
         val originalStm = ShortTermMemory(
             summary = "Test summary with multiple lines.\nSecond line of summary.",
             structuredData = StructuredData(
@@ -82,10 +86,10 @@ This section contains discrete, machine-readable data for immediate use.
                 )
             )
         )
-        
+
         service.writeStm(originalStm)
         val readContent = service.readStm()
-        
+
         // Verify it contains expected sections but as raw string
         readContent.contains("# Short-Term Memory") shouldBe true
         readContent.contains("## Summary") shouldBe true
@@ -95,8 +99,7 @@ This section contains discrete, machine-readable data for immediate use.
         readContent.contains("Goal 2") shouldBe true
         readContent.contains("## Event Log") shouldBe true
         readContent.contains("Test user input") shouldBe true
-        
-        Files.deleteIfExists(stmPath)
-        Files.deleteIfExists(tempDir)
+
+        fs.deleteRecursively(tempDir)
     }
 })
