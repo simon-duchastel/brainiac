@@ -13,6 +13,7 @@ import io.mockk.mockk
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.slot
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import okio.Path.Companion.toPath
 import okio.FileSystem
@@ -76,8 +77,8 @@ class LLMSearchServiceTest : StringSpec({
             frontmatter = LTMFrontmatter(
                 uuid = "test-uuid",
                 tags = listOf("test"),
-                createdAt = Instant.now(),
-                updatedAt = Instant.now(),
+                createdAt = Clock.System.now(),
+                updatedAt = Clock.System.now(),
                 reinforcementCount = 1
             ),
             content = "Test content"
@@ -112,8 +113,8 @@ class LLMSearchServiceTest : StringSpec({
             frontmatter = LTMFrontmatter(
                 uuid = "uuid1",
                 tags = listOf("tag1"),
-                createdAt = Instant.now(),
-                updatedAt = Instant.now(),
+                createdAt = Clock.System.now(),
+                updatedAt = Clock.System.now(),
                 reinforcementCount = 1
             ),
             content = "Content 1"
@@ -122,8 +123,8 @@ class LLMSearchServiceTest : StringSpec({
             frontmatter = LTMFrontmatter(
                 uuid = "uuid2",
                 tags = listOf("tag2"),
-                createdAt = Instant.now(),
-                updatedAt = Instant.now(),
+                createdAt = Clock.System.now(),
+                updatedAt = Clock.System.now(),
                 reinforcementCount = 1
             ),
             content = "Content 2"

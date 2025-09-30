@@ -22,6 +22,10 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+                implementation(libs.kotlinx.datetime)
+                implementation(libs.okio.fakefilesystem)
+                implementation(libs.kotest.assertions.core)
+                implementation(libs.mockk)
             }
         }
         val jvmTest by getting {
