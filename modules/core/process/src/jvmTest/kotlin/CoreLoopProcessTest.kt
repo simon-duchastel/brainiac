@@ -265,7 +265,7 @@ Test summary
         every { mockFileSystemService.readStm() } returns testStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns "Core identity"
         every { mockSearchService.searchLTM(any()) } returns emptyList()
-        
+
         var capturedWorkingMemory = ""
         every { mockLLMService.generateResponse(any()) } answers {
             capturedWorkingMemory = firstArg()
