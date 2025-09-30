@@ -48,7 +48,7 @@ object InstantSerializer : KSerializer<Instant> {
     override fun deserialize(decoder: Decoder): Instant = Instant.parse(decoder.decodeString())
 }
 
-class FileSystemService(
+open class FileSystemService(
     private val stmFilePath: Path = "memory/short_term.md".toPath(),
     private val fileSystem: FileSystem = FileSystem.SYSTEM
 ) {
@@ -60,16 +60,16 @@ class FileSystemService(
     private val locks = mutableMapOf<Path, InMemoryFileLock>()
     private val mutex = Mutex()
 
-    fun read(path: Path): String {
+    open fun read(path: Path): String {
         return fileSystem.read(path) { readUtf8() }
     }
 
-    fun write(path: Path, content: String) {
+    open fun write(path: Path, content: String) {
         path.parent?.let { fileSystem.createDirectories(it) }
         fileSystem.write(path) { writeUtf8(content) }
     }
 
-    fun readLtmFile(path: Path): LTMFile {
+    open fun readLtmFile(path: Path): LTMFile {
         val content = read(path)
         val parts = content.split("---\n", limit = 3)
         
@@ -83,13 +83,13 @@ class FileSystemService(
         return LTMFile(frontmatter, markdownContent)
     }
 
-    fun writeLtmFile(path: Path, ltmFile: LTMFile) {
+    open fun writeLtmFile(path: Path, ltmFile: LTMFile) {
         val frontmatterYaml = yaml.encodeToString(LTMFrontmatter.serializer(), ltmFile.frontmatter)
         val content = "---\n$frontmatterYaml---\n${ltmFile.content}"
         write(path, content)
     }
 
-    fun readStm(): String {
+    open fun readStm(): String {
         return try {
             if (!fileSystem.exists(stmFilePath)) {
                 return ""
@@ -100,7 +100,7 @@ class FileSystemService(
         }
     }
 
-    fun writeStm(stm: ShortTermMemory) {
+    open fun writeStm(stm: ShortTermMemory) {
         try {
             val markdownContent = generateStmMarkdown(stm)
             write(stmFilePath, markdownContent)
@@ -176,7 +176,7 @@ class FileSystemService(
         return builder.toString()
     }
 
-    fun acquireLock(path: Path): FileLock = runBlocking {
+    open fun acquireLock(path: Path): FileLock = runBlocking {
         mutex.withLock {
             if (locks.containsKey(path)) {
                 throw IllegalStateException("Lock already acquired for path: $path")
@@ -191,7 +191,7 @@ class FileSystemService(
         }
     }
 
-    fun releaseLock(path: Path) = runBlocking {
+    open fun releaseLock(path: Path) = runBlocking {
         mutex.withLock {
             locks[path]?.release()
         }
