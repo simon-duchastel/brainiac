@@ -25,7 +25,9 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+                implementation(libs.kotest.framework.engine)
                 implementation(libs.kotest.assertions.core)
+                implementation(libs.kotlinx.datetime)
             }
         }
         val jvmTest by getting {

@@ -9,7 +9,9 @@ import io.kotest.matchers.collections.shouldHaveSize
 import okio.Path
 import okio.Path.Companion.toPath
 import okio.FileSystem
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlin.random.Random
 
 class FileSystemServiceTest : StringSpec({
 
@@ -17,7 +19,7 @@ class FileSystemServiceTest : StringSpec({
     val fs = FileSystem.SYSTEM
 
     "should read empty string when STM file does not exist" {
-        val tempDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "test-stm-${System.currentTimeMillis()}"
+        val tempDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "test-stm-${Random.nextLong()}"
         fs.createDirectories(tempDir)
         val stmPath = tempDir / "short_term.md"
         val service = FileSystemService(stmPath)
@@ -30,7 +32,7 @@ class FileSystemServiceTest : StringSpec({
     }
 
     "should read STM content" {
-        val tempDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "test-stm-${System.currentTimeMillis()}"
+        val tempDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "test-stm-${Random.nextLong()}"
         fs.createDirectories(tempDir)
         val stmPath = tempDir / "short_term.md"
         val service = FileSystemService(stmPath)
@@ -59,7 +61,7 @@ This section contains discrete, machine-readable data for immediate use.
     }
     
     "should write STM content" {
-        val tempDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "test-stm-${System.currentTimeMillis()}"
+        val tempDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "test-stm-${Random.nextLong()}"
         fs.createDirectories(tempDir)
         val stmPath = tempDir / "short_term.md"
         val service = FileSystemService(stmPath)
