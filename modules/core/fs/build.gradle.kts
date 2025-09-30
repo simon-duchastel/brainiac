@@ -17,18 +17,17 @@ kotlin {
                 implementation(project(":core:model"))
                 implementation(libs.kotlinx.serialization.core)
                 implementation(libs.kotlinx.datetime)
+                implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.okio)
-            }
-        }
-        val jvmMain by getting {
-            dependencies {
                 implementation(libs.kaml)
             }
         }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+                implementation(libs.kotest.framework.engine)
                 implementation(libs.kotest.assertions.core)
+                implementation(libs.kotlinx.datetime)
             }
         }
         val jvmTest by getting {

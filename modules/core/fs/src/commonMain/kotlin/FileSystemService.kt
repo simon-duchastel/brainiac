@@ -14,6 +14,9 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.runBlocking
 
 /**
  * Multiplatform file lock interface
@@ -27,7 +30,6 @@ interface FileLock {
  * In-memory implementation of file locking for multiplatform compatibility
  */
 private class InMemoryFileLock(private val path: Path, private val lockMap: MutableMap<Path, InMemoryFileLock>) : FileLock {
-    @Volatile
     private var released = false
     
     override fun release() {
@@ -46,7 +48,7 @@ object InstantSerializer : KSerializer<Instant> {
     override fun deserialize(decoder: Decoder): Instant = Instant.parse(decoder.decodeString())
 }
 
-class FileSystemService(
+open class FileSystemService(
     private val stmFilePath: Path = "memory/short_term.md".toPath(),
     private val fileSystem: FileSystem = FileSystem.SYSTEM
 ) {
@@ -56,17 +58,18 @@ class FileSystemService(
         }
     )
     private val locks = mutableMapOf<Path, InMemoryFileLock>()
+    private val mutex = Mutex()
 
-    fun read(path: Path): String {
+    open fun read(path: Path): String {
         return fileSystem.read(path) { readUtf8() }
     }
 
-    fun write(path: Path, content: String) {
+    open fun write(path: Path, content: String) {
         path.parent?.let { fileSystem.createDirectories(it) }
         fileSystem.write(path) { writeUtf8(content) }
     }
 
-    fun readLtmFile(path: Path): LTMFile {
+    open fun readLtmFile(path: Path): LTMFile {
         val content = read(path)
         val parts = content.split("---\n", limit = 3)
         
@@ -80,15 +83,15 @@ class FileSystemService(
         return LTMFile(frontmatter, markdownContent)
     }
 
-    fun writeLtmFile(path: Path, ltmFile: LTMFile) {
+    open fun writeLtmFile(path: Path, ltmFile: LTMFile) {
         val frontmatterYaml = yaml.encodeToString(LTMFrontmatter.serializer(), ltmFile.frontmatter)
         val content = "---\n$frontmatterYaml---\n${ltmFile.content}"
         write(path, content)
     }
 
-    fun readStm(): String {
+    open fun readStm(): String {
         return try {
-            if (!Files.exists(stmFilePath)) {
+            if (!fileSystem.exists(stmFilePath)) {
                 return ""
             }
             read(stmFilePath)
@@ -97,7 +100,7 @@ class FileSystemService(
         }
     }
 
-    fun writeStm(stm: ShortTermMemory) {
+    open fun writeStm(stm: ShortTermMemory) {
         try {
             val markdownContent = generateStmMarkdown(stm)
             write(stmFilePath, markdownContent)
@@ -173,23 +176,25 @@ class FileSystemService(
         return builder.toString()
     }
 
-    @Synchronized
-    fun acquireLock(path: Path): FileLock {
-        if (locks.containsKey(path)) {
-            throw IllegalStateException("Lock already acquired for path: $path")
+    open fun acquireLock(path: Path): FileLock = runBlocking {
+        mutex.withLock {
+            if (locks.containsKey(path)) {
+                throw IllegalStateException("Lock already acquired for path: $path")
+            }
+
+            // Ensure parent directories exist
+            path.parent?.let { fileSystem.createDirectories(it) }
+
+            val lock = InMemoryFileLock(path, locks)
+            locks[path] = lock
+            lock
         }
-        
-        // Ensure parent directories exist
-        path.parent?.let { fileSystem.createDirectories(it) }
-        
-        val lock = InMemoryFileLock(path, locks)
-        locks[path] = lock
-        return lock
     }
 
-    @Synchronized
-    fun releaseLock(path: Path) {
-        locks[path]?.release()
+    open fun releaseLock(path: Path) = runBlocking {
+        mutex.withLock {
+            locks[path]?.release()
+        }
     }
 
     private fun logAccess(action: String, path: Path) {
