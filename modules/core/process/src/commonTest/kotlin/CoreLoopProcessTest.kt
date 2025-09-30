@@ -9,18 +9,21 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.comparables.shouldBeLessThan
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
+import dev.mokkery.answering.calls
+import dev.mokkery.answering.returns
+import dev.mokkery.every
+import dev.mokkery.matcher.any
+import dev.mokkery.mock
+import dev.mokkery.verify
 import kotlinx.datetime.Instant
 
 class CoreLoopProcessTest : StringSpec({
     
     "should process user prompt with complete flow" {
-        val mockFileSystemService = mockk<FileSystemService>()
-        val mockLLMService = mockk<LLMService>()
-        val mockSearchService = mockk<SearchService>()
-        val mockCoreIdentityService = mockk<CoreIdentityService>()
+        val mockFileSystemService = mock<FileSystemService>()
+        val mockLLMService = mock<LLMService>()
+        val mockSearchService = mock<SearchService>()
+        val mockCoreIdentityService = mock<CoreIdentityService>()
         
         val testStmContent = """# Short-Term Memory Scratchpad
 
@@ -85,10 +88,10 @@ Recent conversation about programming concepts
     }
     
     "should handle empty STM gracefully" {
-        val mockFileSystemService = mockk<FileSystemService>()
-        val mockLLMService = mockk<LLMService>()
-        val mockSearchService = mockk<SearchService>()
-        val mockCoreIdentityService = mockk<CoreIdentityService>()
+        val mockFileSystemService = mock<FileSystemService>()
+        val mockLLMService = mock<LLMService>()
+        val mockSearchService = mock<SearchService>()
+        val mockCoreIdentityService = mock<CoreIdentityService>()
         
         val emptyStmContent = ""
         
@@ -115,10 +118,10 @@ Recent conversation about programming concepts
     }
     
     "should include all STM components in initial context" {
-        val mockFileSystemService = mockk<FileSystemService>()
-        val mockLLMService = mockk<LLMService>()
-        val mockSearchService = mockk<SearchService>()
-        val mockCoreIdentityService = mockk<CoreIdentityService>()
+        val mockFileSystemService = mock<FileSystemService>()
+        val mockLLMService = mock<LLMService>()
+        val mockSearchService = mock<SearchService>()
+        val mockCoreIdentityService = mock<CoreIdentityService>()
         
         val testStmContent = """# Short-Term Memory Scratchpad
 
@@ -143,8 +146,8 @@ Learning about AI systems
         every { mockLLMService.generateResponse(any()) } returns "Response"
         
         var capturedSearchQuery = ""
-        every { mockSearchService.searchLTM(any()) } answers {
-            capturedSearchQuery = firstArg()
+        every { mockSearchService.searchLTM(any()) } calls { (query: String) ->
+            capturedSearchQuery = query
             emptyList()
         }
         
@@ -164,10 +167,10 @@ Learning about AI systems
     }
     
     "should format working memory correctly with LTM excerpts" {
-        val mockFileSystemService = mockk<FileSystemService>()
-        val mockLLMService = mockk<LLMService>()
-        val mockSearchService = mockk<SearchService>()
-        val mockCoreIdentityService = mockk<CoreIdentityService>()
+        val mockFileSystemService = mock<FileSystemService>()
+        val mockLLMService = mock<LLMService>()
+        val mockSearchService = mock<SearchService>()
+        val mockCoreIdentityService = mock<CoreIdentityService>()
         
         val testStmContent = """# Short-Term Memory Scratchpad
 
@@ -211,8 +214,8 @@ Test summary
         every { mockSearchService.searchLTM(any()) } returns listOf(testLTMFile)
         
         var capturedWorkingMemory = ""
-        every { mockLLMService.generateResponse(any()) } answers {
-            capturedWorkingMemory = firstArg()
+        every { mockLLMService.generateResponse(any()) } calls { (workingMemory: String) ->
+            capturedWorkingMemory = workingMemory
             "Response"
         }
         
@@ -251,10 +254,10 @@ Test summary
     }
     
     "should handle no LTM excerpts found" {
-        val mockFileSystemService = mockk<FileSystemService>()
-        val mockLLMService = mockk<LLMService>()
-        val mockSearchService = mockk<SearchService>()
-        val mockCoreIdentityService = mockk<CoreIdentityService>()
+        val mockFileSystemService = mock<FileSystemService>()
+        val mockLLMService = mock<LLMService>()
+        val mockSearchService = mock<SearchService>()
+        val mockCoreIdentityService = mock<CoreIdentityService>()
         
         val testStmContent = """# Short-Term Memory Scratchpad
 
@@ -267,8 +270,8 @@ Test summary
         every { mockSearchService.searchLTM(any()) } returns emptyList()
 
         var capturedWorkingMemory = ""
-        every { mockLLMService.generateResponse(any()) } answers {
-            capturedWorkingMemory = firstArg()
+        every { mockLLMService.generateResponse(any()) } calls { (workingMemory: String) ->
+            capturedWorkingMemory = workingMemory
             "Response without LTM"
         }
         

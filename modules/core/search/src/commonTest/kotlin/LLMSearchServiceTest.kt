@@ -9,10 +9,12 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.string.shouldContain
-import io.mockk.mockk
-import io.mockk.every
-import io.mockk.verify
-import io.mockk.slot
+import dev.mokkery.answering.calls
+import dev.mokkery.answering.returns
+import dev.mokkery.every
+import dev.mokkery.matcher.any
+import dev.mokkery.mock
+import dev.mokkery.verify
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import okio.Path.Companion.toPath
@@ -22,8 +24,8 @@ import okio.fakefilesystem.FakeFileSystem
 class LLMSearchServiceTest : StringSpec({
 
     "should return empty list when query is empty" {
-        val mockLLMService = mockk<LLMService>()
-        val mockFileSystemService = mockk<FileSystemService>()
+        val mockLLMService = mock<LLMService>()
+        val mockFileSystemService = mock<FileSystemService>()
         val fakeFileSystem = FakeFileSystem()
         val searchService = LLMSearchService(mockLLMService, mockFileSystemService, "test/ltm".toPath(), fakeFileSystem)
         
@@ -32,8 +34,8 @@ class LLMSearchServiceTest : StringSpec({
     }
 
     "should return empty list when LTM directory does not exist" {
-        val mockLLMService = mockk<LLMService>()
-        val mockFileSystemService = mockk<FileSystemService>()
+        val mockLLMService = mock<LLMService>()
+        val mockFileSystemService = mock<FileSystemService>()
         val fakeFileSystem = FakeFileSystem()
         val searchService = LLMSearchService(mockLLMService, mockFileSystemService, "nonexistent/ltm".toPath(), fakeFileSystem)
         
@@ -42,27 +44,30 @@ class LLMSearchServiceTest : StringSpec({
     }
 
     "should include query and XML structure in LLM prompt" {
-        val mockLLMService = mockk<LLMService>()
-        val mockFileSystemService = mockk<FileSystemService>()
+        val mockLLMService = mock<LLMService>()
+        val mockFileSystemService = mock<FileSystemService>()
         val fakeFileSystem = FakeFileSystem()
         val ltmPath = "test-ltm".toPath()
         fakeFileSystem.createDirectories(ltmPath)
         val searchService = LLMSearchService(mockLLMService, mockFileSystemService, ltmPath, fakeFileSystem)
         
-        val promptSlot = slot<String>()
-        every { mockLLMService.generateResponse(capture(promptSlot)) } returns ""
-        
+        var capturedPrompt = ""
+        every { mockLLMService.generateResponse(any()) } calls { (prompt: String) ->
+            capturedPrompt = prompt
+            ""
+        }
+
         val query = "machine learning and neural networks"
         searchService.searchLTM(query)
-        
-        promptSlot.captured shouldContain "machine learning and neural networks"
-        promptSlot.captured shouldContain "<ltm_directory>"
-        promptSlot.captured shouldContain "Please select the most relevant memory files"
+
+        capturedPrompt shouldContain "machine learning and neural networks"
+        capturedPrompt shouldContain "<ltm_directory>"
+        capturedPrompt shouldContain "Please select the most relevant memory files"
     }
 
     "should parse LLM response and read selected files" {
-        val mockLLMService = mockk<LLMService>()
-        val mockFileSystemService = mockk<FileSystemService>()
+        val mockLLMService = mock<LLMService>()
+        val mockFileSystemService = mock<FileSystemService>()
         val fakeFileSystem = FakeFileSystem()
         val ltmPath = "test-ltm".toPath()
         fakeFileSystem.createDirectories(ltmPath)
@@ -95,8 +100,8 @@ class LLMSearchServiceTest : StringSpec({
     }
 
     "should handle LLM response with multiple file paths" {
-        val mockLLMService = mockk<LLMService>()
-        val mockFileSystemService = mockk<FileSystemService>()
+        val mockLLMService = mock<LLMService>()
+        val mockFileSystemService = mock<FileSystemService>()
         val fakeFileSystem = FakeFileSystem()
         val ltmPath = "test-ltm".toPath()
         fakeFileSystem.createDirectories(ltmPath)
@@ -142,8 +147,8 @@ class LLMSearchServiceTest : StringSpec({
     }
 
     "should ignore invalid file paths in LLM response" {
-        val mockLLMService = mockk<LLMService>()
-        val mockFileSystemService = mockk<FileSystemService>()
+        val mockLLMService = mock<LLMService>()
+        val mockFileSystemService = mock<FileSystemService>()
         val fakeFileSystem = FakeFileSystem()
         val ltmPath = "test-ltm".toPath()
         fakeFileSystem.createDirectories(ltmPath)
