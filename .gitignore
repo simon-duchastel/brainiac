@@ -5,6 +5,7 @@ gradle-app.setting
 !gradle-wrapper.jar
 !gradle-wrapper.properties
 !gradle/
+.kotlin/
 
 # IntelliJ IDEA
 .idea/

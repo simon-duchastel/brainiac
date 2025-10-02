@@ -1,20 +1,19 @@
 package com.brainiac.core.fileaccess
 
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
-import io.kotest.matchers.collections.shouldHaveSize
-import okio.Path
-import okio.Path.Companion.toPath
-import okio.FileSystem
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import okio.FileSystem
+import okio.SYSTEM
 import kotlin.random.Random
 
 class FileSystemServiceTest : StringSpec({
 
     val fs = FileSystem.SYSTEM
+
+    "should fail" {
+        1 shouldBe 2
+    }
 
     "should read empty string when STM file does not exist" {
         val tempDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "test-stm-${Random.nextLong()}"
