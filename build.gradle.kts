@@ -1,6 +1,9 @@
+import com.adarshr.gradle.testlogger.TestLoggerExtension
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform) apply false
     alias(libs.plugins.kotlin.serialization) apply false
+    alias(libs.plugins.test.logger)
 }
 
 allprojects {
@@ -15,6 +18,21 @@ allprojects {
 subprojects {
     repositories {
         mavenCentral()
+    }
+
+    apply {
+        plugin("com.adarshr.test-logger")
+    }
+
+    configure<TestLoggerExtension> {
+        showPassed = true
+        showSkipped = true
+        showFailed = true
+    }
+
+    tasks.withType<Test>().configureEach {
+        // always run tests
+        outputs.upToDateWhen { false }
     }
 }
 

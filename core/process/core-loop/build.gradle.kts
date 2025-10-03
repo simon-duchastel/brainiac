@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.ksp)
     alias(libs.plugins.mokkery)
+    alias(libs.plugins.kotest)
 }
 
 kotlin {
@@ -34,29 +35,12 @@ kotlin {
                 implementation(libs.kotest.runner.junit5)
             }
         }
-        val linuxX64Test by getting {
-            dependencies {
-                implementation(libs.kotest.assertions.core)
-            }
-        }
-        val macosX64Test by getting {
-            dependencies {
-                implementation(libs.kotest.assertions.core)
-            }
-        }
-        val macosArm64Test by getting {
-            dependencies {
-                implementation(libs.kotest.assertions.core)
-            }
-        }
-        val mingwX64Test by getting {
-            dependencies {
-                implementation(libs.kotest.assertions.core)
-            }
-        }
     }
 }
 
-tasks.withType<Test> {
+tasks.named<Test>("jvmTest") {
     useJUnitPlatform()
+    filter {
+        isFailOnNoMatchingTests = false
+    }
 }

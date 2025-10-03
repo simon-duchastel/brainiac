@@ -11,10 +11,6 @@ class FileSystemServiceTest : StringSpec({
 
     val fs = FileSystem.SYSTEM
 
-    "should fail" {
-        1 shouldBe 2
-    }
-
     "should read empty string when STM file does not exist" {
         val tempDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "test-stm-${Random.nextLong()}"
         fs.createDirectories(tempDir)

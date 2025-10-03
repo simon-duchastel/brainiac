@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.kotest)
 }
 
 kotlin {
@@ -23,7 +25,6 @@ kotlin {
         }
         val commonTest by getting {
             dependencies {
-                implementation(kotlin("test"))
                 implementation(libs.kotest.framework.engine)
                 implementation(libs.kotest.assertions.core)
                 implementation(libs.kotlinx.datetime)
@@ -34,29 +35,12 @@ kotlin {
                 implementation(libs.kotest.runner.junit5)
             }
         }
-        val linuxX64Test by getting {
-            dependencies {
-                implementation(libs.kotest.assertions.core)
-            }
-        }
-        val macosX64Test by getting {
-            dependencies {
-                implementation(libs.kotest.assertions.core)
-            }
-        }
-        val macosArm64Test by getting {
-            dependencies {
-                implementation(libs.kotest.assertions.core)
-            }
-        }
-        val mingwX64Test by getting {
-            dependencies {
-                implementation(libs.kotest.assertions.core)
-            }
-        }
     }
 }
 
-tasks.withType<Test> {
+tasks.named<Test>("jvmTest") {
     useJUnitPlatform()
+    filter {
+        isFailOnNoMatchingTests = false
+    }
 }
