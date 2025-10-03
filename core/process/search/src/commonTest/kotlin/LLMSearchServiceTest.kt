@@ -214,20 +214,29 @@ class LLMSearchServiceTest : StringSpec({
 
         val result = searchService.searchLTM("deep learning and AI")
 
-        // Verify prompt contains the query
-        capturedPrompt shouldContain "deep learning and AI"
+        // Verify exact prompt format
+        // Note: Root files are at depth 1, so indent is "  " (2 spaces) + "  " (file indent) = 4 spaces
+        // Subdirectory tags are at depth 1, so "  " (2 spaces)
+        // Files within subdirectories are at depth 1 + "  " = 4 spaces
+        val expectedPrompt = buildString {
+            appendLine("Given this search query: \"deep learning and AI\"")
+            appendLine()
+            appendLine("Here is the complete structure of available long-term memory files:")
+            appendLine("<ltm_directory>")
+            appendLine("    <file path=\"memory1.md\">memory1.md</file>")
+            appendLine("  <directory name=\"concepts\">")
+            appendLine("    <file path=\"concepts/machine-learning.md\">machine-learning.md</file>")
+            appendLine("    <file path=\"concepts/neural-networks.md\">neural-networks.md</file>")
+            appendLine("  </directory>")
+            appendLine("</ltm_directory>")
+            appendLine()
+            appendLine()
+            appendLine("Please select the most relevant memory files for this query.")
+            appendLine("Return only the file paths (relative to the LTM root), one per line.")
+            appendLine("Do not include any other text or explanations.")
+        }
 
-        // Verify prompt contains XML structure
-        capturedPrompt shouldContain "<ltm_directory>"
-        capturedPrompt shouldContain "</ltm_directory>"
-        capturedPrompt shouldContain "<directory name=\"concepts\">"
-        capturedPrompt shouldContain "<file path=\"memory1.md\">memory1.md</file>"
-        capturedPrompt shouldContain "<file path=\"concepts/neural-networks.md\">neural-networks.md</file>"
-        capturedPrompt shouldContain "<file path=\"concepts/machine-learning.md\">machine-learning.md</file>"
-
-        // Verify prompt contains instructions
-        capturedPrompt shouldContain "Please select the most relevant memory files"
-        capturedPrompt shouldContain "Return only the file paths"
+        capturedPrompt shouldBe expectedPrompt
 
         // Verify the service correctly parsed the LLM response and returned the files
         result shouldHaveSize 2
