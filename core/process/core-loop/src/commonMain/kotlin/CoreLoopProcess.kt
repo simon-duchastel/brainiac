@@ -1,7 +1,6 @@
 package com.brainiac.core.process
 
 import com.brainiac.core.fileaccess.FileSystemService
-import com.brainiac.core.llm.LLMService
 import com.brainiac.core.search.SearchService
 import com.brainiac.core.identity.CoreIdentityService
 import com.brainiac.core.identity.CoreIdentity
@@ -10,23 +9,23 @@ import com.brainiac.core.fileaccess.LTMFile
 
 class CoreLoopProcess(
     private val fileSystemService: FileSystemService,
-    private val llmService: LLMService,
     private val searchService: SearchService,
     private val coreIdentityService: CoreIdentityService
 ) {
     
     fun processUserPrompt(userPrompt: String): String {
         val stmContent = fileSystemService.readStm()
-        
+
         val initialContext = buildInitialContext(userPrompt, stmContent)
-        
+
         // Search for relevant LTM using combined context
         val searchQuery = "$userPrompt $initialContext"
         val ltmExcerpts = searchService.searchLTM(searchQuery)
-        
+
         val workingMemory = assembleWorkingMemory(userPrompt, stmContent, ltmExcerpts)
-        
-        return llmService.generateResponse(workingMemory)
+
+        // TODO: Return working memory or implement proper response generation without LLM abstraction
+        return workingMemory
     }
     
     private fun buildInitialContext(userPrompt: String, stmContent: String): String {
