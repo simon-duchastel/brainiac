@@ -1,7 +1,6 @@
 package com.brainiac.core.process
 
 import com.brainiac.core.fileaccess.FileSystemService
-import com.brainiac.core.llm.LLMService
 import com.brainiac.core.search.SearchService
 import com.brainiac.core.identity.CoreIdentityService
 import com.brainiac.core.fileaccess.*
@@ -21,10 +20,9 @@ class CoreLoopProcessTest : StringSpec({
     
     "should process user prompt with complete flow" {
         val mockFileSystemService = mock<FileSystemService>()
-        val mockLLMService = mock<LLMService>()
         val mockSearchService = mock<SearchService>()
         val mockCoreIdentityService = mock<CoreIdentityService>()
-        
+
         val testStmContent = """# Short-Term Memory Scratchpad
 
 ## Summary
@@ -51,7 +49,7 @@ Recent conversation about programming concepts
 **AI:** "Kotlin is a modern programming language..."
 **Thoughts:** User asking about basics
 """
-        
+
         val testLTMFile = LTMFile(
             frontmatter = LTMFrontmatter(
                 uuid = "kotlin-basics-001",
@@ -62,67 +60,66 @@ Recent conversation about programming concepts
             ),
             content = "# Kotlin Programming Language\n\nKotlin is a statically typed programming language..."
         )
-        
+
         val coreIdentityContent = "# Core Identity\n\nI am Brainiac, an AI assistant designed to help with programming and learning."
-        
+
         every { mockFileSystemService.readStm() } returns testStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns coreIdentityContent
         every { mockSearchService.searchLTM(any()) } returns listOf(testLTMFile)
-        every { mockLLMService.generateResponse(any()) } returns "Based on the information provided, Kotlin is indeed a modern programming language..."
-        
+
         val coreLoopProcess = CoreLoopProcess(
             mockFileSystemService,
-            mockLLMService,
             mockSearchService,
             mockCoreIdentityService
         )
-        
+
         val result = coreLoopProcess.processUserPrompt("Tell me more about Kotlin")
-        
-        result shouldBe "Based on the information provided, Kotlin is indeed a modern programming language..."
-        
+
+        result shouldContain "# Working Memory"
+        result shouldContain coreIdentityContent
+        result shouldContain testStmContent
+        result shouldContain "kotlin-basics-001"
+        result shouldContain "Tell me more about Kotlin"
+
         verify { mockFileSystemService.readStm() }
         verify { mockCoreIdentityService.getCoreIdentityContent() }
         verify { mockSearchService.searchLTM(any()) }
-        verify { mockLLMService.generateResponse(any()) }
     }
     
     "should handle empty STM gracefully" {
         val mockFileSystemService = mock<FileSystemService>()
-        val mockLLMService = mock<LLMService>()
         val mockSearchService = mock<SearchService>()
         val mockCoreIdentityService = mock<CoreIdentityService>()
-        
+
         val emptyStmContent = ""
-        
+
         val coreIdentityContent = "# Core Identity\n\nI am Brainiac."
-        
+
         every { mockFileSystemService.readStm() } returns emptyStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns coreIdentityContent
         every { mockSearchService.searchLTM(any()) } returns emptyList()
-        every { mockLLMService.generateResponse(any()) } returns "I understand your question."
-        
+
         val coreLoopProcess = CoreLoopProcess(
             mockFileSystemService,
-            mockLLMService,
             mockSearchService,
             mockCoreIdentityService
         )
-        
+
         val result = coreLoopProcess.processUserPrompt("Hello")
-        
-        result shouldBe "I understand your question."
-        
+
+        result shouldContain "# Working Memory"
+        result shouldContain coreIdentityContent
+        result shouldContain "Hello"
+
         verify { mockFileSystemService.readStm() }
         verify { mockSearchService.searchLTM(any()) }
     }
     
     "should include all STM components in initial context" {
         val mockFileSystemService = mock<FileSystemService>()
-        val mockLLMService = mock<LLMService>()
         val mockSearchService = mock<SearchService>()
         val mockCoreIdentityService = mock<CoreIdentityService>()
-        
+
         val testStmContent = """# Short-Term Memory Scratchpad
 
 ## Summary
@@ -140,26 +137,24 @@ Learning about AI systems
 ### Tasks
 - [ ] Read documentation
 """
-        
+
         every { mockFileSystemService.readStm() } returns testStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns "Core identity"
-        every { mockLLMService.generateResponse(any()) } returns "Response"
-        
+
         var capturedSearchQuery = ""
         every { mockSearchService.searchLTM(any()) } calls { (query: String) ->
             capturedSearchQuery = query
             emptyList()
         }
-        
+
         val coreLoopProcess = CoreLoopProcess(
             mockFileSystemService,
-            mockLLMService,
             mockSearchService,
             mockCoreIdentityService
         )
-        
+
         coreLoopProcess.processUserPrompt("Test prompt")
-        
+
         // Verify that search is called with combined user prompt and initial context
         capturedSearchQuery shouldContain "Test prompt"
         capturedSearchQuery shouldContain "User Prompt: Test prompt"
@@ -168,10 +163,9 @@ Learning about AI systems
     
     "should format working memory correctly with LTM excerpts" {
         val mockFileSystemService = mock<FileSystemService>()
-        val mockLLMService = mock<LLMService>()
         val mockSearchService = mock<SearchService>()
         val mockCoreIdentityService = mock<CoreIdentityService>()
-        
+
         val testStmContent = """# Short-Term Memory Scratchpad
 
 ## Summary
@@ -197,7 +191,7 @@ Test summary
 **AI:** "Hi there"
 **Thoughts:** Greeting
 """
-        
+
         val testLTMFile = LTMFile(
             frontmatter = LTMFrontmatter(
                 uuid = "test-uuid",
@@ -208,46 +202,39 @@ Test summary
             ),
             content = "Test LTM content"
         )
-        
+
         every { mockFileSystemService.readStm() } returns testStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns "Test core identity"
         every { mockSearchService.searchLTM(any()) } returns listOf(testLTMFile)
-        
-        var capturedWorkingMemory = ""
-        every { mockLLMService.generateResponse(any()) } calls { (workingMemory: String) ->
-            capturedWorkingMemory = workingMemory
-            "Response"
-        }
-        
+
         val coreLoopProcess = CoreLoopProcess(
             mockFileSystemService,
-            mockLLMService,
             mockSearchService,
             mockCoreIdentityService
         )
-        
-        coreLoopProcess.processUserPrompt("Test")
-        
-        capturedWorkingMemory shouldContain "# Working Memory"
-        capturedWorkingMemory shouldContain "## Core Identity"
-        capturedWorkingMemory shouldContain "Test core identity"
-        capturedWorkingMemory shouldContain "## User Prompt"
-        capturedWorkingMemory shouldContain "Test"
-        capturedWorkingMemory shouldContain "## Short-Term Memory"
-        capturedWorkingMemory shouldContain "Test summary"
-        capturedWorkingMemory shouldContain "## Relevant Long-Term Memory"
-        capturedWorkingMemory shouldContain "**UUID:** test-uuid"
-        capturedWorkingMemory shouldContain "Test LTM content"
-        capturedWorkingMemory shouldContain "**User:** \"Hello\""
-        capturedWorkingMemory shouldContain "**AI:** \"Hi there\""
-        capturedWorkingMemory shouldContain "**Thoughts:** Greeting"
-        
+
+        val workingMemory = coreLoopProcess.processUserPrompt("Test")
+
+        workingMemory shouldContain "# Working Memory"
+        workingMemory shouldContain "## Core Identity"
+        workingMemory shouldContain "Test core identity"
+        workingMemory shouldContain "## User Prompt"
+        workingMemory shouldContain "Test"
+        workingMemory shouldContain "## Short-Term Memory"
+        workingMemory shouldContain "Test summary"
+        workingMemory shouldContain "## Relevant Long-Term Memory"
+        workingMemory shouldContain "**UUID:** test-uuid"
+        workingMemory shouldContain "Test LTM content"
+        workingMemory shouldContain "**User:** \"Hello\""
+        workingMemory shouldContain "**AI:** \"Hi there\""
+        workingMemory shouldContain "**Thoughts:** Greeting"
+
         // Verify correct ordering: Core Identity → STM → LTM → User Prompt
-        val coreIdentityIndex = capturedWorkingMemory.indexOf("## Core Identity")
-        val stmIndex = capturedWorkingMemory.indexOf("## Short-Term Memory")
-        val ltmIndex = capturedWorkingMemory.indexOf("## Relevant Long-Term Memory")
-        val promptIndex = capturedWorkingMemory.indexOf("## User Prompt")
-        
+        val coreIdentityIndex = workingMemory.indexOf("## Core Identity")
+        val stmIndex = workingMemory.indexOf("## Short-Term Memory")
+        val ltmIndex = workingMemory.indexOf("## Relevant Long-Term Memory")
+        val promptIndex = workingMemory.indexOf("## User Prompt")
+
         coreIdentityIndex shouldBeLessThan stmIndex
         stmIndex shouldBeLessThan ltmIndex
         ltmIndex shouldBeLessThan promptIndex
@@ -255,46 +242,38 @@ Test summary
     
     "should handle no LTM excerpts found" {
         val mockFileSystemService = mock<FileSystemService>()
-        val mockLLMService = mock<LLMService>()
         val mockSearchService = mock<SearchService>()
         val mockCoreIdentityService = mock<CoreIdentityService>()
-        
+
         val testStmContent = """# Short-Term Memory Scratchpad
 
 ## Summary
 Test summary
 """
-        
+
         every { mockFileSystemService.readStm() } returns testStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns "Core identity"
         every { mockSearchService.searchLTM(any()) } returns emptyList()
 
-        var capturedWorkingMemory = ""
-        every { mockLLMService.generateResponse(any()) } calls { (workingMemory: String) ->
-            capturedWorkingMemory = workingMemory
-            "Response without LTM"
-        }
-        
         val coreLoopProcess = CoreLoopProcess(
             mockFileSystemService,
-            mockLLMService,
             mockSearchService,
             mockCoreIdentityService
         )
-        
-        coreLoopProcess.processUserPrompt("Test")
-        
-        capturedWorkingMemory shouldContain "## Core Identity"
-        capturedWorkingMemory shouldContain "## User Prompt"
-        capturedWorkingMemory shouldContain "## Short-Term Memory"
+
+        val workingMemory = coreLoopProcess.processUserPrompt("Test")
+
+        workingMemory shouldContain "## Core Identity"
+        workingMemory shouldContain "## User Prompt"
+        workingMemory shouldContain "## Short-Term Memory"
         // Should not contain LTM section when no excerpts found
-        capturedWorkingMemory.contains("## Relevant Long-Term Memory") shouldBe false
-        
+        workingMemory.contains("## Relevant Long-Term Memory") shouldBe false
+
         // Verify correct ordering: Core Identity → STM → User Prompt (no LTM)
-        val coreIdentityIndex = capturedWorkingMemory.indexOf("## Core Identity")
-        val stmIndex = capturedWorkingMemory.indexOf("## Short-Term Memory")
-        val promptIndex = capturedWorkingMemory.indexOf("## User Prompt")
-        
+        val coreIdentityIndex = workingMemory.indexOf("## Core Identity")
+        val stmIndex = workingMemory.indexOf("## Short-Term Memory")
+        val promptIndex = workingMemory.indexOf("## User Prompt")
+
         coreIdentityIndex shouldBeLessThan stmIndex
         stmIndex shouldBeLessThan promptIndex
     }

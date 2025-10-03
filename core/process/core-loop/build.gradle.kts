@@ -17,7 +17,6 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(project(":core:fileaccess"))
-                implementation(project(":core:llm"))
                 implementation(project(":core:identity"))
                 implementation(project(":core:search"))
                 implementation(libs.kotlinx.datetime)
