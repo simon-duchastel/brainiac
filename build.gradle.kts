@@ -29,11 +29,6 @@ subprojects {
         showSkipped = true
         showFailed = true
     }
-
-    tasks.withType<Test>().configureEach {
-        // always run tests
-        outputs.upToDateWhen { false }
-    }
 }
 
 // Add test task that delegates to multiplatform test tasks
