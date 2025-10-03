@@ -28,7 +28,6 @@ kotlin {
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.okio.fakefilesystem)
                 implementation(libs.kotest.assertions.core)
-                implementation(libs.mockk)
             }
         }
         val jvmTest by getting {
