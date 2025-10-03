@@ -16,7 +16,7 @@ kotlin {
                 // Expose all core submodules to consumers of this module
                 api(project(":core:identity"))
                 api(project(":core:fileaccess"))
-                api(project(":core:search"))
+                api(project(":core:process:search"))
                 api(project(":core:process"))
             }
         }

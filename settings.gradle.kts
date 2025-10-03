@@ -7,5 +7,6 @@ include(
     "core:search",
     "core:process",
     "core:process:core-loop",
+    "core:process:search",
     "agents",
 )

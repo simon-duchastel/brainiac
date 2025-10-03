@@ -18,7 +18,7 @@ kotlin {
             dependencies {
                 implementation(project(":core:fileaccess"))
                 implementation(project(":core:identity"))
-                implementation(project(":core:search"))
+                implementation(project(":core:process:search"))
                 implementation(libs.kotlinx.datetime)
             }
         }
