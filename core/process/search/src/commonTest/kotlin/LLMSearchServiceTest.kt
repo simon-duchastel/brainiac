@@ -215,26 +215,22 @@ class LLMSearchServiceTest : StringSpec({
         val result = searchService.searchLTM("deep learning and AI")
 
         // Verify exact prompt format
-        // Note: Root files are at depth 1, so indent is "  " (2 spaces) + "  " (file indent) = 4 spaces
-        // Subdirectory tags are at depth 1, so "  " (2 spaces)
-        // Files within subdirectories are at depth 1 + "  " = 4 spaces
-        val expectedPrompt = buildString {
-            appendLine("Given this search query: \"deep learning and AI\"")
-            appendLine()
-            appendLine("Here is the complete structure of available long-term memory files:")
-            appendLine("<ltm_directory>")
-            appendLine("    <file path=\"memory1.md\">memory1.md</file>")
-            appendLine("  <directory name=\"concepts\">")
-            appendLine("    <file path=\"concepts/machine-learning.md\">machine-learning.md</file>")
-            appendLine("    <file path=\"concepts/neural-networks.md\">neural-networks.md</file>")
-            appendLine("  </directory>")
-            appendLine("</ltm_directory>")
-            appendLine()
-            appendLine()
-            appendLine("Please select the most relevant memory files for this query.")
-            appendLine("Return only the file paths (relative to the LTM root), one per line.")
-            appendLine("Do not include any other text or explanations.")
-        }
+        val expectedPrompt = """Given this search query: "deep learning and AI"
+
+Here is the complete structure of available long-term memory files:
+<ltm_directory>
+    <file path="memory1.md">memory1.md</file>
+  <directory name="concepts">
+    <file path="concepts/machine-learning.md">machine-learning.md</file>
+    <file path="concepts/neural-networks.md">neural-networks.md</file>
+  </directory>
+</ltm_directory>
+
+
+Please select the most relevant memory files for this query.
+Return only the file paths (relative to the LTM root), one per line.
+Do not include any other text or explanations.
+"""
 
         capturedPrompt shouldBe expectedPrompt
 
