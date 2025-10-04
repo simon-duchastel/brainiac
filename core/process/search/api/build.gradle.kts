@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
 }
 
+group = "com.brainiac.core.process.search"
+
 kotlin {
 
     jvm()
@@ -14,7 +16,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(project(":core-fileaccess-api"))
+                api(project(":core:fileaccess:api"))
             }
         }
     }

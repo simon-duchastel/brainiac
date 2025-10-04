@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
 }
 
+group = "com.brainiac.core.process.coreloop"
+
 kotlin {
 
     jvm()

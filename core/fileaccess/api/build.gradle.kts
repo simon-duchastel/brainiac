@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+group = "com.brainiac.core.fileaccess"
+
 kotlin {
     jvm()
 

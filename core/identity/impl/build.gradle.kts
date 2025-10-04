@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.kotest)
 }
 
+group = "com.brainiac.core.identity"
+
 kotlin {
     jvm()
 
@@ -17,8 +19,8 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(project(":core-identity-api"))
-                implementation(project(":core-fileaccess-impl"))
+                api(project(":core:identity:api"))
+                implementation(project(":core:fileaccess:impl"))
                 implementation(libs.kotlinx.serialization.core)
                 implementation(libs.okio)
             }

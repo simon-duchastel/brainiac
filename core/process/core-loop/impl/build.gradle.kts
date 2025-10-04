@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.kotest)
 }
 
+group = "com.brainiac.core.process.coreloop"
+
 kotlin {
     jvm()
 
@@ -16,10 +18,10 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(project(":core-process-coreloop-api"))
-                implementation(project(":core-fileaccess-impl"))
-                implementation(project(":core-identity-impl"))
-                implementation(project(":core-process-search-impl"))
+                api(project(":core:process:core-loop:api"))
+                implementation(project(":core:fileaccess:impl"))
+                implementation(project(":core:identity:impl"))
+                implementation(project(":core:process:search:impl"))
                 implementation(libs.kotlinx.datetime)
             }
         }

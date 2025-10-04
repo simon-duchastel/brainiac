@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.kotest)
 }
 
+group = "com.brainiac.agents"
+
 kotlin {
     jvm()
 
@@ -16,7 +18,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(project(":agents-api"))
+                api(project(":agents:api"))
                 implementation(libs.ktor.client.core)
                 implementation(libs.kotlinx.serialization.core)
             }
