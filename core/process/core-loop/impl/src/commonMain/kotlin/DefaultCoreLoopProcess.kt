@@ -10,7 +10,8 @@ import com.duchastel.simon.brainiac.core.fileaccess.LTMFile
 class DefaultCoreLoopProcess(
     private val fileSystemService: FileSystemService,
     private val searchService: SearchService,
-    private val coreIdentityService: CoreIdentityService
+    private val coreIdentityService: CoreIdentityService,
+    private val modelProvider: ModelProvider,
 ) : CoreLoopProcess {
 
     override fun processUserPrompt(userPrompt: String): String {
@@ -24,8 +25,7 @@ class DefaultCoreLoopProcess(
 
         val workingMemory = assembleWorkingMemory(userPrompt, stmContent, ltmExcerpts)
 
-        // TODO: Return working memory or implement proper response generation without LLM abstraction
-        return workingMemory
+        return modelProvider.process(workingMemory) ?: "Error processing prompt"
     }
 
     private fun buildInitialContext(userPrompt: String, stmContent: String): String {

@@ -16,7 +16,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(project(":core:fileaccess:api"))
+                implementation(project(":core:fileaccess:api"))
             }
         }
     }
