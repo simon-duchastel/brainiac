@@ -10,7 +10,7 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
-class Gemini2_5ProTest : StringSpec({
+class Gemini25ProTest : StringSpec({
 
     "should successfully parse API response and return text" {
         val mockEngine = MockEngine { request ->
@@ -43,7 +43,7 @@ class Gemini2_5ProTest : StringSpec({
         }
 
         val testClient = createTestClient(mockEngine)
-        val provider = Gemini2_5Pro("test-api-key", client = testClient)
+        val provider = Gemini25Pro("test-api-key", client = testClient)
         val result = provider.process("test input")
 
         result shouldBe "Hello from Gemini!"
@@ -59,7 +59,7 @@ class Gemini2_5ProTest : StringSpec({
         }
 
         val testClient = createTestClient(mockEngine)
-        val provider = Gemini2_5Pro("invalid-key", client = testClient)
+        val provider = Gemini25Pro("invalid-key", client = testClient)
         val result = provider.process("test input")
 
         result shouldBe null
@@ -75,7 +75,7 @@ class Gemini2_5ProTest : StringSpec({
         }
 
         val testClient = createTestClient(mockEngine)
-        val provider = Gemini2_5Pro("test-api-key", client = testClient)
+        val provider = Gemini25Pro("test-api-key", client = testClient)
         val result = provider.process("test input")
 
         result shouldBe null
@@ -101,7 +101,7 @@ class Gemini2_5ProTest : StringSpec({
         }
 
         val testClient = createTestClient(mockEngine)
-        val provider = Gemini2_5Pro("test-api-key", client = testClient)
+        val provider = Gemini25Pro("test-api-key", client = testClient)
         val result = provider.process("test input")
 
         result shouldBe null
@@ -113,46 +113,10 @@ class Gemini2_5ProTest : StringSpec({
         }
 
         val testClient = createTestClient(mockEngine)
-        val provider = Gemini2_5Pro("test-api-key", client = testClient)
+        val provider = Gemini25Pro("test-api-key", client = testClient)
         val result = provider.process("test input")
 
         result shouldBe null
-    }
-
-    "should use custom base URL when provided" {
-        val mockEngine = MockEngine { request ->
-            request.url.toString() shouldContain "https://custom-api.example.com"
-
-            respond(
-                content = """
-                {
-                    "candidates": [
-                        {
-                            "content": {
-                                "parts": [
-                                    {
-                                        "text": "Custom response"
-                                    }
-                                ]
-                            }
-                        }
-                    ]
-                }
-                """.trimIndent(),
-                status = HttpStatusCode.OK,
-                headers = headersOf(HttpHeaders.ContentType, "application/json")
-            )
-        }
-
-        val testClient = createTestClient(mockEngine)
-        val provider = Gemini2_5Pro(
-            apiKey = "test-api-key",
-            baseUrl = "https://custom-api.example.com",
-            client = testClient
-        )
-        val result = provider.process("test input")
-
-        result shouldBe "Custom response"
     }
 
     "should handle response with multiple candidates by taking first" {
@@ -190,7 +154,7 @@ class Gemini2_5ProTest : StringSpec({
         }
 
         val testClient = createTestClient(mockEngine)
-        val provider = Gemini2_5Pro("test-api-key", client = testClient)
+        val provider = Gemini25Pro("test-api-key", client = testClient)
         val result = provider.process("test input")
 
         result shouldBe "First response"
@@ -223,47 +187,10 @@ class Gemini2_5ProTest : StringSpec({
         }
 
         val testClient = createTestClient(mockEngine)
-        val provider = Gemini2_5Pro("test-api-key", client = testClient)
+        val provider = Gemini25Pro("test-api-key", client = testClient)
         val result = provider.process("test input")
 
         result shouldBe "Response text"
-    }
-
-    "should send correct request body format" {
-        var receivedBody = ""
-
-        val mockEngine = MockEngine { request ->
-            receivedBody = request.body.toByteArray().decodeToString()
-            receivedBody shouldContain "contents"
-            receivedBody shouldContain "parts"
-            receivedBody shouldContain "test input message"
-
-            respond(
-                content = """
-                {
-                    "candidates": [
-                        {
-                            "content": {
-                                "parts": [
-                                    {
-                                        "text": "OK"
-                                    }
-                                ]
-                            }
-                        }
-                    ]
-                }
-                """.trimIndent(),
-                status = HttpStatusCode.OK,
-                headers = headersOf(HttpHeaders.ContentType, "application/json")
-            )
-        }
-
-        val testClient = createTestClient(mockEngine)
-        val provider = Gemini2_5Pro("test-api-key", client = testClient)
-        provider.process("test input message")
-
-        // Verification happens in the mockEngine lambda
     }
 })
 

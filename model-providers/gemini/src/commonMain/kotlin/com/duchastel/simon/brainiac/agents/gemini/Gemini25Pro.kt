@@ -15,16 +15,15 @@ import kotlinx.serialization.json.Json
  * Implementation of ModelProvider for Google's Gemini 2.5 Pro model.
  *
  * @param apiKey The Google AI API key for authentication
- * @param baseUrl The base URL for the Gemini API (defaults to the official endpoint)
  * @param client The HTTP client to use (defaults to a configured client, injectable for testing)
  */
-class Gemini2_5Pro(
+class Gemini25Pro(
     private val apiKey: String,
-    private val baseUrl: String = "https://generativelanguage.googleapis.com",
     private val client: HttpClient = createDefaultClient()
 ) : ModelProvider {
 
-    private val modelEndpoint = "$baseUrl/v1beta/models/gemini-2.5-pro:generateContent"
+    private val modelEndpoint =
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent"
 
     override fun process(input: String): String? = runBlocking {
         try {
