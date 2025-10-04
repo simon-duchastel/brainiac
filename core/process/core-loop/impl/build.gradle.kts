@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.kotest)
 }
 
-group = "com.brainiac.core.process.coreloop"
+group = "com.duchastel.simon.brainiac.core.process.coreloop"
 
 kotlin {
     jvm()

@@ -1,6 +1,6 @@
-package com.brainiac.core.identity
+package com.duchastel.simon.brainiac.core.identity
 
-import com.brainiac.core.fileaccess.FileSystemService
+import com.duchastel.simon.brainiac.core.fileaccess.FileSystemService
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain

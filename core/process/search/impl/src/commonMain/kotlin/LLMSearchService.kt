@@ -1,7 +1,7 @@
-package com.brainiac.core.search
+package com.duchastel.simon.brainiac.core.search
 
-import com.brainiac.core.fileaccess.LTMFile
-import com.brainiac.core.fileaccess.FileSystemService
+import com.duchastel.simon.brainiac.core.fileaccess.LTMFile
+import com.duchastel.simon.brainiac.core.fileaccess.FileSystemService
 import okio.Path
 import okio.FileSystem
 

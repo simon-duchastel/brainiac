@@ -1,4 +1,4 @@
-package com.brainiac.core.identity
+package com.duchastel.simon.brainiac.core.identity
 
 interface CoreIdentityService {
     fun getCoreIdentity(): CoreIdentity

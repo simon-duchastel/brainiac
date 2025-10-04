@@ -1,6 +1,6 @@
-package com.brainiac.core.identity
+package com.duchastel.simon.brainiac.core.identity
 
-import com.brainiac.core.fileaccess.FileSystemService
+import com.duchastel.simon.brainiac.core.fileaccess.FileSystemService
 import okio.Path
 
 class DefaultCoreIdentityService(
