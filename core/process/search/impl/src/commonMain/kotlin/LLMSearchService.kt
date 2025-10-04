@@ -144,7 +144,7 @@ class LLMSearchService(
             .filter { it.isNotEmpty() && !it.startsWith("<") && !it.startsWith("#") }
             .forEach { filePath ->
                 try {
-                    val fullPath = ltmRootPath / filePath
+                    val fullPath = ltmRootPath / filePath.toPath()
                     if (fileSystem.exists(fullPath) && fileSystem.metadata(fullPath).isRegularFile) {
                         val ltmFile = fileSystemService.readLtmFile(fullPath)
                         result.add(ltmFile)
