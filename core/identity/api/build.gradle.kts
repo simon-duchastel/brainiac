@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-group = "com.brainiac.core.identity"
+group = "com.duchastel.simon.brainiac.core.identity"
 
 kotlin {
 

@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.kotest)
 }
 
-group = "com.brainiac.agents"
+group = "com.duchastel.simon.brainiac.agents"
 
 kotlin {
     jvm()

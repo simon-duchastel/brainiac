@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
 }
 
-group = "com.brainiac.core.process.coreloop"
+group = "com.duchastel.simon.brainiac.core.process.coreloop"
 
 kotlin {
 
