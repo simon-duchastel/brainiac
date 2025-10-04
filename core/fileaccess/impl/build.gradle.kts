@@ -20,7 +20,7 @@ kotlin {
             dependencies {
                 api(project(":core:fileaccess:api"))
                 implementation(libs.kotlinx.serialization.core)
-                implementation(libs.kotlinx.datetime)
+                
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.okio)
                 implementation(libs.kaml)
@@ -30,7 +30,7 @@ kotlin {
             dependencies {
                 implementation(libs.kotest.framework.engine)
                 implementation(libs.kotest.assertions.core)
-                implementation(libs.kotlinx.datetime)
+                
             }
         }
         val jvmTest by getting {

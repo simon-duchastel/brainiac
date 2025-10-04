@@ -22,7 +22,7 @@ kotlin {
                 implementation(project(":core:fileaccess:impl"))
                 implementation(project(":core:identity:impl"))
                 implementation(project(":core:process:search:impl"))
-                implementation(libs.kotlinx.datetime)
+                
             }
         }
         val commonTest by getting {
