@@ -6,7 +6,6 @@ plugins {
 }
 
 kotlin {
-    applyDefaultHierarchyTemplate()
     jvm()
 
     linuxX64()
@@ -17,8 +16,8 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(project(":core:process:search:api"))
-                implementation(project(":core:fileaccess:impl"))
+                api(project(":core-process-search-api"))
+                implementation(project(":core-fileaccess-impl"))
                 implementation(libs.okio)
             }
         }

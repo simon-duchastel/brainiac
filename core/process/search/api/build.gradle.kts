@@ -3,7 +3,6 @@ plugins {
 }
 
 kotlin {
-    applyDefaultHierarchyTemplate()
 
     jvm()
 
@@ -15,7 +14,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(project(":core:fileaccess:api"))
+                api(project(":core-fileaccess-api"))
             }
         }
     }
