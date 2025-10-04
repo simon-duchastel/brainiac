@@ -9,8 +9,6 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 /**
@@ -18,21 +16,13 @@ import kotlinx.serialization.json.Json
  *
  * @param apiKey The Google AI API key for authentication
  * @param baseUrl The base URL for the Gemini API (defaults to the official endpoint)
+ * @param client The HTTP client to use (defaults to a configured client, injectable for testing)
  */
 class Gemini2_5Pro(
     private val apiKey: String,
-    private val baseUrl: String = "https://generativelanguage.googleapis.com"
+    private val baseUrl: String = "https://generativelanguage.googleapis.com",
+    private val client: HttpClient = createDefaultClient()
 ) : ModelProvider {
-
-    private val client = HttpClient {
-        install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-                prettyPrint = false
-                isLenient = true
-            })
-        }
-    }
 
     private val modelEndpoint = "$baseUrl/v1beta/models/gemini-2.5-pro:generateContent"
 
@@ -67,33 +57,20 @@ class Gemini2_5Pro(
             null
         }
     }
+
+    companion object {
+        /**
+         * Creates the default HttpClient with JSON content negotiation configured
+         * for Gemini API responses.
+         */
+        fun createDefaultClient(): HttpClient = HttpClient {
+            install(ContentNegotiation) {
+                json(Json {
+                    ignoreUnknownKeys = true
+                    prettyPrint = false
+                    isLenient = true
+                })
+            }
+        }
+    }
 }
-
-@Serializable
-internal data class GeminiRequest(
-    val contents: List<Content>
-)
-
-@Serializable
-internal data class Content(
-    val parts: List<Part>,
-    val role: String? = null
-)
-
-@Serializable
-internal data class Part(
-    val text: String
-)
-
-@Serializable
-internal data class GeminiResponse(
-    val candidates: List<Candidate>
-)
-
-@Serializable
-internal data class Candidate(
-    val content: Content,
-    @SerialName("finishReason")
-    val finishReason: String? = null,
-    val index: Int? = null
-)
