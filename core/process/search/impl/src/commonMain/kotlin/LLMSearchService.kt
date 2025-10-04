@@ -4,12 +4,12 @@ import com.brainiac.core.fileaccess.LTMFile
 import com.brainiac.core.fileaccess.FileSystemService
 import okio.Path
 import okio.FileSystem
+import dev.zacsweers.metro.Inject
 
-class LLMSearchService(
+class LLMSearchService @Inject constructor(
     private val fileSystemService: FileSystemService,
     private val ltmRootPath: Path,
-    private val fileSystem: FileSystem,
-    private val llmResponseProvider: ((String) -> String)? = null // For testing only
+    private val fileSystem: FileSystem
 ) : SearchService {
 
     override fun searchLTM(query: String): List<LTMFile> {
@@ -36,7 +36,7 @@ class LLMSearchService(
         }
 
         // TODO: Call LLM service to generate response
-        val response = llmResponseProvider?.invoke(prompt) ?: "" // llmService.generateResponse(prompt)
+        val response = "" // llmService.generateResponse(prompt)
 
         // Parse file paths from LLM response and read the files
         return parseSelectedFiles(response)

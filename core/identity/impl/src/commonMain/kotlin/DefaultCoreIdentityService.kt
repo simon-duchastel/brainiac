@@ -2,8 +2,9 @@ package com.brainiac.core.identity
 
 import com.brainiac.core.fileaccess.FileSystemService
 import okio.Path
+import dev.zacsweers.metro.Inject
 
-class DefaultCoreIdentityService(
+class DefaultCoreIdentityService @Inject constructor(
     private val fileSystemService: FileSystemService,
     private val coreIdentityPath: Path
 ) : CoreIdentityService {

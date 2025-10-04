@@ -9,9 +9,10 @@ plugins {
 allprojects {
     group = "com.brainiac"
     version = "1.0.0"
-    
+
     repositories {
         mavenCentral()
+        maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
     }
 }
 

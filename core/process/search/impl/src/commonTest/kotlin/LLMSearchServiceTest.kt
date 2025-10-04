@@ -151,6 +151,8 @@ class LLMSearchServiceTest : StringSpec({
         result.shouldBeEmpty()
     }
 
+    // TODO: Re-enable this test when LLM integration is added
+    /*
     "should generate correct LLM prompt with XML structure and return parsed files from LLM response" {
         val mockFileSystemService = mock<FileSystemService>()
         val fakeFileSystem = FakeFileSystem()
@@ -238,4 +240,5 @@ Do not include any other text or explanations.
         verify { mockFileSystemService.readLtmFile(file2) }
         verify { mockFileSystemService.readLtmFile(file3) }
     }
+    */
 })

@@ -15,6 +15,7 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.runBlocking
+import dev.zacsweers.metro.Inject
 
 /**
  * In-memory implementation of file locking for multiplatform compatibility
@@ -41,7 +42,7 @@ object InstantSerializer : KSerializer<Instant> {
     override fun deserialize(decoder: Decoder): Instant = Instant.parse(decoder.decodeString())
 }
 
-class DefaultFileSystemService(
+class DefaultFileSystemService @Inject constructor(
     private val stmFilePath: Path,
     private val fileSystem: FileSystem
 ) : FileSystemService {

@@ -4,8 +4,9 @@ import com.brainiac.core.fileaccess.FileSystemService
 import com.brainiac.core.search.SearchService
 import com.brainiac.core.identity.CoreIdentityService
 import com.brainiac.core.fileaccess.LTMFile
+import dev.zacsweers.metro.Inject
 
-class DefaultCoreLoopProcess(
+class DefaultCoreLoopProcess @Inject constructor(
     private val fileSystemService: FileSystemService,
     private val searchService: SearchService,
     private val coreIdentityService: CoreIdentityService

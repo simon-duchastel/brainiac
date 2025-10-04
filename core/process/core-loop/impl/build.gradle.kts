@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.mokkery)
     alias(libs.plugins.kotest)
+    alias(libs.plugins.metro)
 }
 
 group = "com.brainiac.core.process.coreloop"

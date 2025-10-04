@@ -1,6 +1,6 @@
 [versions]
-kotlin = "2.2.10"
-ksp = "2.2.10-2.0.2"
+kotlin = "2.2.20"
+ksp = "2.2.20-2.0.3"
 coroutines = "1.7.3"
 kotlinx-serialization = "1.6.0"
 kotlinx-datetime = "0.4.1"
@@ -11,6 +11,7 @@ kotest = "6.0.3"
 mockk = "1.13.8"
 mokkery = "2.10.0"
 test-logger = "4.0.0"
+metro = "0.6.6"
 
 [libraries]
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
@@ -33,3 +34,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotest = { id = "io.kotest", version.ref = "kotest" }
 mokkery = { id = "dev.mokkery", version.ref = "mokkery" }
 test-logger = { id = "com.adarshr.test-logger", version.ref = "test-logger" }
+metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
