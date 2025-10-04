@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package com.duchastel.simon.brainiac.core.process
 
 import com.duchastel.simon.brainiac.core.fileaccess.FileSystemService

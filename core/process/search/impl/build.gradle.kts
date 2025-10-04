@@ -27,7 +27,7 @@ kotlin {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(libs.kotest.framework.engine)
-                implementation(libs.kotlinx.datetime)
+                
                 implementation(libs.okio.fakefilesystem)
                 implementation(libs.kotest.assertions.core)
             }

@@ -1,8 +1,11 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.duchastel.simon.brainiac.core.fileaccess
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
+import kotlin.time.ExperimentalTime
 import okio.FileSystem
 import okio.SYSTEM
 import kotlin.random.Random

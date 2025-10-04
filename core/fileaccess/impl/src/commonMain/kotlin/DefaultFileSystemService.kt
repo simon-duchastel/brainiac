@@ -1,9 +1,12 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.duchastel.simon.brainiac.core.fileaccess
 
 import okio.Path
 import okio.FileSystem
 import com.charleskorn.kaml.Yaml
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
+import kotlin.time.ExperimentalTime
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
 import kotlinx.serialization.KSerializer
@@ -45,11 +48,12 @@ class DefaultFileSystemService(
     private val stmFilePath: Path,
     private val fileSystem: FileSystem
 ) : FileSystemService {
-    private val yaml = Yaml(
-        serializersModule = SerializersModule {
-            contextual(InstantSerializer)
-        }
-    )
+    private val yaml =
+        Yaml(
+            serializersModule = SerializersModule {
+                contextual(InstantSerializer)
+            }
+        )
     private val locks = mutableMapOf<Path, InMemoryFileLock>()
     private val mutex = Mutex()
 

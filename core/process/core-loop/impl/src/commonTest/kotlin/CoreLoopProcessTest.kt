@@ -14,8 +14,10 @@ import dev.mokkery.every
 import dev.mokkery.matcher.any
 import dev.mokkery.mock
 import dev.mokkery.verify
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 class CoreLoopProcessTest : StringSpec({
     
     "should process user prompt with complete flow" {

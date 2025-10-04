@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package com.duchastel.simon.brainiac.core.search
 
 import com.duchastel.simon.brainiac.core.fileaccess.FileSystemService
@@ -11,7 +13,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
 
