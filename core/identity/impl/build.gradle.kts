@@ -19,7 +19,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(project(":core:identity:api"))
+                api(project(":core:identity:api"))
                 implementation(project(":core:fileaccess:impl"))
                 implementation(libs.kotlinx.serialization.core)
                 implementation(libs.okio)

@@ -24,6 +24,7 @@ class CoreLoopProcessTest : StringSpec({
         val mockFileSystemService = mock<FileSystemService>()
         val mockSearchService = mock<SearchService>()
         val mockCoreIdentityService = mock<CoreIdentityService>()
+        val mockModelProvider = mock<ModelProvider>()
 
         val testStmContent = """# Short-Term Memory Scratchpad
 
@@ -69,10 +70,14 @@ Recent conversation about programming concepts
         every { mockCoreIdentityService.getCoreIdentityContent() } returns coreIdentityContent
         every { mockSearchService.searchLTM(any()) } returns listOf(testLTMFile)
 
+        // Mock modelProvider to return the working memory unchanged so we can verify it
+        every { mockModelProvider.process(any()) } calls { (input: String) -> input }
+
         val coreLoopProcess = DefaultCoreLoopProcess(
             mockFileSystemService,
             mockSearchService,
-            mockCoreIdentityService
+            mockCoreIdentityService,
+            mockModelProvider
         )
 
         val result = coreLoopProcess.processUserPrompt("Tell me more about Kotlin")
@@ -92,6 +97,7 @@ Recent conversation about programming concepts
         val mockFileSystemService = mock<FileSystemService>()
         val mockSearchService = mock<SearchService>()
         val mockCoreIdentityService = mock<CoreIdentityService>()
+        val mockModelProvider = mock<ModelProvider>()
 
         val emptyStmContent = ""
 
@@ -101,10 +107,14 @@ Recent conversation about programming concepts
         every { mockCoreIdentityService.getCoreIdentityContent() } returns coreIdentityContent
         every { mockSearchService.searchLTM(any()) } returns emptyList()
 
+        // Mock modelProvider to return the working memory unchanged so we can verify it
+        every { mockModelProvider.process(any()) } calls { (input: String) -> input }
+
         val coreLoopProcess = DefaultCoreLoopProcess(
             mockFileSystemService,
             mockSearchService,
-            mockCoreIdentityService
+            mockCoreIdentityService,
+            mockModelProvider
         )
 
         val result = coreLoopProcess.processUserPrompt("Hello")
@@ -121,6 +131,7 @@ Recent conversation about programming concepts
         val mockFileSystemService = mock<FileSystemService>()
         val mockSearchService = mock<SearchService>()
         val mockCoreIdentityService = mock<CoreIdentityService>()
+        val mockModelProvider = mock<ModelProvider>()
 
         val testStmContent = """# Short-Term Memory Scratchpad
 
@@ -143,6 +154,9 @@ Learning about AI systems
         every { mockFileSystemService.readStm() } returns testStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns "Core identity"
 
+        // Mock modelProvider to return empty string for this test
+        every { mockModelProvider.process(any()) } returns ""
+
         var capturedSearchQuery = ""
         every { mockSearchService.searchLTM(any()) } calls { (query: String) ->
             capturedSearchQuery = query
@@ -152,7 +166,8 @@ Learning about AI systems
         val coreLoopProcess = DefaultCoreLoopProcess(
             mockFileSystemService,
             mockSearchService,
-            mockCoreIdentityService
+            mockCoreIdentityService,
+            mockModelProvider
         )
 
         coreLoopProcess.processUserPrompt("Test prompt")
@@ -167,6 +182,7 @@ Learning about AI systems
         val mockFileSystemService = mock<FileSystemService>()
         val mockSearchService = mock<SearchService>()
         val mockCoreIdentityService = mock<CoreIdentityService>()
+        val mockModelProvider = mock<ModelProvider>()
 
         val testStmContent = """# Short-Term Memory Scratchpad
 
@@ -209,10 +225,14 @@ Test summary
         every { mockCoreIdentityService.getCoreIdentityContent() } returns "Test core identity"
         every { mockSearchService.searchLTM(any()) } returns listOf(testLTMFile)
 
+        // Mock modelProvider to return the working memory unchanged so we can verify it
+        every { mockModelProvider.process(any()) } calls { (input: String) -> input }
+
         val coreLoopProcess = DefaultCoreLoopProcess(
             mockFileSystemService,
             mockSearchService,
-            mockCoreIdentityService
+            mockCoreIdentityService,
+            mockModelProvider
         )
 
         val workingMemory = coreLoopProcess.processUserPrompt("Test")
@@ -246,6 +266,7 @@ Test summary
         val mockFileSystemService = mock<FileSystemService>()
         val mockSearchService = mock<SearchService>()
         val mockCoreIdentityService = mock<CoreIdentityService>()
+        val mockModelProvider = mock<ModelProvider>()
 
         val testStmContent = """# Short-Term Memory Scratchpad
 
@@ -257,10 +278,14 @@ Test summary
         every { mockCoreIdentityService.getCoreIdentityContent() } returns "Core identity"
         every { mockSearchService.searchLTM(any()) } returns emptyList()
 
+        // Mock modelProvider to return the working memory unchanged so we can verify it
+        every { mockModelProvider.process(any()) } calls { (input: String) -> input }
+
         val coreLoopProcess = DefaultCoreLoopProcess(
             mockFileSystemService,
             mockSearchService,
-            mockCoreIdentityService
+            mockCoreIdentityService,
+            mockModelProvider
         )
 
         val workingMemory = coreLoopProcess.processUserPrompt("Test")

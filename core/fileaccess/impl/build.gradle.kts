@@ -18,7 +18,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(project(":core:fileaccess:api"))
+                api(project(":core:fileaccess:api"))
                 implementation(libs.kotlinx.serialization.core)
                 
                 implementation(libs.kotlinx.coroutines.core)

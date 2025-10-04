@@ -19,7 +19,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(project(":core:model-providers:api"))
-                implementation(project(":core:process:search:api"))
+                api(project(":core:process:search:api"))
                 implementation(project(":core:fileaccess:impl"))
                 implementation(libs.okio)
             }
