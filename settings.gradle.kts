@@ -2,6 +2,7 @@ rootProject.name = "brainiac"
 
 include(
     "model-providers",
+    "model-providers:gemini",
     "core:identity:api",
     "core:identity:impl",
     "core:fileaccess:api",
