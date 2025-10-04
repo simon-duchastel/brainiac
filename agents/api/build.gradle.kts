@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-group = "com.brainiac.agents"
+group = "com.duchastel.simon.brainiac.agents"
 
 kotlin {
 

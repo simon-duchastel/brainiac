@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.kotest)
 }
 
-group = "com.brainiac.core.process.search"
+group = "com.duchastel.simon.brainiac.core.process.search"
 
 kotlin {
     jvm()

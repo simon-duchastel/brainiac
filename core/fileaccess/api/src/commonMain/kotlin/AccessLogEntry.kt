@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
 
-package com.brainiac.core.fileaccess
+package com.duchastel.simon.brainiac.core.fileaccess
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Contextual

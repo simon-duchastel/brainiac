@@ -1,6 +1,6 @@
-package com.brainiac.core.search
+package com.duchastel.simon.brainiac.core.search
 
-import com.brainiac.core.fileaccess.LTMFile
+import com.duchastel.simon.brainiac.core.fileaccess.LTMFile
 
 interface SearchService {
     fun searchLTM(query: String): List<LTMFile>

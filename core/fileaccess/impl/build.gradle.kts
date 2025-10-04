@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.kotest)
 }
 
-group = "com.brainiac.core.fileaccess"
+group = "com.duchastel.simon.brainiac.core.fileaccess"
 
 kotlin {
     jvm()

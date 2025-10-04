@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.kotest)
 }
 
-group = "com.brainiac.core.identity"
+group = "com.duchastel.simon.brainiac.core.identity"
 
 kotlin {
     jvm()
