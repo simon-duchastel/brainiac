@@ -2,6 +2,7 @@ package com.duchastel.simon.brainiac.core.search
 
 import com.duchastel.simon.brainiac.core.fileaccess.LTMFile
 import com.duchastel.simon.brainiac.core.fileaccess.FileSystemService
+import com.duchastel.simon.brainiac.core.process.ModelProvider
 import okio.Path
 import okio.FileSystem
 
@@ -9,7 +10,7 @@ class LLMSearchService(
     private val fileSystemService: FileSystemService,
     private val ltmRootPath: Path,
     private val fileSystem: FileSystem,
-    private val llmResponseProvider: ((String) -> String)? = null // For testing only
+    private val modelProvider: ModelProvider,
 ) : SearchService {
 
     override fun searchLTM(query: String): List<LTMFile> {
@@ -35,8 +36,7 @@ class LLMSearchService(
             appendLine("Do not include any other text or explanations.")
         }
 
-        // TODO: Call LLM service to generate response
-        val response = llmResponseProvider?.invoke(prompt) ?: "" // llmService.generateResponse(prompt)
+        val response = modelProvider.process(prompt) ?: ""
 
         // Parse file paths from LLM response and read the files
         return parseSelectedFiles(response)
@@ -53,7 +53,7 @@ class LLMSearchService(
         try {
             val allPaths = collectAllPaths(ltmRootPath)
             buildXmlStructure(allPaths, ltmRootPath, xmlBuilder, 1)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return ""
         }
 
@@ -95,14 +95,14 @@ class LLMSearchService(
 
             val children = groupedByParent[dirPath] ?: emptyList()
             val directories = children.filter {
-                try { fileSystem.metadata(it).isDirectory } catch (e: Exception) { false }
+                try { fileSystem.metadata(it).isDirectory } catch (_: Exception) { false }
             }
             val files = children.filter {
                 try {
                     fileSystem.metadata(it).isRegularFile &&
                     it.name.endsWith(".md") &&
                     !it.name.startsWith("_index")
-                } catch (e: Exception) { false }
+                } catch (_: Exception) { false }
             }
 
             // Add files first
@@ -149,7 +149,7 @@ class LLMSearchService(
                         val ltmFile = fileSystemService.readLtmFile(fullPath)
                         result.add(ltmFile)
                     }
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     // Skip files that can't be read
                 }
             }

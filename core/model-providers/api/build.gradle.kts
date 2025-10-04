@@ -1,9 +1,8 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlin.serialization)
 }
 
-group = "com.duchastel.simon.brainiac.agents"
+group = "com.duchastel.simon.brainiac.core.modelproviders"
 
 kotlin {
 
@@ -16,9 +15,7 @@ kotlin {
 
     sourceSets {
         val commonMain by getting {
-            dependencies {
-                api(libs.kotlinx.serialization.core)
-            }
+
         }
     }
 }

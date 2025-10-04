@@ -18,6 +18,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                api(project(":core:model-providers:api"))
                 api(project(":core:process:search:api"))
                 implementation(project(":core:fileaccess:impl"))
                 implementation(libs.okio)
