@@ -1,11 +1,9 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.kotest)
 }
 
 kotlin {
+    applyDefaultHierarchyTemplate()
     jvm()
 
     linuxX64()
@@ -16,31 +14,9 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(libs.kotlinx.serialization.core)
-                implementation(libs.kotlinx.datetime)
-                implementation(libs.kotlinx.coroutines.core)
-                implementation(libs.okio)
-                implementation(libs.kaml)
+                // Expose API module to consumers - they only see interfaces
+                api(project(":core:fileaccess:api"))
             }
         }
-        val commonTest by getting {
-            dependencies {
-                implementation(libs.kotest.framework.engine)
-                implementation(libs.kotest.assertions.core)
-                implementation(libs.kotlinx.datetime)
-            }
-        }
-        val jvmTest by getting {
-            dependencies {
-                implementation(libs.kotest.runner.junit5)
-            }
-        }
-    }
-}
-
-tasks.named<Test>("jvmTest") {
-    useJUnitPlatform()
-    filter {
-        isFailOnNoMatchingTests = false
     }
 }

@@ -3,6 +3,7 @@ plugins {
 }
 
 kotlin {
+    applyDefaultHierarchyTemplate()
     jvm()
 
     linuxX64()
@@ -13,8 +14,9 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                // Expose all process submodules to consumers of this module
-                api(project(":core:process:core-loop"))
+                // Expose API modules to consumers - they only see interfaces
+                api(project(":core:process:core-loop:api"))
+                api(project(":core:process:search:api"))
             }
         }
     }

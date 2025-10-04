@@ -1,9 +1,11 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
     applyDefaultHierarchyTemplate()
+
     jvm()
 
     linuxX64()
@@ -14,8 +16,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                // Expose API module to consumers - they only see interfaces
-                api(project(":agents:api"))
+                api(libs.kotlinx.serialization.core)
             }
         }
     }
