@@ -5,6 +5,7 @@ import com.duchastel.simon.brainiac.core.fileaccess.FileSystemService
 import com.duchastel.simon.brainiac.core.process.ModelProvider
 import okio.Path
 import okio.FileSystem
+import okio.Path.Companion.toPath
 
 class LLMSearchService(
     private val fileSystemService: FileSystemService,
@@ -144,7 +145,7 @@ class LLMSearchService(
             .filter { it.isNotEmpty() && !it.startsWith("<") && !it.startsWith("#") }
             .forEach { filePath ->
                 try {
-                    val fullPath = ltmRootPath / filePath.toPath()
+                    val fullPath = ltmRootPath / filePath.toPath(normalize = true)
                     if (fileSystem.exists(fullPath) && fileSystem.metadata(fullPath).isRegularFile) {
                         val ltmFile = fileSystemService.readLtmFile(fullPath)
                         result.add(ltmFile)
