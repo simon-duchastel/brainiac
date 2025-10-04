@@ -184,9 +184,11 @@ class DefaultFileSystemService(
         }
     }
 
-    override fun releaseLock(path: Path) = runBlocking {
-        mutex.withLock {
-            locks[path]?.release()
+    override fun releaseLock(path: Path) {
+        runBlocking {
+            mutex.withLock {
+                locks[path]?.release()
+            }
         }
     }
 

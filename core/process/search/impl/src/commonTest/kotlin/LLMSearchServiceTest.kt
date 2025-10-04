@@ -1,23 +1,18 @@
 package com.brainiac.core.search
 
+import com.brainiac.core.fileaccess.FileSystemService
 import com.brainiac.core.fileaccess.LTMFile
 import com.brainiac.core.fileaccess.LTMFrontmatter
-import com.brainiac.core.fileaccess.FileSystemService
-import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.collections.shouldBeEmpty
-import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.string.shouldContain
-import dev.mokkery.answering.calls
 import dev.mokkery.answering.returns
 import dev.mokkery.every
-import dev.mokkery.matcher.any
 import dev.mokkery.mock
 import dev.mokkery.verify
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import okio.Path.Companion.toPath
-import okio.FileSystem
 import okio.fakefilesystem.FakeFileSystem
 
 class LLMSearchServiceTest : StringSpec({
