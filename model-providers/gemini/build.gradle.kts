@@ -44,6 +44,20 @@ kotlin {
         val macosX64Main by getting { dependsOn(nativeMain) }
         val macosArm64Main by getting { dependsOn(nativeMain) }
         val mingwX64Main by getting { dependsOn(nativeMain) }
+
+        val commonTest by getting {
+            dependencies {
+                implementation(libs.kotest.assertions.core)
+                implementation(libs.kotest.framework.engine)
+                implementation(libs.ktor.client.mock)
+            }
+        }
+
+        val jvmTest by getting {
+            dependencies {
+                implementation(libs.kotest.runner.junit5)
+            }
+        }
     }
 }
 
