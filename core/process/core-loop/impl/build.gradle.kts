@@ -18,7 +18,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(project(":core:model-providers:api"))
+                implementation(project(":core:agents:api"))
                 implementation(project(":core:process:core-loop:api"))
                 implementation(project(":core:fileaccess:impl"))
                 implementation(project(":core:identity:impl"))

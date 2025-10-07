@@ -1,13 +1,13 @@
-package com.duchastel.simon.brainiac.core.process
+package com.duchastel.simon.brainiac.core.agent
 
 /**
- * Interface to abstract access to an LLM model
+ * Interface to abstract access to an AI agent
  */
-interface ModelProvider {
+interface Agent {
     /**
      * Processes the given [input] as the context window and returns the resultant
      * context window, which will include the input at the beginning or null if there
      * was an error processing.
      */
-    fun process(input: String): String?
+    suspend fun process(input: String): String?
 }

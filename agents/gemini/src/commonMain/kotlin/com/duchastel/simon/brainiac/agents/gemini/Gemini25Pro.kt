@@ -1,6 +1,6 @@
 package com.duchastel.simon.brainiac.agents.gemini
 
-import com.duchastel.simon.brainiac.core.process.ModelProvider
+import com.duchastel.simon.brainiac.core.agent.Agent
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -8,11 +8,10 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 
 /**
- * Implementation of ModelProvider for Google's Gemini 2.5 Pro model.
+ * Implementation of Agent for Google's Gemini 2.5 Pro model.
  *
  * @param apiKey The Google AI API key for authentication
  * @param client The HTTP client to use (defaults to a configured client, injectable for testing)
@@ -20,13 +19,13 @@ import kotlinx.serialization.json.Json
 class Gemini25Pro(
     private val apiKey: String,
     private val client: HttpClient = createDefaultClient()
-) : ModelProvider {
+) : Agent {
 
     private val modelEndpoint =
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent"
 
-    override fun process(input: String): String? = runBlocking {
-        try {
+    override suspend fun process(input: String): String? {
+        return try {
             val request = GeminiRequest(
                 contents = listOf(
                     Content(

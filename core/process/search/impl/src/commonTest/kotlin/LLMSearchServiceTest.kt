@@ -5,7 +5,7 @@ package com.duchastel.simon.brainiac.core.search
 import com.duchastel.simon.brainiac.core.fileaccess.FileSystemService
 import com.duchastel.simon.brainiac.core.fileaccess.LTMFile
 import com.duchastel.simon.brainiac.core.fileaccess.LTMFrontmatter
-import com.duchastel.simon.brainiac.core.process.ModelProvider
+import com.duchastel.simon.brainiac.core.agent.Agent
 import dev.mokkery.answering.returns
 import dev.mokkery.every
 import dev.mokkery.matcher.any
@@ -23,9 +23,9 @@ class LLMSearchServiceTest : StringSpec({
 
     "should return empty list when query is empty" {
         val mockFileSystemService = mock<FileSystemService>()
-        val mockModelProvider = mock<ModelProvider>()
+        val mockAgent = mock<Agent>()
         val fakeFileSystem = FakeFileSystem()
-        val searchService = LLMSearchService(mockFileSystemService, "test/ltm".toPath(), fakeFileSystem, mockModelProvider)
+        val searchService = LLMSearchService(mockFileSystemService, "test/ltm".toPath(), fakeFileSystem, mockAgent)
 
         val result = searchService.searchLTM("")
         result.shouldBeEmpty()
@@ -33,9 +33,9 @@ class LLMSearchServiceTest : StringSpec({
 
     "should return empty list when LTM directory does not exist" {
         val mockFileSystemService = mock<FileSystemService>()
-        val mockModelProvider = mock<ModelProvider>()
+        val mockAgent = mock<Agent>()
         val fakeFileSystem = FakeFileSystem()
-        val searchService = LLMSearchService(mockFileSystemService, "nonexistent/ltm".toPath(), fakeFileSystem, mockModelProvider)
+        val searchService = LLMSearchService(mockFileSystemService, "nonexistent/ltm".toPath(), fakeFileSystem, mockAgent)
 
         val result = searchService.searchLTM("test query")
         result.shouldBeEmpty()
@@ -43,7 +43,7 @@ class LLMSearchServiceTest : StringSpec({
 
     "should generate XML tree and build correct prompt for LLM" {
         val mockFileSystemService = mock<FileSystemService>()
-        val mockModelProvider = mock<ModelProvider>()
+        val mockAgent = mock<Agent>()
         val fakeFileSystem = FakeFileSystem()
         val ltmPath = "test-ltm".toPath()
         fakeFileSystem.createDirectories(ltmPath)
@@ -52,9 +52,9 @@ class LLMSearchServiceTest : StringSpec({
         val testFile = ltmPath / "test-memory.md"
         fakeFileSystem.write(testFile) { writeUtf8("# Test Memory") }
 
-        every { mockModelProvider.process(any()) } returns ""
+        every { mockAgent.process(any()) } returns ""
 
-        val searchService = LLMSearchService(mockFileSystemService, ltmPath, fakeFileSystem, mockModelProvider)
+        val searchService = LLMSearchService(mockFileSystemService, ltmPath, fakeFileSystem, mockAgent)
 
         // This test verifies the prompt construction
         // Since we're returning empty string from mock, result will be empty
@@ -67,7 +67,7 @@ class LLMSearchServiceTest : StringSpec({
 
     "should parse LLM response and read selected files" {
         val mockFileSystemService = mock<FileSystemService>()
-        val mockModelProvider = mock<ModelProvider>()
+        val mockAgent = mock<Agent>()
         val fakeFileSystem = FakeFileSystem()
         val ltmPath = "test-ltm".toPath()
         fakeFileSystem.createDirectories(ltmPath)
@@ -87,10 +87,10 @@ class LLMSearchServiceTest : StringSpec({
             content = "Test content"
         )
 
-        every { mockModelProvider.process(any()) } returns ""
+        every { mockAgent.process(any()) } returns ""
         every { mockFileSystemService.readLtmFile(testFile) } returns expectedLTMFile
 
-        val searchService = LLMSearchService(mockFileSystemService, ltmPath, fakeFileSystem, mockModelProvider)
+        val searchService = LLMSearchService(mockFileSystemService, ltmPath, fakeFileSystem, mockAgent)
 
         val result = searchService.searchLTM("test query")
 
@@ -100,7 +100,7 @@ class LLMSearchServiceTest : StringSpec({
 
     "should handle LLM response with multiple file paths" {
         val mockFileSystemService = mock<FileSystemService>()
-        val mockModelProvider = mock<ModelProvider>()
+        val mockAgent = mock<Agent>()
         val fakeFileSystem = FakeFileSystem()
         val ltmPath = "test-ltm".toPath()
         fakeFileSystem.createDirectories(ltmPath)
@@ -132,11 +132,11 @@ class LLMSearchServiceTest : StringSpec({
             content = "Content 2"
         )
 
-        every { mockModelProvider.process(any()) } returns ""
+        every { mockAgent.process(any()) } returns ""
         every { mockFileSystemService.readLtmFile(testFile1) } returns ltmFile1
         every { mockFileSystemService.readLtmFile(testFile2) } returns ltmFile2
 
-        val searchService = LLMSearchService(mockFileSystemService, ltmPath, fakeFileSystem, mockModelProvider)
+        val searchService = LLMSearchService(mockFileSystemService, ltmPath, fakeFileSystem, mockAgent)
 
         val result = searchService.searchLTM("test query")
 
@@ -146,14 +146,14 @@ class LLMSearchServiceTest : StringSpec({
 
     "should ignore invalid file paths in LLM response" {
         val mockFileSystemService = mock<FileSystemService>()
-        val mockModelProvider = mock<ModelProvider>()
+        val mockAgent = mock<Agent>()
         val fakeFileSystem = FakeFileSystem()
         val ltmPath = "test-ltm".toPath()
         fakeFileSystem.createDirectories(ltmPath)
 
-        every { mockModelProvider.process(any()) } returns "nonexistent.md\n# Some comment\n<xml>tag</xml>"
+        every { mockAgent.process(any()) } returns "nonexistent.md\n# Some comment\n<xml>tag</xml>"
 
-        val searchService = LLMSearchService(mockFileSystemService, ltmPath, fakeFileSystem, mockModelProvider)
+        val searchService = LLMSearchService(mockFileSystemService, ltmPath, fakeFileSystem, mockAgent)
 
         val result = searchService.searchLTM("test query")
 
@@ -162,7 +162,7 @@ class LLMSearchServiceTest : StringSpec({
 
     "should generate correct LLM prompt with XML structure and return parsed files from LLM response" {
         val mockFileSystemService = mock<FileSystemService>()
-        val mockModelProvider = mock<ModelProvider>()
+        val mockAgent = mock<Agent>()
         val fakeFileSystem = FakeFileSystem()
         val ltmPath = "test-ltm".toPath()
         fakeFileSystem.createDirectories(ltmPath)
@@ -182,7 +182,7 @@ class LLMSearchServiceTest : StringSpec({
         // Mock LLM response
         val mockLLMResponse = "concepts/neural-networks.md\nconcepts/machine-learning.md"
 
-        every { mockModelProvider.process(any()) } returns mockLLMResponse
+        every { mockAgent.process(any()) } returns mockLLMResponse
 
         val ltmFile1 = LTMFile(
             frontmatter = LTMFrontmatter(
@@ -208,7 +208,7 @@ class LLMSearchServiceTest : StringSpec({
         every { mockFileSystemService.readLtmFile(file2) } returns ltmFile1
         every { mockFileSystemService.readLtmFile(file3) } returns ltmFile2
 
-        val searchService = LLMSearchService(mockFileSystemService, ltmPath, fakeFileSystem, mockModelProvider)
+        val searchService = LLMSearchService(mockFileSystemService, ltmPath, fakeFileSystem, mockAgent)
 
         val result = searchService.searchLTM("deep learning and AI")
 

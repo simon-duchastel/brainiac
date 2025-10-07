@@ -2,7 +2,7 @@ package com.duchastel.simon.brainiac.core.search
 
 import com.duchastel.simon.brainiac.core.fileaccess.LTMFile
 import com.duchastel.simon.brainiac.core.fileaccess.FileSystemService
-import com.duchastel.simon.brainiac.core.process.ModelProvider
+import com.duchastel.simon.brainiac.core.agent.Agent
 import okio.Path
 import okio.FileSystem
 import okio.Path.Companion.toPath
@@ -12,10 +12,10 @@ class LLMSearchService(
     private val fileSystemService: FileSystemService,
     private val ltmRootPath: Path,
     private val fileSystem: FileSystem,
-    private val modelProvider: ModelProvider,
+    private val agent: Agent,
 ) : SearchService {
 
-    override fun searchLTM(query: String): List<LTMFile> {
+    override suspend fun searchLTM(query: String): List<LTMFile> {
         if (query.isEmpty()) {
             return emptyList()
         }
@@ -38,7 +38,7 @@ class LLMSearchService(
             appendLine("Do not include any other text or explanations.")
         }
 
-        val response = modelProvider.process(prompt) ?: ""
+        val response = agent.process(prompt) ?: ""
 
         // Parse file paths from LLM response and read the files
         return parseSelectedFiles(response)
