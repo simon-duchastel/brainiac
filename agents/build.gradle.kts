@@ -5,52 +5,32 @@ plugins {
     alias(libs.plugins.kotest)
 }
 
-group = "com.duchastel.simon.brainiac.agents.gemini"
+group = "com.duchastel.simon.brainiac.agents"
 
 kotlin {
     jvm()
 
-    linuxX64()
-    macosX64()
-    macosArm64()
-    mingwX64()
+    // Note: koog currently only supports JVM, JS, WASM, and iOS targets
+    // Native desktop targets (linuxX64, macosX64, etc.) are not supported yet
 
     sourceSets {
         val commonMain by getting {
             dependencies {
                 implementation(project(":core:agents:api"))
-                implementation(libs.ktor.client.core)
-                implementation(libs.ktor.client.content.negotiation)
-                implementation(libs.ktor.serialization.kotlinx.json)
-                implementation(libs.kotlinx.serialization.core)
                 implementation(libs.kotlinx.coroutines.core)
             }
         }
 
         val jvmMain by getting {
             dependencies {
-                implementation(libs.ktor.client.cio)
                 implementation(libs.koog.agents)
             }
         }
-
-        val nativeMain by creating {
-            dependsOn(commonMain)
-            dependencies {
-                implementation(libs.ktor.client.curl)
-            }
-        }
-
-        val linuxX64Main by getting { dependsOn(nativeMain) }
-        val macosX64Main by getting { dependsOn(nativeMain) }
-        val macosArm64Main by getting { dependsOn(nativeMain) }
-        val mingwX64Main by getting { dependsOn(nativeMain) }
 
         val commonTest by getting {
             dependencies {
                 implementation(libs.kotest.assertions.core)
                 implementation(libs.kotest.framework.engine)
-                implementation(libs.ktor.client.mock)
             }
         }
 

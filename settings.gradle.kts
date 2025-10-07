@@ -1,7 +1,7 @@
 rootProject.name = "brainiac"
 
 include(
-    "agents:gemini",
+    "agents",
     "core:identity:api",
     "core:identity:impl",
     "core:fileaccess:api",
