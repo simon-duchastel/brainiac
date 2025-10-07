@@ -32,7 +32,6 @@ subprojects {
     }
 }
 
-// Add test task that delegates to multiplatform test tasks
 tasks.register("test") {
     group = "verification"
     description = "Runs all tests across all platforms"

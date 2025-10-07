@@ -1,38 +1,39 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.mokkery)
     alias(libs.plugins.kotest)
 }
 
-group = "com.duchastel.simon.brainiac.core.process.coreloop"
+group = "com.duchastel.simon.brainiac.agents"
 
 kotlin {
     jvm()
 
-    linuxX64()
-    macosX64()
-    macosArm64()
-    mingwX64()
+    // Note: koog currently only supports JVM, JS, WASM, and iOS targets
+    // Native desktop targets (linuxX64, macosX64, etc.) are not supported yet
 
     sourceSets {
         val commonMain by getting {
             dependencies {
+                implementation(libs.kotlinx.coroutines.core)
                 implementation(project(":core:agents:api"))
-                implementation(project(":core:process:core-loop:api"))
-                implementation(project(":core:fileaccess:impl"))
-                implementation(project(":core:identity:impl"))
-                implementation(project(":core:process:search:impl"))
-                
             }
         }
+
+        val jvmMain by getting {
+            dependencies {
+                implementation(libs.koog.agents)
+            }
+        }
+
         val commonTest by getting {
             dependencies {
-                implementation(kotlin("test"))
-                implementation(libs.kotest.framework.engine)
                 implementation(libs.kotest.assertions.core)
+                implementation(libs.kotest.framework.engine)
             }
         }
+
         val jvmTest by getting {
             dependencies {
                 implementation(libs.kotest.runner.junit5)

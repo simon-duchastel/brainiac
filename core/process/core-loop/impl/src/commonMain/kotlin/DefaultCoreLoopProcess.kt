@@ -6,15 +6,16 @@ import com.duchastel.simon.brainiac.core.fileaccess.FileSystemService
 import com.duchastel.simon.brainiac.core.search.SearchService
 import com.duchastel.simon.brainiac.core.identity.CoreIdentityService
 import com.duchastel.simon.brainiac.core.fileaccess.LTMFile
+import com.duchastel.simon.brainiac.core.agent.Agent
 
 class DefaultCoreLoopProcess(
     private val fileSystemService: FileSystemService,
     private val searchService: SearchService,
     private val coreIdentityService: CoreIdentityService,
-    private val modelProvider: ModelProvider,
+    private val agent: Agent,
 ) : CoreLoopProcess {
 
-    override fun processUserPrompt(userPrompt: String): String {
+    override suspend fun processUserPrompt(userPrompt: String): String {
         val stmContent = fileSystemService.readStm()
 
         val initialContext = buildInitialContext(userPrompt, stmContent)
@@ -25,7 +26,7 @@ class DefaultCoreLoopProcess(
 
         val workingMemory = assembleWorkingMemory(userPrompt, stmContent, ltmExcerpts)
 
-        return modelProvider.process(workingMemory) ?: "Error processing prompt"
+        return agent.process(workingMemory) ?: "Error processing prompt"
     }
 
     private fun buildInitialContext(userPrompt: String, stmContent: String): String {
