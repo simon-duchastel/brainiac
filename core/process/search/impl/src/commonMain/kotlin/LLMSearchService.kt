@@ -5,6 +5,8 @@ import com.duchastel.simon.brainiac.core.fileaccess.FileSystemService
 import com.duchastel.simon.brainiac.core.process.ModelProvider
 import okio.Path
 import okio.FileSystem
+import okio.Path.Companion.toPath
+import okio.Path.Companion.DIRECTORY_SEPARATOR
 
 class LLMSearchService(
     private val fileSystemService: FileSystemService,
@@ -144,7 +146,9 @@ class LLMSearchService(
             .filter { it.isNotEmpty() && !it.startsWith("<") && !it.startsWith("#") }
             .forEach { filePath ->
                 try {
-                    val fullPath = ltmRootPath / filePath
+                    // Normalize path separators to platform-specific separator before converting to Path
+                    val normalizedPath = filePath.replace("/", DIRECTORY_SEPARATOR)
+                    val fullPath = ltmRootPath / normalizedPath.toPath()
                     if (fileSystem.exists(fullPath) && fileSystem.metadata(fullPath).isRegularFile) {
                         val ltmFile = fileSystemService.readLtmFile(fullPath)
                         result.add(ltmFile)
