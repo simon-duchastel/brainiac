@@ -8,6 +8,7 @@ import com.duchastel.simon.brainiac.core.fileaccess.LTMFrontmatter
 import com.duchastel.simon.brainiac.core.agent.Agent
 import dev.mokkery.answering.returns
 import dev.mokkery.every
+import dev.mokkery.everySuspend
 import dev.mokkery.matcher.any
 import dev.mokkery.mock
 import dev.mokkery.verify
@@ -52,7 +53,7 @@ class LLMSearchServiceTest : StringSpec({
         val testFile = ltmPath / "test-memory.md"
         fakeFileSystem.write(testFile) { writeUtf8("# Test Memory") }
 
-        every { mockAgent.process(any()) } returns ""
+        everySuspend { mockAgent.process(any()) } returns ""
 
         val searchService = LLMSearchService(mockFileSystemService, ltmPath, fakeFileSystem, mockAgent)
 
@@ -87,7 +88,7 @@ class LLMSearchServiceTest : StringSpec({
             content = "Test content"
         )
 
-        every { mockAgent.process(any()) } returns ""
+        everySuspend { mockAgent.process(any()) } returns ""
         every { mockFileSystemService.readLtmFile(testFile) } returns expectedLTMFile
 
         val searchService = LLMSearchService(mockFileSystemService, ltmPath, fakeFileSystem, mockAgent)
@@ -132,7 +133,7 @@ class LLMSearchServiceTest : StringSpec({
             content = "Content 2"
         )
 
-        every { mockAgent.process(any()) } returns ""
+        everySuspend { mockAgent.process(any()) } returns ""
         every { mockFileSystemService.readLtmFile(testFile1) } returns ltmFile1
         every { mockFileSystemService.readLtmFile(testFile2) } returns ltmFile2
 
@@ -151,7 +152,7 @@ class LLMSearchServiceTest : StringSpec({
         val ltmPath = "test-ltm".toPath()
         fakeFileSystem.createDirectories(ltmPath)
 
-        every { mockAgent.process(any()) } returns "nonexistent.md\n# Some comment\n<xml>tag</xml>"
+        everySuspend { mockAgent.process(any()) } returns "nonexistent.md\n# Some comment\n<xml>tag</xml>"
 
         val searchService = LLMSearchService(mockFileSystemService, ltmPath, fakeFileSystem, mockAgent)
 
@@ -182,7 +183,7 @@ class LLMSearchServiceTest : StringSpec({
         // Mock LLM response
         val mockLLMResponse = "concepts/neural-networks.md\nconcepts/machine-learning.md"
 
-        every { mockAgent.process(any()) } returns mockLLMResponse
+        everySuspend { mockAgent.process(any()) } returns mockLLMResponse
 
         val ltmFile1 = LTMFile(
             frontmatter = LTMFrontmatter(

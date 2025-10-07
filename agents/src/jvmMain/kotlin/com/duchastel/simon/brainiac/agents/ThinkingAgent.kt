@@ -19,7 +19,7 @@ class ThinkingAgent(
 
     private val koogAgent: AIAgent<String, String> = AIAgent(
         promptExecutor = simpleGoogleAIExecutor(apiKey),
-        llmModel = GoogleModels.Gemini2_0Flash,
+        llmModel = GoogleModels.Gemini2_5Pro,
         systemPrompt = "You are a thoughtful AI assistant focused on helping users think through problems and providing clear, reasoned responses.",
         temperature = 0.7
     )

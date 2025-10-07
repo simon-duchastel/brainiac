@@ -16,8 +16,8 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(project(":core:agents:api"))
                 implementation(libs.kotlinx.coroutines.core)
+                implementation(project(":core:agents:api"))
             }
         }
 

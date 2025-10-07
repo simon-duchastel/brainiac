@@ -12,9 +12,11 @@ import io.kotest.matchers.comparables.shouldBeLessThan
 import dev.mokkery.answering.calls
 import dev.mokkery.answering.returns
 import dev.mokkery.every
+import dev.mokkery.everySuspend
 import dev.mokkery.matcher.any
 import dev.mokkery.mock
 import dev.mokkery.verify
+import dev.mokkery.verifySuspend
 import kotlin.time.Instant
 import kotlin.time.ExperimentalTime
 
@@ -69,10 +71,10 @@ Recent conversation about programming concepts
 
         every { mockFileSystemService.readStm() } returns testStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns coreIdentityContent
-        every { mockSearchService.searchLTM(any()) } returns listOf(testLTMFile)
+        everySuspend { mockSearchService.searchLTM(any()) } returns listOf(testLTMFile)
 
         // Mock modelProvider to return the working memory unchanged so we can verify it
-        every { mockAgent.process(any()) } calls { (input: String) -> input }
+        everySuspend { mockAgent.process(any()) } calls { (input: String) -> input }
 
         val coreLoopProcess = DefaultCoreLoopProcess(
             mockFileSystemService,
@@ -91,7 +93,7 @@ Recent conversation about programming concepts
 
         verify { mockFileSystemService.readStm() }
         verify { mockCoreIdentityService.getCoreIdentityContent() }
-        verify { mockSearchService.searchLTM(any()) }
+        verifySuspend { mockSearchService.searchLTM(any()) }
     }
     
     "should handle empty STM gracefully" {
@@ -106,10 +108,10 @@ Recent conversation about programming concepts
 
         every { mockFileSystemService.readStm() } returns emptyStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns coreIdentityContent
-        every { mockSearchService.searchLTM(any()) } returns emptyList()
+        everySuspend { mockSearchService.searchLTM(any()) } returns emptyList()
 
         // Mock modelProvider to return the working memory unchanged so we can verify it
-        every { mockAgent.process(any()) } calls { (input: String) -> input }
+        everySuspend { mockAgent.process(any()) } calls { (input: String) -> input }
 
         val coreLoopProcess = DefaultCoreLoopProcess(
             mockFileSystemService,
@@ -125,7 +127,7 @@ Recent conversation about programming concepts
         result shouldContain "Hello"
 
         verify { mockFileSystemService.readStm() }
-        verify { mockSearchService.searchLTM(any()) }
+        verifySuspend { mockSearchService.searchLTM(any()) }
     }
     
     "should include all STM components in initial context" {
@@ -156,10 +158,10 @@ Learning about AI systems
         every { mockCoreIdentityService.getCoreIdentityContent() } returns "Core identity"
 
         // Mock modelProvider to return empty string for this test
-        every { mockAgent.process(any()) } returns ""
+        everySuspend { mockAgent.process(any()) } returns ""
 
         var capturedSearchQuery = ""
-        every { mockSearchService.searchLTM(any()) } calls { (query: String) ->
+        everySuspend { mockSearchService.searchLTM(any()) } calls { (query: String) ->
             capturedSearchQuery = query
             emptyList()
         }
@@ -224,10 +226,10 @@ Test summary
 
         every { mockFileSystemService.readStm() } returns testStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns "Test core identity"
-        every { mockSearchService.searchLTM(any()) } returns listOf(testLTMFile)
+        everySuspend { mockSearchService.searchLTM(any()) } returns listOf(testLTMFile)
 
         // Mock modelProvider to return the working memory unchanged so we can verify it
-        every { mockAgent.process(any()) } calls { (input: String) -> input }
+        everySuspend { mockAgent.process(any()) } calls { (input: String) -> input }
 
         val coreLoopProcess = DefaultCoreLoopProcess(
             mockFileSystemService,
@@ -277,10 +279,10 @@ Test summary
 
         every { mockFileSystemService.readStm() } returns testStmContent
         every { mockCoreIdentityService.getCoreIdentityContent() } returns "Core identity"
-        every { mockSearchService.searchLTM(any()) } returns emptyList()
+        everySuspend { mockSearchService.searchLTM(any()) } returns emptyList()
 
         // Mock modelProvider to return the working memory unchanged so we can verify it
-        every { mockAgent.process(any()) } calls { (input: String) -> input }
+        everySuspend { mockAgent.process(any()) } calls { (input: String) -> input }
 
         val coreLoopProcess = DefaultCoreLoopProcess(
             mockFileSystemService,
