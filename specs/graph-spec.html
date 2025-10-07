@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Graph Specifications - Brainiac</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            line-height: 1.6;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #007aff;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 40px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 8px;
+        }
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Graph Specifications</h1>
+    <p>This document contains the workflow diagrams for the Brainiac AI memory system.</p>
+
+    <h2>1. Update STM</h2>
+    <div class="mermaid">
+graph LR
+    Input[update STM request] --> ProcessRequest[process request]
+    ProcessRequest -->|request is new event| AppendEvent[append event]
+    ProcessRequest -->|request is new insight| AppendInsight[append insight]
+    AppendEvent -->|new STM| BuildPrompt[build final prompt]
+    AppendInsight -->|new STM| BuildPrompt
+    BuildPrompt --> Output[prompt]
+    </div>
+
+    <h2>2. Promotion</h2>
+    <div class="mermaid">
+graph LR
+    Start --> DistillLTMs[distill new LTMs]
+    DistillLTMs -->|list of LTM candidates| AppendLTMs[append or create new<br/>LTMs in mind map]
+    AppendLTMs -->|list of updates| UpdateIndex[update mind map index]
+    UpdateIndex --> ClearSTM[clear STM]
+    ClearSTM -->|new STM| BuildPrompt[build final prompt]
+    BuildPrompt --> Output[prompt]
+    </div>
+
+    <h2>3. Thinking Loop</h2>
+    <div class="mermaid">
+graph TB
+    Input[String] --> CallLLM[call llm]
+    CallLLM -->|Message.Response is<br/>Tool.Call && tool ==<br/>update STM| UpdateSTM[update STM]
+    UpdateSTM --> CallLLM
+    UpdateSTM -->|prompt| Output[Output]
+    CallLLM -->|Message.Response is Assistant| Output
+    CallLLM -->|Message.Response &&<br/>context > max_size| Reflection[reflection]
+    Reflection -->|Message.Response is<br/>Tool.Call| CallTool[call tool]
+    Reflection -->|Message.Response is<br/>Assistant| Output
+    CallTool --> CallLLM
+    CallLLM -->|Message.Response is<br/>Tool.Call && tool ==<br/>update STM| UpdateSTM
+    </div>
+
+    <h2>4. Fetch LTM</h2>
+    <div class="mermaid">
+graph LR
+    Input[String] --> GetMindMap[get mind map<br/>file]
+    GetMindMap -->|mind map file| AskLLM[ask LLM<br/>which files<br/>in mind map<br/>are useful]
+    AskLLM -->|list of files| FetchFiles[fetch those<br/>files]
+    FetchFiles --> Output[LTM files]
+    </div>
+
+    <h2>5. Build Final Prompt</h2>
+    <div class="mermaid">
+graph LR
+    Input[prompt, STM, LTM<br/>files] --> Build[build final prompt]
+    Build --> Output[final prompt]
+    </div>
+
+    <h2>6. Setup (Overall Flow)</h2>
+    <div class="mermaid">
+graph TB
+    Start[start] -->|Prompt| FetchSTM[fetch STM file]
+    FetchSTM -->|Prompt, STM| FetchLTM[Fetch LTM]
+    FetchLTM -->|prompt, STM, LTM<br/>files| BuildPrompt[build final prompt]
+    BuildPrompt -->|final prompt| ThinkingLoop[thinking loop]
+    ThinkingLoop --> Reflection[reflection]
+    Reflection --> Promotion[promotion]
+    Promotion --> End[end]
+    </div>
+</body>
+</html>
