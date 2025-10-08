@@ -7,7 +7,7 @@ import com.duchastel.simon.brainiac.core.process.nodes.nodeDistillLongTermMemory
 import com.duchastel.simon.brainiac.core.process.nodes.nodeResetShortTermMemory
 import com.duchastel.simon.brainiac.core.process.nodes.nodeUpdateMindMapIndex
 import com.duchastel.simon.brainiac.core.process.nodes.nodeWriteLongTermMemoryCandidates
-import com.duchastel.simon.brainiac.core.process.nodes.util.passthrough
+import com.duchastel.simon.brainiac.core.process.nodes.util.passthroughWithInput
 
 /**
  * Creates a subgraph that implements the memory promotion process.
@@ -29,8 +29,8 @@ fun AIAgentSubgraphBuilderBase<*, *>.subgraphPromotionProcess(
 ): AIAgentSubgraphDelegate<ShortTermMemory, List<LongTermMemory>> = subgraph(name) {
     val nodeDistillLtmCandidates by nodeDistillLongTermMemoryCandidates()
     val nodeWriteLtmCandidates by nodeWriteLongTermMemoryCandidates()
-    val nodeUpdateMindMap by passthrough(nodeUpdateMindMapIndex())
-    val nodeResetShortTermMemory by passthrough(nodeResetShortTermMemory())
+    val nodeUpdateMindMap by passthroughWithInput(nodeUpdateMindMapIndex())
+    val nodeResetShortTermMemory by passthroughWithInput(nodeResetShortTermMemory())
     val updateState by parallel(
         nodeUpdateMindMap,
             nodeResetShortTermMemory,

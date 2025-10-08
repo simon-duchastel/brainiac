@@ -64,7 +64,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.subgraphThinkingLoop(
         nodeUpdateSTMSubgraph forwardTo nodeFinish
             transformed { prompt ->
                 // TODO: Convert to Message.Response
-                Message.Response.Assistant("TODO")
+                TODO()
             }
     )
 
@@ -83,7 +83,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.subgraphThinkingLoop(
         nodeReflectionNode forwardTo nodeCallToolNode
             transformed { stm ->
                 // TODO: Convert to Message.Response
-                Message.Response.Assistant("TODO")
+                TODO()
             }
     )
 
@@ -91,7 +91,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.subgraphThinkingLoop(
         nodeReflectionNode forwardTo nodeFinish
             transformed { stm ->
                 // TODO: Convert to Message.Response
-                Message.Response.Assistant("TODO")
+                TODO()
             }
     )
 

@@ -36,16 +36,12 @@ fun AIAgentSubgraphBuilderBase<*, *>.subgraphUpdateSTM(
 
     edge(
         nodeProcessRequest forwardTo nodeAppendEventNode
-            transformed { request ->
-                if (request.type == "event") request else null
-            }
+            onCondition  { request -> request.type == "event"}
     )
 
     edge(
         nodeProcessRequest forwardTo nodeAppendInsightNode
-            transformed { request ->
-                if (request.type == "insight") request else null
-            }
+            onCondition { request -> request.type == "insight" }
     )
 
     // Both event and insight nodes produce ShortTermMemory, which needs to be

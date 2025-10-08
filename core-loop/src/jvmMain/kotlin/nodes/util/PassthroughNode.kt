@@ -7,7 +7,7 @@ import kotlin.reflect.typeOf
  * Helper function for passing through the input to a node as its output. [innerNode] effectively
  * acts as a side effect in the graph.
  */
-inline fun <reified Input> passthrough(
+inline fun <reified Input> passthroughWithInput(
     innerNode: AIAgentNodeDelegate<Input, Unit>
 ): AIAgentNodeDelegate<Input, Input> {
     return AIAgentNodeDelegate(

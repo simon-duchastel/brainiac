@@ -28,17 +28,17 @@ fun AIAgentSubgraphBuilderBase<*, *>.subgraphReflection(
     edge(nodeStart forwardTo nodeDistillInsights)
 
     // Route to Promotion if STM is too large
-    edge(
-        nodeDistillInsights forwardTo nodePromotionSubgraph
-            transformed { stm ->
-                // TODO: Add actual STM size check
-                // For now, always route based on size threshold
-                if (stm.memory.length > 10000) { // TODO: Replace with actual max_size check
-                    stm
-                } else {
-                    null
-                }
-            }
+    edge(nodeDistillInsights forwardTo nodePromotionSubgraph
+        onCondition { stm -> stm.memory.length > 1_000 }
+    )
+
+    // Route to Build Final Prompt if STM is not too large
+    edge(nodeDistillInsights forwardTo nodeBuildPromptSubgraph
+        onCondition { stm -> stm.memory.length < 1_000 }
+        transformed { ltmList ->
+            // TODO: Build FinalPromptInput with actual data
+            FinalPromptInput("", ShortTermMemory(""), listOf())
+        }
     )
 
     // Promotion produces List<LongTermMemory>, needs to build final prompt
@@ -47,20 +47,6 @@ fun AIAgentSubgraphBuilderBase<*, *>.subgraphReflection(
             transformed { ltmList ->
                 // TODO: Build FinalPromptInput with actual data
                 FinalPromptInput("", ShortTermMemory(""), ltmList)
-            }
-    )
-
-    // Route to Build Final Prompt if STM is not too large
-    edge(
-        nodeDistillInsights forwardTo nodeBuildPromptSubgraph
-            transformed { stm ->
-                // TODO: Add actual STM size check (inverse of above)
-                if (stm.memory.length <= 10000) {
-                    // TODO: Build FinalPromptInput with actual data
-                    FinalPromptInput("", stm, listOf())
-                } else {
-                    null
-                }
             }
     )
 
