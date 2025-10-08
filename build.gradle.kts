@@ -34,52 +34,16 @@ subprojects {
 
 tasks.register("test") {
     group = "verification"
-    description = "Runs all tests across all platforms"
-    
-    // Find all subprojects that have KMP configuration
-    val jvmTestTasks = subprojects
-        .filter { project -> 
-            // Only include projects that have build files
-            project.buildFile.exists() 
-        }
-        .map { project -> 
-            "${project.path}:jvmTest" 
-        }
-    
-    val nativeTestTasks = subprojects
-        .filter { project -> 
-            // Only include projects that have build files
-            project.buildFile.exists() 
-        }
-        .flatMap { project ->
-            listOf(
-                "${project.path}:linuxX64Test",
-                "${project.path}:macosX64Test", 
-                "${project.path}:macosArm64Test",
-                "${project.path}:mingwX64Test"
-            )
-        }
-    
-    dependsOn(jvmTestTasks + nativeTestTasks)
-}
+    description = "Runs all JVM tests"
 
-// Add native build tasks
-tasks.register("buildNative") {
-    group = "build"
-    description = "Builds native binaries for all platforms"
-    
-    val nativeBuildTasks = subprojects
-        .filter { project -> 
-            project.buildFile.exists() 
+    // Find all subprojects that have build files
+    val jvmTestTasks = subprojects
+        .filter { project ->
+            project.buildFile.exists()
         }
-        .flatMap { project ->
-            listOf(
-                "${project.path}:linuxX64Binaries",
-                "${project.path}:macosX64Binaries", 
-                "${project.path}:macosArm64Binaries",
-                "${project.path}:mingwX64Binaries"
-            )
+        .map { project ->
+            "${project.path}:jvmTest"
         }
-    
-    dependsOn(nativeBuildTasks)
+
+    dependsOn(jvmTestTasks)
 }
