@@ -3,7 +3,7 @@ import ai.koog.agents.core.dsl.builder.AIAgentNodeDelegate
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.message.Message
-import com.duchastel.simon.brainiac.core.process.graphs.LongTermMemory
+import com.duchastel.simon.brainiac.core.process.graphs.*
 
 /**
  * Creates an AI agent node that fetches the current short-term memory state.
@@ -55,4 +55,50 @@ fun AIAgentSubgraphBuilderBase<*, *>.nodeResetShortTermMemory(
     name: String? = null,
 ): AIAgentNodeDelegate<List<LongTermMemory>, Unit> = node(name) { input ->
     input
+}
+
+/**
+ * Creates an AI agent node that processes an update STM request.
+ *
+ * This node analyzes the request and determines the type of update (event or insight)
+ * to route it to the appropriate processing node.
+ *
+ * @param name Optional name for the node. If null, a default name will be assigned.
+ * @return A node delegate that takes [UpdateSTMRequest] as input and produces [UpdateSTMRequest]
+ */
+fun AIAgentSubgraphBuilderBase<*, *>.nodeProcessSTMRequest(
+    name: String? = null,
+): AIAgentNodeDelegate<UpdateSTMRequest, UpdateSTMRequest> = node(name) { input ->
+    // TODO: Implement STM request processing logic
+    input
+}
+
+/**
+ * Creates an AI agent node that appends an event to short-term memory.
+ *
+ * This node adds episodic information (events) to the STM log.
+ *
+ * @param name Optional name for the node. If null, a default name will be assigned.
+ * @return A node delegate that takes [UpdateSTMRequest] as input and produces [ShortTermMemory]
+ */
+fun AIAgentSubgraphBuilderBase<*, *>.nodeAppendEvent(
+    name: String? = null,
+): AIAgentNodeDelegate<UpdateSTMRequest, ShortTermMemory> = node(name) { input ->
+    // TODO: Implement event appending logic
+    ShortTermMemory("TODO: append event - ${input.content}")
+}
+
+/**
+ * Creates an AI agent node that appends an insight to short-term memory.
+ *
+ * This node adds semantic information (insights, facts, learnings) to STM.
+ *
+ * @param name Optional name for the node. If null, a default name will be assigned.
+ * @return A node delegate that takes [UpdateSTMRequest] as input and produces [ShortTermMemory]
+ */
+fun AIAgentSubgraphBuilderBase<*, *>.nodeAppendInsight(
+    name: String? = null,
+): AIAgentNodeDelegate<UpdateSTMRequest, ShortTermMemory> = node(name) { input ->
+    // TODO: Implement insight appending logic
+    ShortTermMemory("TODO: append insight - ${input.content}")
 }

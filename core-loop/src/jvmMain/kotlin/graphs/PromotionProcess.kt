@@ -84,3 +84,65 @@ data class LongTermMemoryCandidate(
 data class ShortTermMemory(
     val memory: String,
 )
+
+/**
+ * Represents a request to update short-term memory.
+ *
+ * Updates can be either new events (episodic) or new insights (semantic).
+ *
+ * @property type The type of update: "event" or "insight"
+ * @property content The content to add to short-term memory
+ */
+data class UpdateSTMRequest(
+    val type: String, // "event" or "insight"
+    val content: String,
+)
+
+/**
+ * Represents the mind map index file content.
+ *
+ * The mind map is stored in `memory/long_term/_index.md` and contains a semantic
+ * graph of all long-term memories with their relationships and metadata.
+ *
+ * @property content The content of the mind map index file
+ */
+data class MindMapFile(
+    val content: String,
+)
+
+/**
+ * Represents the input required to build the final prompt.
+ *
+ * Combines the user's original prompt with context from short-term and long-term memory.
+ *
+ * @property userPrompt The original user prompt
+ * @property shortTermMemory Current short-term memory content
+ * @property longTermMemories Relevant long-term memory entries
+ */
+data class FinalPromptInput(
+    val userPrompt: String,
+    val shortTermMemory: ShortTermMemory,
+    val longTermMemories: List<LongTermMemory>,
+)
+
+/**
+ * Represents a fully assembled prompt ready for the LLM.
+ *
+ * @property prompt The complete prompt with system instructions, memory context, and user query
+ */
+data class FinalPrompt(
+    val prompt: String,
+)
+
+/**
+ * Represents the context needed for the reflection process.
+ *
+ * Contains the conversation history and current state to extract key information.
+ *
+ * @property conversationHistory The history of messages in the current conversation
+ * @property currentSTM Current short-term memory state
+ */
+data class ReflectionContext(
+    val conversationHistory: List<String>,
+    val currentSTM: ShortTermMemory,
+)

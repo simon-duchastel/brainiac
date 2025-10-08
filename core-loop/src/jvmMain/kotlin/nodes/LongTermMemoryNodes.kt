@@ -1,9 +1,7 @@
 package com.duchastel.simon.brainiac.core.process.nodes
 import ai.koog.agents.core.dsl.builder.AIAgentNodeDelegate
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
-import com.duchastel.simon.brainiac.core.process.graphs.LongTermMemory
-import com.duchastel.simon.brainiac.core.process.graphs.LongTermMemoryCandidate
-import com.duchastel.simon.brainiac.core.process.graphs.ShortTermMemory
+import com.duchastel.simon.brainiac.core.process.graphs.*
 
 /**
  * Creates an AI agent node that fetches relevant long-term memories based on input context.
@@ -72,4 +70,67 @@ fun AIAgentSubgraphBuilderBase<*, *>.nodeUpdateMindMapIndex(
     name: String? = null,
 ): AIAgentNodeDelegate<List<LongTermMemory>, Unit> = node(name) { input ->
 
+}
+
+/**
+ * Creates an AI agent node that fetches the mind map index file.
+ *
+ * This node retrieves the `_index.md` file from the LTM directory, which contains
+ * the semantic graph of all long-term memories.
+ *
+ * @param name Optional name for the node. If null, a default name will be assigned.
+ * @return A node delegate that takes a String (user prompt) as input and produces [MindMapFile]
+ */
+fun AIAgentSubgraphBuilderBase<*, *>.nodeGetMindMapFile(
+    name: String? = null,
+): AIAgentNodeDelegate<String, MindMapFile> = node(name) { input ->
+    // TODO: Implement mind map file retrieval
+    MindMapFile("TODO: fetch mind map index")
+}
+
+/**
+ * Creates an AI agent node that asks the LLM which files in the mind map are relevant.
+ *
+ * This node uses the LLM to analyze the mind map index and determine which LTM files
+ * are relevant to the current user prompt.
+ *
+ * @param name Optional name for the node. If null, a default name will be assigned.
+ * @return A node delegate that takes [MindMapFile] as input and produces a List of file paths
+ */
+fun AIAgentSubgraphBuilderBase<*, *>.nodeAskLLMForRelevantFiles(
+    name: String? = null,
+): AIAgentNodeDelegate<MindMapFile, List<String>> = node(name) { input ->
+    // TODO: Implement LLM-based file selection
+    listOf()
+}
+
+/**
+ * Creates an AI agent node that fetches the actual LTM files.
+ *
+ * This node retrieves the content of the specified LTM files from the file system.
+ *
+ * @param name Optional name for the node. If null, a default name will be assigned.
+ * @return A node delegate that takes a List of file paths and produces a List of [LongTermMemory]
+ */
+fun AIAgentSubgraphBuilderBase<*, *>.nodeFetchLTMFiles(
+    name: String? = null,
+): AIAgentNodeDelegate<List<String>, List<LongTermMemory>> = node(name) { input ->
+    // TODO: Implement file fetching logic
+    listOf()
+}
+
+/**
+ * Creates an AI agent node that builds the final prompt from all components.
+ *
+ * This node combines the user prompt, short-term memory, and long-term memories
+ * into a complete prompt ready for the LLM.
+ *
+ * @param name Optional name for the node. If null, a default name will be assigned.
+ * @return A node delegate that takes [FinalPromptInput] and produces [FinalPrompt]
+ */
+fun AIAgentSubgraphBuilderBase<*, *>.nodeBuildFinalPrompt(
+    name: String? = null,
+): AIAgentNodeDelegate<FinalPromptInput, FinalPrompt> = node(name) { input ->
+    // TODO: Implement final prompt building logic
+    FinalPrompt("TODO: build final prompt")
 }

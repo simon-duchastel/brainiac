@@ -13,8 +13,7 @@ import ai.koog.agents.features.eventHandler.feature.EventHandler
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
-import com.duchastel.simon.brainiac.core.process.graphs.ShortTermMemory
-import com.duchastel.simon.brainiac.core.process.graphs.subgraphPromotionProcess
+import com.duchastel.simon.brainiac.core.process.graphs.coreProcessGraph
 
 /**
  * Core loop process that handles user prompts with memory retrieval and assembly.
@@ -66,13 +65,11 @@ class CoreLoopProcess() {
      * @return A string containing the agent's response
      */
     suspend fun processUserPrompt(userPrompt: String): String {
-        val agentStrategy = strategy<String, Unit>("core-loop-strategy") {
-            val promotionProcess by subgraphPromotionProcess()
+        val agentStrategy = strategy<String, String>("core-loop-strategy") {
+            val coreGraph by coreProcessGraph()
 
-            edge(nodeStart forwardTo promotionProcess
-                    transformed { input -> ShortTermMemory(userPrompt) }
-            )
-            edge(promotionProcess forwardTo nodeFinish transformed { })
+            edge(nodeStart forwardTo coreGraph)
+            edge(coreGraph forwardTo nodeFinish)
         }
 
 
@@ -103,6 +100,6 @@ class CoreLoopProcess() {
             }
         )
 
-        return agent.run(userPrompt).let { "Success" }
+        return agent.run(userPrompt)
     }
 }
