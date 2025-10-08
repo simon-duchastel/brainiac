@@ -19,18 +19,10 @@ kotlin {
         }
         val jvmTest by getting {
             dependencies {
-                implementation(kotlin("test"))
                 implementation(libs.kotest.framework.engine)
                 implementation(libs.kotest.assertions.core)
                 implementation(libs.kotest.runner.junit5)
             }
         }
-    }
-}
-
-tasks.named<Test>("jvmTest") {
-    useJUnitPlatform()
-    filter {
-        isFailOnNoMatchingTests = false
     }
 }
