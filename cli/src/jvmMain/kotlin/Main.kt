@@ -1,6 +1,8 @@
 package com.duchastel.simon.brainiac.cli
 
 import com.duchastel.simon.brainiac.core.process.CoreAgent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.runBlocking
 
 fun main() = runBlocking {
@@ -13,26 +15,27 @@ fun main() = runBlocking {
 
     val coreAgent = CoreAgent(apiKey)
 
-    while (true) {
-        print("> ")
-        val input = readlnOrNull()?.trim()
+    print("> ")
+    val input = readlnOrNull()?.trim()
 
-        if (input.isNullOrEmpty()) {
-            continue
-        }
+    if (input.isNullOrBlank()) {
+        println("No input received, exiting...")
+        return@runBlocking
+    }
 
-        if (input.lowercase() in listOf("exit", "quit")) {
-            println("Goodbye!")
-            break
-        }
+    if (input.lowercase() in listOf("exit", "quit")) {
+        println("Goodbye!")
+        return@runBlocking
+    }
 
-        try {
-            coreAgent.run(input).collect {
+    try {
+        coreAgent.run(input)
+            .flowOn(Dispatchers.Default)
+            .collect {
                 println(it)
             }
-        } catch (e: Exception) {
-            println("Error: ${e.message}")
-            e.printStackTrace()
-        }
+    } catch (e: Exception) {
+        println("Error: ${e.message}")
+        e.printStackTrace()
     }
 }
