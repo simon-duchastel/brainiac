@@ -11,10 +11,15 @@ kotlin {
     jvm()
 
     sourceSets {
+        val commonMain by getting {
+            dependencies {
+                implementation(libs.okio)
+                implementation(libs.kotlinx.coroutines.core)
+            }
+        }
         val jvmMain by getting {
             dependencies {
                 implementation(libs.koog.agents)
-                implementation(libs.kotlinx.coroutines.core)
             }
         }
         val jvmTest by getting {
