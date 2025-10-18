@@ -2,23 +2,14 @@
 
 package com.duchastel.simon.brainiac.core.process
 
-import ai.koog.agents.core.agent.context.AIAgentGraphContextBase
 import ai.koog.agents.core.agent.entity.AIAgentGraphStrategy
-import ai.koog.agents.core.agent.entity.AIAgentNodeBase
 import ai.koog.agents.core.agent.entity.createStorageKey
-import ai.koog.agents.core.dsl.builder.AIAgentEdgeBuilderIntermediate
-import ai.koog.agents.core.dsl.builder.AIAgentNodeDelegate
-import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
-import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
-import ai.koog.agents.core.dsl.builder.EdgeTransformationDslMarker
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
 import ai.koog.agents.core.dsl.extension.nodeExecuteTool
-import ai.koog.agents.core.dsl.extension.nodeLLMRequest
 import ai.koog.agents.core.dsl.extension.nodeLLMSendToolResult
 import ai.koog.agents.core.dsl.extension.onAssistantMessage
 import ai.koog.agents.core.dsl.extension.onToolCall
-import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.message.Message
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemory
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRequest
@@ -26,8 +17,8 @@ import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemory
 import com.duchastel.simon.brainiac.core.process.memory.loadInitialWorkingMemory
 import com.duchastel.simon.brainiac.core.process.memory.recallLongTermMemory
 import com.duchastel.simon.brainiac.core.process.memory.recallShortTermMemory
+import com.duchastel.simon.brainiac.core.process.memory.updateLongTermMemory
 import com.duchastel.simon.brainiac.core.process.memory.updateShortTermMemory
-import kotlin.reflect.typeOf
 
 /**
  * Core loop process that handles user prompts with memory retrieval and assembly.
@@ -97,7 +88,7 @@ object CoreLoop {
                 }
             }
             val updateShortTermMemory by updateShortTermMemory<Message.Response>("update_short_term_memory")
-            val updateLongTermMemory by updateShortTermMemory<Message.Response>("update_long_term_memory")
+            val updateLongTermMemory by updateLongTermMemory<Message.Response>("update_long_term_memory")
 
             val executeTool by nodeExecuteTool()
             val sendToolResult by nodeLLMSendToolResult()
@@ -115,7 +106,14 @@ object CoreLoop {
                 }
             )
             recallLongTermMemory then prepareWorkingMemoryInputs then loadInitialWorkingMemory then
-                    appendUserQuery then requestLlm then updateShortTermMemory then updateLongTermMemory
+                    appendUserQuery then requestLlm then updateShortTermMemory
+
+            edge(
+                updateShortTermMemory forwardTo updateLongTermMemory
+                transformed { llmResponse ->
+                    storage.getValue(shortTermMemoryKey) to llmResponse
+                }
+            )
 
             edge(
                 updateLongTermMemory forwardTo executeTool
