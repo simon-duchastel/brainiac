@@ -41,37 +41,11 @@ The system autonomously manages what to remember, what to forget, and how to org
 - **Organization**: Refactors LTM structure based on access patterns
 
 See [specs/spec-v1.md](specs/spec-v1.md) for detailed architecture documentation.
-
-## Project Structure
-
-```
-brainiac/
-├── core-loop/           # Main memory system implementation
-│   └── src/
-│       ├── jvmMain/
-│       │   └── kotlin/
-│       │       ├── CoreLoopProcess.kt          # Main process orchestrator
-│       │       ├── nodes/
-│       │       │   ├── LongTermMemoryNodes.kt  # LTM operations
-│       │       │   ├── ShortTermMemoryNodes.kt # STM operations
-│       │       │   └── util/
-│       │       │       └── PassthroughNode.kt  # Helper utilities
-│       │       └── graphs/
-│       │           └── PromotionProcess.kt     # Memory promotion logic
-│       └── jvmTest/     # Unit tests
-├── docs/                # Additional documentation
-├── specs/               # System specifications
-└── prompts/             # LLM prompt templates
-```
-
 ## Building
 
 This project uses Gradle with Kotlin Multiplatform:
 
 ```bash
-# Run tests
-./gradlew test
-
 # Build the project
 ./gradlew build
 ```
