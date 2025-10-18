@@ -6,16 +6,14 @@ import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.features.eventHandler.feature.EventHandler
-import ai.koog.agents.core.feature.handler.agent.AgentCompletedContext
-import ai.koog.agents.core.feature.handler.agent.AgentStartingContext
+import ai.koog.agents.features.tokenizer.feature.MessageTokenizer
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.executor.clients.google.GoogleModels
-import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.all.simpleGoogleAIExecutor
-import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
 import ai.koog.prompt.message.Message
+import ai.koog.prompt.tokenizer.SimpleRegexBasedTokenizer
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.callbackFlow
 
 /**
  * Core agent for the Brainiac AI Memory System.
@@ -35,7 +33,7 @@ class CoreAgent(
     fun run(userQuery: String): Flow<String> {
         val coreLoopStrategy = CoreLoop.strategy("core-loop")
 
-        return flow {
+        return callbackFlow {
             val agent = AIAgent(
                 promptExecutor = simpleGoogleAIExecutor(googleApiKey),
                 toolRegistry = ToolRegistry.EMPTY,
@@ -56,17 +54,20 @@ class CoreAgent(
                     maxAgentIterations = Int.MAX_VALUE,
                 ),
                 installFeatures = {
+                    install(MessageTokenizer) {
+                        tokenizer = SimpleRegexBasedTokenizer()
+                    }
                     install(EventHandler) {
                         onLLMCallCompleted { ctx ->
                             ctx.responses.forEach {
                                 when (it) {
                                     is Message.Assistant -> {
-                                        emit("------ Assistant")
-                                        emit(it.content)
+                                        trySend("------ Assistant")
+                                        trySend(it.content)
                                     }
 
                                     is Message.Tool.Call -> {
-                                        emit("Calling ${it.tool}")
+                                        trySend("Calling ${it.tool}")
                                     }
                                 }
                             }
@@ -76,6 +77,7 @@ class CoreAgent(
             )
 
             agent.run(userQuery)
+            close()
         }
     }
 }

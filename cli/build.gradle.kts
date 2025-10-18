@@ -12,6 +12,8 @@ kotlin {
         }
     }
 
+    jvmToolchain(17)
+
     sourceSets {
         val jvmMain by getting {
             dependencies {
@@ -20,4 +22,8 @@ kotlin {
             }
         }
     }
+}
+
+tasks.withType<JavaExec> {
+    standardInput = System.`in`
 }
