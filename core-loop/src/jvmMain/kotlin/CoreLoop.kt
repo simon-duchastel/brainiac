@@ -18,7 +18,6 @@ import ai.koog.agents.core.dsl.extension.nodeLLMRequest
 import ai.koog.agents.core.dsl.extension.nodeLLMSendToolResult
 import ai.koog.agents.core.dsl.extension.onAssistantMessage
 import ai.koog.agents.core.dsl.extension.onToolCall
-import ai.koog.agents.core.utils.Some
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.message.Message
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemory
