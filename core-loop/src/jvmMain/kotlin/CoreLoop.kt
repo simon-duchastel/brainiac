@@ -14,6 +14,7 @@ import ai.koog.prompt.message.Message
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemory
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRequest
 import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemory
+import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
 import com.duchastel.simon.brainiac.core.process.memory.loadInitialWorkingMemory
 import com.duchastel.simon.brainiac.core.process.memory.recallLongTermMemory
 import com.duchastel.simon.brainiac.core.process.memory.recallShortTermMemory
@@ -55,7 +56,9 @@ import com.duchastel.simon.brainiac.core.process.memory.updateShortTermMemory
  * 1. Ask sub-model to read through all memory accesses and reinforce or de-prioritize memories
  *    based on most important accesses. Condenses and distills information
  */
-object CoreLoop {
+class CoreLoop(
+    private val shortTermMemoryRepository: ShortTermMemoryRepository,
+) {
     fun strategy(
         name: String,
     ): AIAgentGraphStrategy<String, Unit> {
@@ -63,7 +66,10 @@ object CoreLoop {
             val userQueryKey = createStorageKey<String>("${name}_user_prompt")
             val shortTermMemoryKey = createStorageKey<ShortTermMemory>("${name}_short_term_memory")
 
-            val recallShortTermMemory by recallShortTermMemory("recall_short_term_memory")
+            val recallShortTermMemory by recallShortTermMemory(
+                name = "recall_short_term_memory",
+                shortTermMemoryRepository = shortTermMemoryRepository
+            )
             val recallLongTermMemory by recallLongTermMemory("recall_short_term_memory")
             val prepareWorkingMemoryInputs by node<LongTermMemory, Pair<ShortTermMemory, LongTermMemory>>("prepare_working_memory_inputs") { longTermMemory ->
                 val shortTermMemory = storage.getValue(shortTermMemoryKey)
@@ -87,7 +93,10 @@ object CoreLoop {
                     requestLLM()
                 }
             }
-            val updateShortTermMemory by updateShortTermMemory<Message.Response>("update_short_term_memory")
+            val updateShortTermMemory by updateShortTermMemory<Message.Response>(
+                name = "update_short_term_memory",
+                shortTermMemoryRepository = shortTermMemoryRepository
+            )
             val updateLongTermMemory by updateLongTermMemory<Message.Response>("update_long_term_memory")
 
             val executeTool by nodeExecuteTool()

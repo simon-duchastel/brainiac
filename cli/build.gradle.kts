@@ -19,6 +19,7 @@ kotlin {
             dependencies {
                 implementation(project(":core-loop"))
                 implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.okio)
             }
         }
     }

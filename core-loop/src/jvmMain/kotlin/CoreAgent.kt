@@ -12,6 +12,7 @@ import ai.koog.prompt.executor.clients.google.GoogleModels
 import ai.koog.prompt.executor.llms.all.simpleGoogleAIExecutor
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.tokenizer.SimpleRegexBasedTokenizer
+import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
@@ -23,7 +24,10 @@ import kotlinx.coroutines.flow.callbackFlow
  */
 class CoreAgent(
     private val googleApiKey: String,
+    shortTermMemoryRepository: ShortTermMemoryRepository,
 ) {
+    private val coreLoop = CoreLoop(shortTermMemoryRepository)
+
     /**
      * Runs the agent with the given user query.
      *
@@ -31,7 +35,7 @@ class CoreAgent(
      * @return The agent's response (currently returns empty string as strategy outputs Unit)
      */
     fun run(userQuery: String): Flow<String> {
-        val coreLoopStrategy = CoreLoop.strategy("core-loop")
+        val coreLoopStrategy = coreLoop.strategy("core-loop")
 
         return callbackFlow {
             val agent = AIAgent(
