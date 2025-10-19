@@ -12,6 +12,7 @@ import ai.koog.prompt.executor.clients.google.GoogleModels
 import ai.koog.prompt.executor.llms.all.simpleGoogleAIExecutor
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.tokenizer.SimpleRegexBasedTokenizer
+import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
 import com.duchastel.simon.brainiac.core.process.callbacks.AgentEvent
 import com.duchastel.simon.brainiac.core.process.callbacks.ToolUse
 import kotlinx.coroutines.runBlocking
@@ -24,15 +25,18 @@ import kotlinx.coroutines.runBlocking
  */
 class CoreAgent(
     private val googleApiKey: String,
+    shortTermMemoryRepository: ShortTermMemoryRepository,
     private val onEvent: (AgentEvent) -> Unit,
 ) {
+    private val coreLoop = CoreLoop(shortTermMemoryRepository)
+
     /**
      * Runs the agent with the given user query.
      *
      * @param userQuery The user's input query
      */
     fun run(userQuery: String) = runBlocking {
-        val coreLoopStrategy = CoreLoop.strategy("core-loop")
+        val coreLoopStrategy = coreLoop.strategy("core-loop")
 
         val agent = AIAgent(
             promptExecutor = simpleGoogleAIExecutor(googleApiKey),

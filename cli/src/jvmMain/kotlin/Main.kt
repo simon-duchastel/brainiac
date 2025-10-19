@@ -3,16 +3,24 @@ package com.duchastel.simon.brainiac.cli
 import com.duchastel.simon.brainiac.core.process.CoreAgent
 import com.duchastel.simon.brainiac.core.process.callbacks.AgentEvent
 import com.duchastel.simon.brainiac.core.process.callbacks.ToolUse
+import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
+import okio.Path.Companion.toPath
 
 fun main() {
-    println("=== Brainiac AI Memory System ===")
+    println("===== Brainiac AI =====")
     println("Type 'exit' or 'quit' to exit")
     println()
 
     val apiKey = System.getenv("GOOGLE_API_KEY")
         ?: error("GOOGLE_API_KEY environment variable not set")
 
-    val coreAgent = CoreAgent(apiKey) { event ->
+    val shortTermMemoryRepository = ShortTermMemoryRepository(
+        brainiacRootDirectory = "~/.brainiac/".toPath()
+    )
+    val coreAgent = CoreAgent(
+        googleApiKey = apiKey,
+        shortTermMemoryRepository = shortTermMemoryRepository
+    ) { event ->
         when (event) {
             is AgentEvent.AssistantMessage -> {
                 println(event.content)
@@ -35,25 +43,23 @@ fun main() {
         }
     }
 
-    while (true) {
-        print("> ")
-        val input = readlnOrNull()?.trim()
+    print("> ")
+    val input = readlnOrNull()?.trim()
 
-        if (input.isNullOrBlank()) {
-            println("No input received, exiting...")
-            break
-        }
+    if (input.isNullOrBlank()) {
+        println("No input received, exiting...")
+        return
+    }
 
-        if (input.lowercase() in listOf("exit", "quit")) {
-            println("Goodbye!")
-            break
-        }
+    if (input.lowercase() in listOf("exit", "quit")) {
+        println("Goodbye!")
+        return
+    }
 
-        try {
-            coreAgent.run(input)
-        } catch (e: Exception) {
-            println("Error: ${e.message}")
-            e.printStackTrace()
-        }
+    try {
+        coreAgent.run(input)
+    } catch (e: Exception) {
+        println("Error: ${e.message}")
+        e.printStackTrace()
     }
 }
