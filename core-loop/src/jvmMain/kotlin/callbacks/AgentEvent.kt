@@ -1,6 +1,6 @@
 package com.duchastel.simon.brainiac.core.process.callbacks
 
-import com.duchastel.simon.brainiac.core.process.tools.ToolUse
+import com.duchastel.simon.brainiac.core.process.callbacks.ToolUse
 
 /**
  * Sealed interface representing events that occur during agent execution.

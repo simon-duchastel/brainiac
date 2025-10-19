@@ -1,4 +1,4 @@
-package com.duchastel.simon.brainiac.core.process.tools
+package com.duchastel.simon.brainiac.core.process.callbacks
 
 /**
  * Sealed interface representing tool use actions available to the AI agent.

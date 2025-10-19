@@ -13,7 +13,7 @@ import ai.koog.prompt.executor.llms.all.simpleGoogleAIExecutor
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.tokenizer.SimpleRegexBasedTokenizer
 import com.duchastel.simon.brainiac.core.process.callbacks.AgentEvent
-import com.duchastel.simon.brainiac.core.process.tools.ToolUse
+import com.duchastel.simon.brainiac.core.process.callbacks.ToolUse
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -66,7 +66,6 @@ class CoreAgent(
                                 }
 
                                 is Message.Tool.Call -> {
-                                    // Map Koog tool calls to our ToolUse interface
                                     val toolUse = when (it.tool) {
                                         "store_short_term_memory" -> ToolUse.StoreShortTermMemory
                                         "store_long_term_memory" -> ToolUse.StoreLongTermMemory

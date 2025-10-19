@@ -2,7 +2,7 @@ package com.duchastel.simon.brainiac.cli
 
 import com.duchastel.simon.brainiac.core.process.CoreAgent
 import com.duchastel.simon.brainiac.core.process.callbacks.AgentEvent
-import com.duchastel.simon.brainiac.core.process.tools.ToolUse
+import com.duchastel.simon.brainiac.core.process.callbacks.ToolUse
 
 fun main() {
     println("=== Brainiac AI Memory System ===")
@@ -15,43 +15,45 @@ fun main() {
     val coreAgent = CoreAgent(apiKey) { event ->
         when (event) {
             is AgentEvent.AssistantMessage -> {
-                println("Assistant: ${event.content}")
+                println(event.content)
             }
             is AgentEvent.ToolCall -> {
-                val toolName = when (event.tool) {
-                    ToolUse.StoreShortTermMemory -> "store_short_term_memory"
-                    ToolUse.StoreLongTermMemory -> "store_long_term_memory"
+                val toolUseMessage = when (event.tool) {
+                    ToolUse.StoreShortTermMemory -> "Updating short term memory..."
+                    ToolUse.StoreLongTermMemory -> "Updating long term memory..."
                 }
-                println("[Tool Call: $toolName]")
+                println(toolUseMessage)
             }
             is AgentEvent.ToolResult -> {
-                val toolName = when (event.tool) {
-                    ToolUse.StoreShortTermMemory -> "store_short_term_memory"
-                    ToolUse.StoreLongTermMemory -> "store_long_term_memory"
+                val toolResultMessage = when (event.tool) {
+                    ToolUse.StoreShortTermMemory -> "Done updating short term memory!"
+                    ToolUse.StoreLongTermMemory -> "Done updating long term memory!"
                 }
                 val status = if (event.success) "SUCCESS" else "FAILED"
-                println("[Tool Result: $toolName - $status]")
+                println("$toolResultMessage ($status)")
             }
         }
     }
 
-    print("> ")
-    val input = readlnOrNull()?.trim()
+    while (true) {
+        print("> ")
+        val input = readlnOrNull()?.trim()
 
-    if (input.isNullOrBlank()) {
-        println("No input received, exiting...")
-        return
-    }
+        if (input.isNullOrBlank()) {
+            println("No input received, exiting...")
+            break
+        }
 
-    if (input.lowercase() in listOf("exit", "quit")) {
-        println("Goodbye!")
-        return
-    }
+        if (input.lowercase() in listOf("exit", "quit")) {
+            println("Goodbye!")
+            break
+        }
 
-    try {
-        coreAgent.run(input)
-    } catch (e: Exception) {
-        println("Error: ${e.message}")
-        e.printStackTrace()
+        try {
+            coreAgent.run(input)
+        } catch (e: Exception) {
+            println("Error: ${e.message}")
+            e.printStackTrace()
+        }
     }
 }
