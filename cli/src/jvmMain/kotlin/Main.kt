@@ -1,14 +1,13 @@
 package com.duchastel.simon.brainiac.cli
 
 import com.duchastel.simon.brainiac.core.process.CoreAgent
+import com.duchastel.simon.brainiac.core.process.callbacks.AgentEvent
+import com.duchastel.simon.brainiac.core.process.callbacks.ToolUse
 import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.runBlocking
 import okio.Path.Companion.toPath
 
-fun main() = runBlocking {
-    println("=== Brainiac AI Memory System ===")
+fun main() {
+    println("===== Brainiac AI =====")
     println("Type 'exit' or 'quit' to exit")
     println()
 
@@ -18,27 +17,47 @@ fun main() = runBlocking {
     val shortTermMemoryRepository = ShortTermMemoryRepository(
         brainiacRootDirectory = "~/.brainiac/".toPath()
     )
-    val coreAgent = CoreAgent(googleApiKey = apiKey, shortTermMemoryRepository = shortTermMemoryRepository)
+    val coreAgent = CoreAgent(
+        googleApiKey = apiKey,
+        shortTermMemoryRepository = shortTermMemoryRepository
+    ) { event ->
+        when (event) {
+            is AgentEvent.AssistantMessage -> {
+                println(event.content)
+            }
+            is AgentEvent.ToolCall -> {
+                val toolUseMessage = when (event.tool) {
+                    ToolUse.StoreShortTermMemory -> "Updating short term memory..."
+                    ToolUse.StoreLongTermMemory -> "Updating long term memory..."
+                }
+                println(toolUseMessage)
+            }
+            is AgentEvent.ToolResult -> {
+                val toolResultMessage = when (event.tool) {
+                    ToolUse.StoreShortTermMemory -> "Done updating short term memory!"
+                    ToolUse.StoreLongTermMemory -> "Done updating long term memory!"
+                }
+                val status = if (event.success) "SUCCESS" else "FAILED"
+                println("$toolResultMessage ($status)")
+            }
+        }
+    }
 
     print("> ")
     val input = readlnOrNull()?.trim()
 
     if (input.isNullOrBlank()) {
         println("No input received, exiting...")
-        return@runBlocking
+        return
     }
 
     if (input.lowercase() in listOf("exit", "quit")) {
         println("Goodbye!")
-        return@runBlocking
+        return
     }
 
     try {
         coreAgent.run(input)
-            .flowOn(Dispatchers.Default)
-            .collect {
-                println(it)
-            }
     } catch (e: Exception) {
         println("Error: ${e.message}")
         e.printStackTrace()
