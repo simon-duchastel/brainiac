@@ -1,8 +1,11 @@
 package com.duchastel.simon.brainiac.core.process.memory
 
+import ai.koog.agents.core.agent.entity.createStorageKey
 import ai.koog.agents.core.dsl.builder.AIAgentBuilderDslMarker
 import ai.koog.agents.core.dsl.builder.AIAgentNodeDelegate
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
+import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
+import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.features.tokenizer.feature.tokenizer
 import ai.koog.prompt.dsl.prompt
 import kotlinx.serialization.Serializable
@@ -16,14 +19,24 @@ fun AIAgentSubgraphBuilderBase<*, *>.recallShortTermMemory(
 }
 
 @AIAgentBuilderDslMarker
-inline fun <reified T> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemory(
+inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemory(
     name: String? = null,
-    tokenThreshold: Long = 50_000,
+    tokenThreshold: Int = 50_000,
     shortTermMemoryRepository: ShortTermMemoryRepository,
-): AIAgentNodeDelegate<T, T> = node(name) { input ->
-    val currentTokens = tokenizer.tokenCountFor(llm.prompt)
+): AIAgentSubgraphDelegate<T, T> = subgraph(name) {
+    val initialInputKey = createStorageKey<T>("${name}_initial_input")
 
-    if (currentTokens > tokenThreshold) {
+    val storeIntitalInput by node<T, Unit>("${name}_store_initial_input") { input ->
+        storage.set(initialInputKey, input)
+    }
+    val cleanup by node<Unit, T>("${name}_cleanup") {
+        storage.getValue(initialInputKey)
+    }
+    val evaluateNeedForShortTermMemoryUpdate by node<Unit, Boolean>("${name}_evalute_tokens") {
+        tokenizer.tokenCountFor(llm.prompt) >= tokenThreshold
+    }
+
+    val updatePrompt by node<Unit, Unit>("${name}_update_prompt") {
         llm.writeSession {
             updatePrompt {
                 system {
@@ -64,7 +77,20 @@ inline fun <reified T> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemory(
         }
     }
 
-    input
+    edge(nodeStart forwardTo storeIntitalInput)
+    edge(storeIntitalInput forwardTo evaluateNeedForShortTermMemoryUpdate)
+    edge(
+        evaluateNeedForShortTermMemoryUpdate forwardTo updatePrompt
+        onCondition { it }
+        transformed { }
+    )
+    edge(
+        evaluateNeedForShortTermMemoryUpdate forwardTo cleanup
+                onCondition { !it }
+                transformed { }
+    )
+    edge(updatePrompt forwardTo cleanup)
+    edge(cleanup forwardTo nodeFinish)
 }
 
 @Serializable
