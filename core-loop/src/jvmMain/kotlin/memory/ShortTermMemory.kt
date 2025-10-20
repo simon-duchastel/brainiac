@@ -7,7 +7,8 @@ import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.features.tokenizer.feature.tokenizer
-import ai.koog.prompt.dsl.prompt
+import ai.koog.prompt.dsl.Prompt
+import ai.koog.prompt.markdown.markdown
 import ai.koog.prompt.text.TextContentBuilderBase
 import ai.koog.prompt.xml.xml
 import kotlinx.serialization.Serializable
@@ -27,9 +28,11 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
     shortTermMemoryRepository: ShortTermMemoryRepository,
 ): AIAgentSubgraphDelegate<T, T> = subgraph(name) {
     val initialInputKey = createStorageKey<T>("${name}_initial_input")
+    val initialPromptKey = createStorageKey<Prompt>("${name}_initial_prompt")
 
-    val storeInitalInput by node<T, Unit>("${name}_store_initial_input") { input ->
+    val setup by node<T, Unit>("${name}_setup") { input ->
         storage.set(initialInputKey, input)
+        storage.set(initialPromptKey, llm.prompt)
     }
     val cleanup by node<Unit, T>("${name}_cleanup") {
         storage.getValue(initialInputKey)
@@ -38,61 +41,95 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
         tokenizer.tokenCountFor(llm.prompt) >= tokenThreshold
     }
 
-    val updatePrompt by node<Unit, Unit>("${name}_update_prompt") {
+    val updateEvents by node<Unit, List<String>>("${name}_update_events") {
+        val originalPrompt = storage.getValue(initialPromptKey)
         llm.writeSession {
+            rewritePrompt { originalPrompt }
             updatePrompt {
                 system {
                     +"""
-                    Please synthesize the current working memory into a concise, actionable short-term memory.
-                    Focus on:
-                    - Key facts and information from the conversation
-                    - Current tasks or goals
-                    - Important context that should be retained
-                    - Action items or next steps
-
-                    Provide a clear, structured summary that will be useful for future interactions.
+                    Review the conversation and the current short-term memory.
+                    Identify any events that should be added to the events list based on the current context.
+                    
+                    Return all new events to be added (not including current events), in structured format.
                     """.trimIndent()
                 }
             }
-
-            // Request LLM to synthesize the memory
-            val response = requestLLMWithoutTools()
-            val synthesizedMemory = response.content
-
-            // Write the synthesized memory to disk as a thought
-            val currentMemory = shortTermMemoryRepository.getShortTermMemory()
-            val updatedMemory = ShortTermMemory(
-                thoughts = listOf(synthesizedMemory),
-                goals = currentMemory.goals,
-                events = currentMemory.events
-            )
-            shortTermMemoryRepository.updateShortTermMemory(updatedMemory)
-
-            // Replace working memory with just the summary
-            rewritePrompt {
-                prompt("short_term_memory_summary") {
-                    system {
-                        +synthesizedMemory
-                    }
+            requestLLMStructured<List<String>>().getOrNull()!!.structure
+        }
+    }
+    val updateGoals by node<List<String>, Pair<List<String>, List<Goal>>>("${name}_update_goals") { events ->
+        val originalPrompt = storage.getValue(initialPromptKey)
+        llm.writeSession {
+            rewritePrompt { originalPrompt }
+            updatePrompt {
+                system {
+                    +"""
+                    Review the conversation and the current short-term memory.
+                    Identify any goals that should be added, removed, or have their completion status changed.
+                    
+                    Return the updated complete list of goals, including all goals which should be kept, in structured format.
+                    """.trimIndent()
                 }
             }
+            val goals =requestLLMStructured<List<Goal>>().getOrNull()!!.structure
+            events to goals
+        }
+    }
+    val updateThoughts by node<Pair<List<String>, List<Goal>>, Triple<List<String>, List<Goal>, List<String>>>("${name}_update_thoughts") { (events, goals) ->
+        val originalPrompt = storage.getValue(initialPromptKey)
+        llm.writeSession {
+            rewritePrompt { originalPrompt }
+            updatePrompt {
+                system {
+                    +"""
+                    Review the conversation and the current short-term memory.
+                    Identify any thoughts that should be distilled and added to the thoughts list
+                    
+                    Return all new thoughts to be added (not including current thoughts), in structured format.
+                    """.trimIndent()
+                }
+            }
+            val thoughts = requestLLMStructured<List<String>>().getOrNull()!!.structure
+            Triple(events, goals, thoughts)
         }
     }
 
-    edge(nodeStart forwardTo storeInitalInput)
-    edge(storeInitalInput forwardTo evaluateNeedForShortTermMemoryUpdate)
+    val updatePrompt by node<Triple<List<String>, List<Goal>, List<String>>, Unit>("${name}_update_prompt") { (events, goals, thoughts) ->
+        shortTermMemoryRepository.updateThoughts(thoughts)
+        shortTermMemoryRepository.updateGoals(goals)
+        events.forEach { shortTermMemoryRepository.addEvent(it) }
+        val updatedShortTermMemory = shortTermMemoryRepository.getShortTermMemory()
+
+        val originalPrompt = storage.getValue(initialPromptKey)
+        llm.writeSession {
+            rewritePrompt { originalPrompt }
+            updatePrompt {
+                system { summarizeWorkingMemory(updatedShortTermMemory) }
+            }
+            val summaryMessage = requestLLM()
+            rewriteWorkingMemory(
+                updatedShortTermMemory,
+                LongTermMemory("")
+            )
+            prompt = prompt.withMessages { currentMessages -> currentMessages + summaryMessage }
+        }
+    }
+
+    edge(nodeStart forwardTo setup)
+    edge(setup forwardTo evaluateNeedForShortTermMemoryUpdate)
     edge(
-        evaluateNeedForShortTermMemoryUpdate forwardTo updatePrompt
+        evaluateNeedForShortTermMemoryUpdate forwardTo updateEvents
         onCondition { it }
         transformed { }
     )
+    updateEvents then updateGoals then updateThoughts then updatePrompt then cleanup
     edge(
         evaluateNeedForShortTermMemoryUpdate forwardTo cleanup
                 onCondition { !it }
                 transformed { }
     )
-    edge(updatePrompt forwardTo cleanup)
-    edge(cleanup forwardTo nodeFinish)
+    cleanup then nodeFinish
 }
 
 @Serializable
@@ -137,3 +174,15 @@ data class Goal(
     val description: String,
     val completed: Boolean = false,
 )
+
+fun TextContentBuilderBase<*>.summarizeWorkingMemory(
+    updatedShortTermMemory: ShortTermMemory
+) = markdown {
+    +"Summarize the current context based on the updated short-term memory below:"
+
+    updatedShortTermMemory.asXmlRepresentation()
+
+    +"Remove any irrelevant or redundant information as well as any information already included in the updated short-term memory"
+    +"For example, discard any information pertaining to completed goals which you feel will not be relevant moving forward"
+    +"Keep any information that will be useful in the future for working memory, ie. information immediately pertinent to what the user is asking you to do."
+}
