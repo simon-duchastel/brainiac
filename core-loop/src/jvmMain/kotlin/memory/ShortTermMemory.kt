@@ -5,13 +5,14 @@ import ai.koog.agents.core.dsl.builder.AIAgentNodeDelegate
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.features.tokenizer.feature.tokenizer
 import ai.koog.prompt.dsl.prompt
+import kotlinx.serialization.Serializable
 
 @AIAgentBuilderDslMarker
 fun AIAgentSubgraphBuilderBase<*, *>.recallShortTermMemory(
     name: String? = null,
     shortTermMemoryRepository: ShortTermMemoryRepository,
 ): AIAgentNodeDelegate<Unit, ShortTermMemory> = node(name) {
-    shortTermMemoryRepository.read()
+    shortTermMemoryRepository.getShortTermMemory()
 }
 
 @AIAgentBuilderDslMarker
@@ -43,8 +44,14 @@ inline fun <reified T> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemory(
             val response = requestLLMWithoutTools()
             val synthesizedMemory = response.content
 
-            // Write the synthesized memory to disk
-            shortTermMemoryRepository.write(synthesizedMemory)
+            // Write the synthesized memory to disk as a thought
+            val currentMemory = shortTermMemoryRepository.getShortTermMemory()
+            val updatedMemory = ShortTermMemory(
+                thoughts = listOf(synthesizedMemory),
+                goals = currentMemory.goals,
+                events = currentMemory.events
+            )
+            shortTermMemoryRepository.updateShortTermMemory(updatedMemory)
 
             // Replace working memory with just the summary
             rewritePrompt {
@@ -60,6 +67,15 @@ inline fun <reified T> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemory(
     input
 }
 
+@Serializable
 data class ShortTermMemory(
-    val memory: String
+    val thoughts: List<String> = emptyList(),
+    val goals: List<Goal> = emptyList(),
+    val events: List<String> = emptyList(),
+)
+
+@Serializable
+data class Goal(
+    val description: String,
+    val completed: Boolean = false,
 )

@@ -1,5 +1,7 @@
 package com.duchastel.simon.brainiac.core.process.memory
 
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import okio.FileSystem
 import okio.Path
 
@@ -14,21 +16,22 @@ class ShortTermMemoryRepository(
     private val fileSystem: FileSystem = FileSystem.SYSTEM,
 ) {
     private val memoryFilePath: Path = defaultMemoryPath(brainiacRootDirectory)
+    private val json = Json { prettyPrint = true }
 
     /**
      * Reads the short-term memory from disk.
      *
-     * @return The contents of the short-term memory file, or an empty string if the file doesn't exist
+     * @return The contents of the short-term memory file, or an empty ShortTermMemory if the file doesn't exist
      */
-    fun read(): ShortTermMemory {
-        val rawMemory = if (fileSystem.exists(memoryFilePath)) {
-            fileSystem.read(memoryFilePath) {
+    fun getShortTermMemory(): ShortTermMemory {
+        return if (fileSystem.exists(memoryFilePath)) {
+            val rawMemory = fileSystem.read(memoryFilePath) {
                 readUtf8()
             }
+            json.decodeFromString<ShortTermMemory>(rawMemory)
         } else {
-            ""
+            ShortTermMemory()
         }
-        return ShortTermMemory(rawMemory)
     }
 
     /**
@@ -36,23 +39,58 @@ class ShortTermMemoryRepository(
      *
      * Creates the parent directory if it doesn't exist.
      *
-     * @param memory The memory content to write to disk
+     * @param shortTermMemory The memory content to write to disk
      */
-    fun write(memory: String) {
+    fun updateShortTermMemory(shortTermMemory: ShortTermMemory) {
         memoryFilePath.parent?.let { fileSystem.createDirectories(it) }
+        val jsonContent = json.encodeToString(shortTermMemory)
         fileSystem.write(memoryFilePath) {
-            writeUtf8(memory)
+            writeUtf8(jsonContent)
         }
+    }
+
+    /**
+     * Updates the goals in short-term memory.
+     *
+     * @param updatedGoals The new list of goals to store
+     */
+    fun updateGoals(updatedGoals: List<Goal>) {
+        val currentMemory = getShortTermMemory()
+        val updatedMemory = currentMemory.copy(goals = updatedGoals)
+        updateShortTermMemory(updatedMemory)
+    }
+
+    /**
+     * Adds a new event to short-term memory.
+     *
+     * @param newEvent The event to add to the event list
+     */
+    fun addEvent(newEvent: String) {
+        val currentMemory = getShortTermMemory()
+        val updatedEvents = currentMemory.events + newEvent
+        val updatedMemory = currentMemory.copy(events = updatedEvents)
+        updateShortTermMemory(updatedMemory)
+    }
+
+    /**
+     * Updates the thoughts in short-term memory.
+     *
+     * @param updatedThoughts The new list of thoughts to store
+     */
+    fun updateThoughts(updatedThoughts: List<String>) {
+        val currentMemory = getShortTermMemory()
+        val updatedMemory = currentMemory.copy(thoughts = updatedThoughts)
+        updateShortTermMemory(updatedMemory)
     }
 
     companion object {
         /**
          * Returns the default path for the short-term memory file.
          *
-         * @return Path to brainiacRootDirectory/short-term-memory.txt
+         * @return Path to brainiacRootDirectory/short-term-memory.json
          */
         private fun defaultMemoryPath(brainiacRootDirectory: Path): Path {
-            return brainiacRootDirectory / "short-term-memory.txt"
+            return brainiacRootDirectory / "short-term-memory.json"
         }
     }
 }

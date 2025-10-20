@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.mokkery)
     alias(libs.plugins.kotest)
@@ -15,6 +16,7 @@ kotlin {
             dependencies {
                 implementation(libs.okio)
                 implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.kotlinx.serialization.core)
             }
         }
         val jvmMain by getting {
