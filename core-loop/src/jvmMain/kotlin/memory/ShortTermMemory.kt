@@ -22,12 +22,12 @@ inline fun <reified T> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemory(
 ): AIAgentNodeDelegate<T, T> = node(name) { input ->
     val currentTokens = tokenizer.tokenCountFor(llm.prompt)
 
-    if (currentTokens > tokenThreshold) {
+    if (currentTokens >= tokenThreshold) {
         llm.writeSession {
             updatePrompt {
                 system {
                     +"""
-                    Please synthesize the current working memory into a concise, actionable short-term memory.
+                    Please synthesize the current context into a concise, actionable short-term memory.
                     Focus on:
                     - Key facts and information from the conversation
                     - Current tasks or goals
