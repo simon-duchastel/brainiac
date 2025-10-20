@@ -37,6 +37,7 @@ class CoreAgent(
     )
     private val coreLoop = CoreLoop(
         shortTermMemoryRepository = shortTermMemoryRepository,
+        longTermMemoryRepository = longTermMemoryRepository,
         brainiacContext = brainiacContext,
     )
 

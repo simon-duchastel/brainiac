@@ -60,6 +60,7 @@ import com.duchastel.simon.brainiac.core.process.memory.updateShortTermMemory
  */
 class CoreLoop(
     private val shortTermMemoryRepository: ShortTermMemoryRepository,
+    private val longTermMemoryRepository: LongTermMemoryRepository,
     private val brainiacContext: BrainiacContext
 ) {
     fun strategy(
@@ -74,7 +75,10 @@ class CoreLoop(
                 name = "recall_short_term_memory",
                 shortTermMemoryRepository = shortTermMemoryRepository
             )
-            val recallLongTermMemory by recallLongTermMemory("recall_short_term_memory")
+            val recallLongTermMemory by recallLongTermMemory(
+                name = "recall_long_term_memory",
+                longTermMemoryRepository = longTermMemoryRepository
+            )
             val prepareWorkingMemoryInputs by node<LongTermMemory, Pair<ShortTermMemory, LongTermMemory>>(
                 "prepare_working_memory_inputs"
             ) { longTermMemory ->

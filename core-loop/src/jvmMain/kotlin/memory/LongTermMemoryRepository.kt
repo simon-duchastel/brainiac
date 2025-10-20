@@ -48,7 +48,7 @@ class LongTermMemoryRepository(
      * The mind map includes folder and file names but no file contents.
      */
     context(textBuilder: TextContentBuilderBase<*>)
-    fun generateMindMap(indented: Boolean = true) = textBuilder.xml(indented) {
+    fun generateXmlMindMap(indented: Boolean = true) = textBuilder.xml(indented) {
         tag("mind-map") {
             if (fileSystem.exists(ltmDirectory)) {
                 generateMindMapRecursive(ltmDirectory)
