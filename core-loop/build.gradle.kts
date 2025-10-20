@@ -30,9 +30,9 @@ kotlin {
         }
         val jvmTest by getting {
             dependencies {
-                implementation(libs.kotest.framework.engine)
                 implementation(libs.kotest.assertions.core)
                 implementation(libs.kotest.runner.junit5)
+                implementation(libs.kotest.framework.engine)
             }
         }
     }
