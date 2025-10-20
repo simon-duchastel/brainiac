@@ -16,37 +16,8 @@ fun AIAgentSubgraphBuilderBase<*, *>.loadInitialWorkingMemory(
                 originalPrompt.withMessages {
                     prompt("initial_working_memory") {
                         system {
-                            xml {
-                                tag("long-term-memory") {
-                                    +longTermMemory.memory
-                                }
-                                tag("short-term-memory") {
-                                    tag("thoughts") {
-                                        shortTermMemory.thoughts.forEach {
-                                            tag("thought") {
-                                                +it
-                                            }
-                                        }
-                                    }
-                                    tag("goals") {
-                                        shortTermMemory.goals.forEach {
-                                            tag(
-                                                name = "goal",
-                                                attributes = linkedMapOf("completed" to it.completed.toString())
-                                            ) {
-                                                +it.description
-                                            }
-                                        }
-                                    }
-                                    tag("events") {
-                                        shortTermMemory.events.forEach {
-                                            tag("event") {
-                                                +it
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            longTermMemory.asXmlRepresentation()
+                            shortTermMemory.asXmlRepresentation()
                         }
                     }.messages
                 }

@@ -8,6 +8,8 @@ import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.features.tokenizer.feature.tokenizer
 import ai.koog.prompt.dsl.prompt
+import ai.koog.prompt.text.TextContentBuilderBase
+import ai.koog.prompt.xml.xml
 import kotlinx.serialization.Serializable
 
 @AIAgentBuilderDslMarker
@@ -26,7 +28,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
 ): AIAgentSubgraphDelegate<T, T> = subgraph(name) {
     val initialInputKey = createStorageKey<T>("${name}_initial_input")
 
-    val storeIntitalInput by node<T, Unit>("${name}_store_initial_input") { input ->
+    val storeInitalInput by node<T, Unit>("${name}_store_initial_input") { input ->
         storage.set(initialInputKey, input)
     }
     val cleanup by node<Unit, T>("${name}_cleanup") {
@@ -77,8 +79,8 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
         }
     }
 
-    edge(nodeStart forwardTo storeIntitalInput)
-    edge(storeIntitalInput forwardTo evaluateNeedForShortTermMemoryUpdate)
+    edge(nodeStart forwardTo storeInitalInput)
+    edge(storeInitalInput forwardTo evaluateNeedForShortTermMemoryUpdate)
     edge(
         evaluateNeedForShortTermMemoryUpdate forwardTo updatePrompt
         onCondition { it }
@@ -98,7 +100,37 @@ data class ShortTermMemory(
     val thoughts: List<String> = emptyList(),
     val goals: List<Goal> = emptyList(),
     val events: List<String> = emptyList(),
-)
+) {
+    context(textBuilder: TextContentBuilderBase<*>)
+    fun asXmlRepresentation(indented: Boolean = true) = textBuilder.xml(indented) {
+        tag("short-term-memory") {
+            tag("thoughts") {
+                thoughts.forEach {
+                    tag("thought") {
+                        +it
+                    }
+                }
+            }
+            tag("goals") {
+                goals.forEach {
+                    tag(
+                        name = "goal",
+                        attributes = linkedMapOf("completed" to it.completed.toString())
+                    ) {
+                        +it.description
+                    }
+                }
+            }
+            tag("events") {
+                events.forEach {
+                    tag("event") {
+                        +it
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Serializable
 data class Goal(
