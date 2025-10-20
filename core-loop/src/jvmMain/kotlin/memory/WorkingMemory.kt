@@ -16,14 +16,8 @@ fun AIAgentSubgraphBuilderBase<*, *>.loadInitialWorkingMemory(
                 originalPrompt.withMessages {
                     prompt("initial_working_memory") {
                         system {
-                            xml {
-                                tag("short-term-memory") {
-                                    +shortTermMemory.memory
-                                }
-                                tag("long-term-memory") {
-                                    +longTermMemory.memory
-                                }
-                            }
+                            longTermMemory.asXmlRepresentation()
+                            shortTermMemory.asXmlRepresentation()
                         }
                     }.messages
                 }
