@@ -11,6 +11,8 @@ import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.markdown.markdown
 import ai.koog.prompt.text.TextContentBuilderBase
 import ai.koog.prompt.xml.xml
+import com.duchastel.simon.brainiac.core.process.context.BrainiacContext
+import com.duchastel.simon.brainiac.core.process.util.withModel
 import kotlinx.serialization.Serializable
 
 @AIAgentBuilderDslMarker
@@ -22,6 +24,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.recallShortTermMemory(
 }
 
 @AIAgentBuilderDslMarker
+context(brainiacContext: BrainiacContext)
 inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemory(
     name: String? = null,
     tokenThreshold: Int = 50_000,
@@ -55,7 +58,9 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
                     """.trimIndent()
                 }
             }
-            requestLLMStructured<List<String>>().getOrNull()!!.structure
+            withModel(brainiacContext.mediumThoughtModel) {
+                requestLLMStructured<List<String>>().getOrNull()!!.structure
+            }
         }
     }
     val updateGoals by node<List<String>, Pair<List<String>, List<Goal>>>("${name}_update_goals") { events ->
@@ -72,7 +77,10 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
                     """.trimIndent()
                 }
             }
-            val goals =requestLLMStructured<List<Goal>>().getOrNull()!!.structure
+
+            val goals = withModel(brainiacContext.mediumThoughtModel) {
+                requestLLMStructured<List<Goal>>().getOrNull()!!.structure
+            }
             events to goals
         }
     }
@@ -90,7 +98,9 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
                     """.trimIndent()
                 }
             }
-            val thoughts = requestLLMStructured<List<String>>().getOrNull()!!.structure
+            val thoughts = withModel(brainiacContext.mediumThoughtModel) {
+                requestLLMStructured<List<String>>().getOrNull()!!.structure
+            }
             Triple(events, goals, thoughts)
         }
     }
