@@ -13,6 +13,7 @@ import ai.koog.agents.core.dsl.extension.onToolCall
 import ai.koog.prompt.message.Message
 import com.duchastel.simon.brainiac.core.process.context.BrainiacContext
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemory
+import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRepository
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRequest
 import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemory
 import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
@@ -59,6 +60,7 @@ import com.duchastel.simon.brainiac.core.process.memory.updateShortTermMemory
  */
 class CoreLoop(
     private val shortTermMemoryRepository: ShortTermMemoryRepository,
+    private val longTermMemoryRepository: LongTermMemoryRepository,
     private val brainiacContext: BrainiacContext
 ) {
     fun strategy(
@@ -73,7 +75,10 @@ class CoreLoop(
                 name = "recall_short_term_memory",
                 shortTermMemoryRepository = shortTermMemoryRepository
             )
-            val recallLongTermMemory by recallLongTermMemory("recall_short_term_memory")
+            val recallLongTermMemory by recallLongTermMemory(
+                name = "recall_long_term_memory",
+                longTermMemoryRepository = longTermMemoryRepository
+            )
             val prepareWorkingMemoryInputs by node<LongTermMemory, Pair<ShortTermMemory, LongTermMemory>>(
                 "prepare_working_memory_inputs"
             ) { longTermMemory ->
@@ -102,7 +107,11 @@ class CoreLoop(
                 name = "update_short_term_memory",
                 shortTermMemoryRepository = shortTermMemoryRepository
             )
-            val updateLongTermMemory by updateLongTermMemory<Message.Response>("update_long_term_memory")
+            val updateLongTermMemory by updateLongTermMemory<Message.Response>(
+                name = "update_long_term_memory",
+                longTermMemoryRepository = longTermMemoryRepository,
+                shortTermMemoryRepository = shortTermMemoryRepository
+            )
 
             val executeTool by nodeExecuteTool()
             val sendToolResult by nodeLLMSendToolResult()

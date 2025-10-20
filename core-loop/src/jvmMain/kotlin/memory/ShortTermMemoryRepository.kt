@@ -1,6 +1,5 @@
 package com.duchastel.simon.brainiac.core.process.memory
 
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okio.FileSystem
 import okio.Path
@@ -42,7 +41,7 @@ class ShortTermMemoryRepository(
      * @param shortTermMemory The memory content to write to disk
      */
     fun updateShortTermMemory(shortTermMemory: ShortTermMemory) {
-        memoryFilePath.parent?.let { fileSystem.createDirectories(it) }
+        fileSystem.createDirectories(memoryFilePath)
         val jsonContent = json.encodeToString(shortTermMemory)
         fileSystem.write(memoryFilePath) {
             writeUtf8(jsonContent)

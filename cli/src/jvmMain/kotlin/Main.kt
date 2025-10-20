@@ -3,6 +3,7 @@ package com.duchastel.simon.brainiac.cli
 import com.duchastel.simon.brainiac.core.process.CoreAgent
 import com.duchastel.simon.brainiac.core.process.callbacks.AgentEvent
 import com.duchastel.simon.brainiac.core.process.callbacks.ToolUse
+import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRepository
 import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
 import okio.Path.Companion.toPath
 
@@ -14,12 +15,18 @@ fun main() {
     val apiKey = System.getenv("GOOGLE_API_KEY")
         ?: error("GOOGLE_API_KEY environment variable not set")
 
+    val brainiacRootDirectory = "~/.brainiac/".toPath()
+
     val shortTermMemoryRepository = ShortTermMemoryRepository(
-        brainiacRootDirectory = "~/.brainiac/".toPath()
+        brainiacRootDirectory = brainiacRootDirectory
+    )
+    val longTermMemoryRepository = LongTermMemoryRepository(
+        brainiacRootDirectory = brainiacRootDirectory
     )
     val coreAgent = CoreAgent(
         googleApiKey = apiKey,
-        shortTermMemoryRepository = shortTermMemoryRepository
+        shortTermMemoryRepository = shortTermMemoryRepository,
+        longTermMemoryRepository = longTermMemoryRepository
     ) { event ->
         when (event) {
             is AgentEvent.AssistantMessage -> {

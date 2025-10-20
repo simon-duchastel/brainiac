@@ -53,7 +53,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
                     +"""
                     Review the conversation and the current short-term memory.
                     Identify any events that should be added to the events list based on the current context.
-                    
+
                     Return all new events to be added (not including current events), in structured format.
                     """.trimIndent()
                 }
@@ -72,7 +72,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
                     +"""
                     Review the conversation and the current short-term memory.
                     Identify any goals that should be added, removed, or have their completion status changed.
-                    
+
                     Return the updated complete list of goals, including all goals which should be kept, in structured format.
                     """.trimIndent()
                 }
@@ -120,7 +120,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
             val summaryMessage = requestLLM()
             rewriteWorkingMemory(
                 updatedShortTermMemory,
-                LongTermMemory("")
+                LongTermMemory(listOf())
             )
             prompt = prompt.withMessages { currentMessages -> currentMessages + summaryMessage }
         }
@@ -186,7 +186,7 @@ data class Goal(
 )
 
 fun TextContentBuilderBase<*>.summarizeWorkingMemory(
-    updatedShortTermMemory: ShortTermMemory
+    updatedShortTermMemory: ShortTermMemory,
 ) = markdown {
     +"Summarize the current context based on the updated short-term memory below:"
 
