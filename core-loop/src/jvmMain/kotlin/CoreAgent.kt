@@ -1,5 +1,3 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
-
 package com.duchastel.simon.brainiac.core.process
 
 import ai.koog.agents.core.agent.AIAgent
@@ -15,7 +13,9 @@ import ai.koog.prompt.tokenizer.SimpleRegexBasedTokenizer
 import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
 import com.duchastel.simon.brainiac.core.process.callbacks.AgentEvent
 import com.duchastel.simon.brainiac.core.process.callbacks.ToolUse
+import com.duchastel.simon.brainiac.core.process.context.BrainiacContext
 import kotlinx.coroutines.runBlocking
+import kotlin.time.ExperimentalTime
 
 /**
  * Core agent for the Brainiac AI Memory System.
@@ -28,7 +28,15 @@ class CoreAgent(
     shortTermMemoryRepository: ShortTermMemoryRepository,
     private val onEvent: (AgentEvent) -> Unit,
 ) {
-    private val coreLoop = CoreLoop(shortTermMemoryRepository)
+    private val brainiacContext = BrainiacContext(
+        highThoughtModel = GoogleModels.Gemini2_5Pro,
+        mediumThoughtModel = GoogleModels.Gemini2_5Flash,
+        lowThoughtModel = GoogleModels.Gemini2_5FlashLite,
+    )
+    private val coreLoop = CoreLoop(
+        shortTermMemoryRepository = shortTermMemoryRepository,
+        brainiacContext = brainiacContext,
+    )
 
     /**
      * Runs the agent with the given user query.
@@ -54,8 +62,8 @@ class CoreAgent(
                         """.trimIndent()
                     )
                 },
-                model = GoogleModels.Gemini2_5Pro,
-                maxAgentIterations = Int.MAX_VALUE,
+                model = brainiacContext.highThoughtModel,
+                maxAgentIterations = Int.MAX_VALUE, // no limit on interactions
             ),
             installFeatures = {
                 install(MessageTokenizer) {
