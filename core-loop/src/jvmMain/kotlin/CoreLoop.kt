@@ -11,6 +11,7 @@ import ai.koog.agents.core.dsl.extension.nodeLLMSendToolResult
 import ai.koog.agents.core.dsl.extension.onAssistantMessage
 import ai.koog.agents.core.dsl.extension.onToolCall
 import ai.koog.prompt.message.Message
+import com.duchastel.simon.brainiac.core.process.context.BrainiacContext
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemory
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRepository
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRequest
@@ -59,24 +60,24 @@ import com.duchastel.simon.brainiac.core.process.memory.updateShortTermMemory
  */
 class CoreLoop(
     private val shortTermMemoryRepository: ShortTermMemoryRepository,
-    private val longTermMemoryRepository: LongTermMemoryRepository,
+    private val brainiacContext: BrainiacContext
 ) {
     fun strategy(
         name: String,
-    ): AIAgentGraphStrategy<String, Unit> {
-        return strategy<String, Unit>(name) {
+    ): AIAgentGraphStrategy<String, Unit> = with(brainiacContext) {
+        strategy<String, Unit>(name) {
             val userQueryKey = createStorageKey<String>("${name}_user_prompt")
-            val shortTermMemoryKey = createStorageKey<ShortTermMemory>("${name}_short_term_memory")
+            val shortTermMemoryKey =
+                createStorageKey<ShortTermMemory>("${name}_short_term_memory")
 
             val recallShortTermMemory by recallShortTermMemory(
                 name = "recall_short_term_memory",
                 shortTermMemoryRepository = shortTermMemoryRepository
             )
-            val recallLongTermMemory by recallLongTermMemory(
-                name = "recall_long_term_memory",
-                longTermMemoryRepository = longTermMemoryRepository
-            )
-            val prepareWorkingMemoryInputs by node<LongTermMemory, Pair<ShortTermMemory, LongTermMemory>>("prepare_working_memory_inputs") { longTermMemory ->
+            val recallLongTermMemory by recallLongTermMemory("recall_short_term_memory")
+            val prepareWorkingMemoryInputs by node<LongTermMemory, Pair<ShortTermMemory, LongTermMemory>>(
+                "prepare_working_memory_inputs"
+            ) { longTermMemory ->
                 val shortTermMemory = storage.getValue(shortTermMemoryKey)
                 shortTermMemory to longTermMemory
             }

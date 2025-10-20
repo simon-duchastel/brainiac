@@ -7,6 +7,7 @@ import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
 import ai.koog.agents.features.tokenizer.feature.MessageTokenizer
 import ai.koog.agents.features.tokenizer.feature.tokenizer
 import ai.koog.prompt.dsl.prompt
+import ai.koog.prompt.text.TextContentBuilderBase
 import ai.koog.prompt.xml.xml
 
 @AIAgentBuilderDslMarker
@@ -80,10 +81,11 @@ inline fun <reified T> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemory(
     longTermMemoryRepository: LongTermMemoryRepository,
     shortTermMemoryRepository: ShortTermMemoryRepository,
 ): AIAgentNodeDelegate<Pair<ShortTermMemory, T>, T> = node(name) { (shortTermMemory, input) ->
-    // We need to put the short term memory into a fake prompt in order to count its tokens.
-    // Currently the tokenizer can only tokenize messages or prompts, not arbitrary strings (even though
-    // under the hood it just parses out the raw string).
-    val shortTermMemoryForTokenization = prompt("short_term_memory") { shortTermMemory.memory }
+    val shortTermMemoryForTokenization = prompt("short_term_memory") {
+        system {
+            shortTermMemory.asXmlRepresentation()
+        }
+    }
     val currentTokens = tokenizer.tokenCountFor(shortTermMemoryForTokenization)
 
     if (currentTokens > tokenThreshold) {
@@ -193,4 +195,11 @@ data class LongTermMemoryRequest(
 
 data class LongTermMemory(
     val memory: String
-)
+) {
+    context(textBuilder: TextContentBuilderBase<*>)
+    fun asXmlRepresentation(indented: Boolean = true) = textBuilder.xml(indented) {
+        tag("long-term-memory") {
+            +memory
+        }
+    }
+}
