@@ -79,18 +79,18 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemor
     longTermMemoryRepository: LongTermMemoryRepository,
     shortTermMemoryRepository: ShortTermMemoryRepository,
 ): AIAgentSubgraphDelegate<Pair<ShortTermMemory, T>, T> = subgraph(name) {
-    val initialInputKey = createStorageKey<Pair<ShortTermMemory, T>>("${name}_initial_input")
+    val initialInputKey = createStorageKey<T>("${name}_initial_input")
     val initialPromptKey = createStorageKey<Prompt>("${name}_initial_prompt")
-    val shortTermMemoryKey = createStorageKey<ShortTermMemory>("${name}_stm")
+    val shortTermMemoryKey = createStorageKey<ShortTermMemory>("${name}initial_stm")
 
-    val setup by node<Pair<ShortTermMemory, T>, Unit>("${name}_setup") { input ->
+    val setup by node<Pair<ShortTermMemory, T>, Unit>("${name}_setup") { (shortTermMemory, input) ->
         storage.set(initialInputKey, input)
         storage.set(initialPromptKey, llm.prompt)
-        storage.set(shortTermMemoryKey, input.first)
+        storage.set(shortTermMemoryKey, shortTermMemory)
     }
 
     val cleanup by node<Unit, T>("${name}_cleanup") {
-        storage.getValue(initialInputKey).second
+        storage.getValue(initialInputKey)
     }
 
     val evaluateNeedForLongTermMemoryUpdate by node<Unit, Boolean>("${name}_evaluate_tokens") {
@@ -105,26 +105,23 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemor
 
     val identifyPromotionCandidates by node<Unit, List<MemoryPromotion>>("${name}_identify_promotions") {
         val stm = storage.getValue(shortTermMemoryKey)
-        val originalPrompt = storage.getValue(initialPromptKey)
 
         llm.writeSession {
-            rewritePrompt { originalPrompt }
-            updatePrompt {
-                system {
-                    xml {
-                        tag("instruction") {
-                            +"""
-                            Please analyze the short-term memory below and identify important information
-                            that should be saved to long-term memory.
+            rewritePrompt {
+                prompt("identify_promotions") {
+                    system {
+                        +"""
+                        Please analyze the short-term memory below and identify important information
+                        that should be saved to long-term memory.
 
-                            Return a list of memory promotions with filenames and content.
-                            If no memories need to be saved, return an empty list.
+                        Return a list of memory promotions with filenames and content.
+                        If no memories need to be saved, return an empty list.
 
-                            Don't save memories just for the sake of it - only save memories that would be genuinely helpful for long-term storage. Consider memories which are either:
-                            1. useful pieces of information, or
-                            2. episodic
-                            """.trimIndent()
-                        }
+                        Don't save memories just for the sake of it - only save memories that would be genuinely helpful for long-term storage. Consider memories which are either:
+                        1. useful pieces of information, or
+                        2. episodic (events which happened that were interesting or notable for summarization and storage)
+                        """.trimIndent()
+
                         stm.asXmlRepresentation()
                     }
                 }
@@ -145,24 +142,21 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemor
 
     val cleanShortTermMemory by node<List<MemoryPromotion>, ShortTermMemory>("${name}_clean_stm") { promotions ->
         val stm = storage.getValue(shortTermMemoryKey)
-        val originalPrompt = storage.getValue(initialPromptKey)
 
         llm.writeSession {
-            rewritePrompt { originalPrompt }
-            updatePrompt {
-                system {
-                    xml {
-                        tag("instruction") {
-                            +"""
-                            The following short-term memory has been analyzed, and important information
-                            has been promoted to long-term memory.
+            rewritePrompt {
+                prompt("clean_short_term_memory") {
+                    system {
+                        +"""
+                        The following short-term memory has been analyzed, and important information
+                        has been promoted to long-term memory.
 
-                            Return a cleaned version of the short-term memory that:
-                            1. Removes information that was promoted to long-term memory
-                            2. Removes any unneeded or redundant information
-                            3. Retains only recent, actionable context that is still relevant
-                            """.trimIndent()
-                        }
+                        Return a cleaned version of the short-term memory that:
+                        1. Removes information that was promoted to long-term memory
+                        2. Removes any unneeded or redundant information
+                        3. Retains only recent, actionable context that is still relevant
+                        """.trimIndent()
+
                         stm.asXmlRepresentation()
                     }
                 }
@@ -175,10 +169,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemor
     }
 
     val updateRepositoryAndPrompt by node<ShortTermMemory, Unit>("${name}_update_prompt") { cleanedStm ->
-        // Write cleaned STM to repository
-        shortTermMemoryRepository.updateThoughts(cleanedStm.thoughts)
-        shortTermMemoryRepository.updateGoals(cleanedStm.goals)
-        cleanedStm.events.forEach { shortTermMemoryRepository.addEvent(it) }
+        shortTermMemoryRepository.updateShortTermMemory(cleanedStm)
 
         val originalPrompt = storage.getValue(initialPromptKey)
         llm.writeSession {

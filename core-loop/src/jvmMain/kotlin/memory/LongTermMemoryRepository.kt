@@ -62,7 +62,7 @@ class LongTermMemoryRepository(
     private fun XmlContentBuilder.generateMindMapRecursive(directory: Path) {
         val entries = try {
             fileSystem.list(directory).sorted()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return
         }
 

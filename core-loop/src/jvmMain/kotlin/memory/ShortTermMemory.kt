@@ -120,7 +120,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
             val summaryMessage = requestLLM()
             rewriteWorkingMemory(
                 updatedShortTermMemory,
-                LongTermMemory("")
+                LongTermMemory(listOf())
             )
             prompt = prompt.withMessages { currentMessages -> currentMessages + summaryMessage }
         }
@@ -186,7 +186,7 @@ data class Goal(
 )
 
 fun TextContentBuilderBase<*>.summarizeWorkingMemory(
-    updatedShortTermMemory: ShortTermMemory
+    updatedShortTermMemory: ShortTermMemory,
 ) = markdown {
     +"Summarize the current context based on the updated short-term memory below:"
 
