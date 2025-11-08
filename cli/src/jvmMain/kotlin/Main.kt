@@ -48,8 +48,8 @@ fun main() {
 
     val coreAgentContext = CoreAgentContext(
         highThoughtModel = stealthModel,
-        mediumThoughtModel =  stealthModel,
-        lowThoughtModel = stealthModel,
+        mediumThoughtModel = GoogleModels.Gemini2_5Flash,
+        lowThoughtModel = GoogleModels.Gemini2_5FlashLite,
         executionClients = mapOf(
             LLMProvider.Google to GoogleLLMClient(googleApiKey),
             LLMProvider.OpenRouter to OpenRouterLLMClient(openRouterApiKey),
