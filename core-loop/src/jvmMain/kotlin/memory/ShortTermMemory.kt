@@ -12,6 +12,7 @@ import ai.koog.prompt.markdown.markdown
 import ai.koog.prompt.text.TextContentBuilderBase
 import ai.koog.prompt.xml.xml
 import com.duchastel.simon.brainiac.core.process.context.BrainiacContext
+import com.duchastel.simon.brainiac.core.process.prompt.Prompts
 import com.duchastel.simon.brainiac.core.process.util.withModel
 import kotlinx.serialization.Serializable
 
@@ -50,12 +51,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
             rewritePrompt { originalPrompt }
             updatePrompt {
                 system {
-                    +"""
-                    Review the conversation and the current short-term memory.
-                    Identify any events that should be added to the events list based on the current context.
-
-                    Return all new events to be added (not including current events), in structured format.
-                    """.trimIndent()
+                    +Prompts.IDENTIFY_EVENTS
                 }
             }
             withModel(brainiacContext.mediumThoughtModel) {
@@ -69,12 +65,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
             rewritePrompt { originalPrompt }
             updatePrompt {
                 system {
-                    +"""
-                    Review the conversation and the current short-term memory.
-                    Identify any goals that should be added, removed, or have their completion status changed.
-
-                    Return the updated complete list of goals, including all goals which should be kept, in structured format.
-                    """.trimIndent()
+                    +Prompts.UPDATE_GOALS
                 }
             }
 
@@ -90,12 +81,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
             rewritePrompt { originalPrompt }
             updatePrompt {
                 system {
-                    +"""
-                    Review the conversation and the current short-term memory.
-                    Identify any thoughts that should be distilled and added to the thoughts list
-                    
-                    Return all new thoughts to be added (not including current thoughts), in structured format.
-                    """.trimIndent()
+                    +Prompts.UPDATE_THOUGHTS
                 }
             }
             val thoughts = withModel(brainiacContext.mediumThoughtModel) {
@@ -115,7 +101,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
         llm.writeSession {
             rewritePrompt { originalPrompt }
             updatePrompt {
-                system { summarizeWorkingMemory(updatedShortTermMemory) }
+                system { with(Prompts) { summarizeWorkingMemory(updatedShortTermMemory) } }
             }
             val summaryMessage = requestLLM()
             rewriteWorkingMemory(
@@ -184,15 +170,3 @@ data class Goal(
     val description: String,
     val completed: Boolean = false,
 )
-
-fun TextContentBuilderBase<*>.summarizeWorkingMemory(
-    updatedShortTermMemory: ShortTermMemory,
-) = markdown {
-    +"Summarize the current context based on the updated short-term memory below:"
-
-    updatedShortTermMemory.asXmlRepresentation()
-
-    +"Remove any irrelevant or redundant information as well as any information already included in the updated short-term memory"
-    +"For example, discard any information pertaining to completed goals which you feel will not be relevant moving forward"
-    +"Keep any information that will be useful in the future for working memory, ie. information immediately pertinent to what the user is asking you to do."
-}
