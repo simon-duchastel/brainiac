@@ -1,7 +1,6 @@
 package com.duchastel.simon.brainiac.cli
 
 import ai.koog.agents.core.tools.ToolRegistry
-import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.executor.clients.google.GoogleLLMClient
 import ai.koog.prompt.executor.clients.google.GoogleModels
 import ai.koog.prompt.executor.clients.openrouter.OpenRouterLLMClient
@@ -11,13 +10,10 @@ import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Message
 import com.duchastel.simon.brainiac.agent.CoreAgent
 import com.duchastel.simon.brainiac.agent.CoreAgentConfig
-import com.duchastel.simon.brainiac.core.process.CoreLoop
-import com.duchastel.simon.brainiac.core.process.callbacks.AgentEvent
-import com.duchastel.simon.brainiac.core.process.callbacks.ToolUse
-import com.duchastel.simon.brainiac.core.process.context.BrainiacContext
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRepository
 import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
-import com.duchastel.simon.brainiac.core.process.prompt.Prompts
+import com.duchastel.simon.brainiac.tools.createToolRegistry
+import com.duchastel.simon.brainiac.tools.websearch.WebSearchTool
 import okio.Path.Companion.toPath
 
 fun main() {
@@ -28,7 +24,9 @@ fun main() {
     val googleApiKey = System.getenv("GOOGLE_API_KEY")
         ?: error("GOOGLE_API_KEY environment variable not set")
     val openRouterApiKey = System.getenv("OPEN_ROUTER_API_KEY")
-        ?: error("GOOGLE_API_KEY environment variable not set")
+        ?: error("OPEN_ROUTER_API_KEY environment variable not set")
+    val tavilyApiKey = System.getenv("TAVILY_API_KEY")
+        // Tavily is optional - if not provided, web search won't be available
 
     val brainiacRootDirectory = "~/.brainiac/".toPath()
 
@@ -50,6 +48,16 @@ fun main() {
         ),
         contextLength = 256_000,
     )
+
+    // Configure tools
+    val toolRegistry = if (tavilyApiKey != null) {
+        println("Web search enabled via Tavily API")
+        val webSearchTool = WebSearchTool(apiKey = tavilyApiKey, maxResults = 5)
+        createToolRegistry(webSearchTool)
+    } else {
+        println("Web search disabled (TAVILY_API_KEY not set)")
+        ToolRegistry.EMPTY
+    }
     val coreAgent = CoreAgent(
         config = CoreAgentConfig(
             highThoughtModel = stealthModel,
@@ -59,7 +67,7 @@ fun main() {
                 LLMProvider.Google to GoogleLLMClient(googleApiKey),
                 LLMProvider.OpenRouter to OpenRouterLLMClient(openRouterApiKey),
             ),
-            toolRegistry = ToolRegistry.EMPTY,
+            toolRegistry = toolRegistry,
             onEventHandler = { messages ->
                 messages.forEach { message ->
                     when (message) {
