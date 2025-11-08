@@ -4,14 +4,6 @@ import ai.koog.agents.core.tools.Tool
 
 /**
  * Base interface for all Brainiac tools.
- *
- * This interface provides an abstraction layer over Koog's Tool interface,
- * making it easier to configure and manage tools in the Brainiac system.
- *
- * Each tool implementation should:
- * 1. Define its configuration (API keys, parameters, etc.)
- * 2. Implement the conversion to Koog's Tool interface
- * 3. Handle all implementation details internally
  */
 interface BrainiacTool {
     /**

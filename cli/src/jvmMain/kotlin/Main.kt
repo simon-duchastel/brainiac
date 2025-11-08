@@ -12,6 +12,7 @@ import com.duchastel.simon.brainiac.agent.CoreAgent
 import com.duchastel.simon.brainiac.agent.CoreAgentConfig
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRepository
 import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
+import com.duchastel.simon.brainiac.tools.BrainiacTool
 import com.duchastel.simon.brainiac.tools.createToolRegistry
 import com.duchastel.simon.brainiac.tools.websearch.WebSearchTool
 import okio.Path.Companion.toPath
@@ -26,7 +27,6 @@ fun main() {
     val openRouterApiKey = System.getenv("OPEN_ROUTER_API_KEY")
         ?: error("OPEN_ROUTER_API_KEY environment variable not set")
     val tavilyApiKey = System.getenv("TAVILY_API_KEY")
-        // Tavily is optional - if not provided, web search won't be available
 
     val brainiacRootDirectory = "~/.brainiac/".toPath()
 
@@ -49,15 +49,15 @@ fun main() {
         contextLength = 256_000,
     )
 
-    // Configure tools
-    val toolRegistry = if (tavilyApiKey != null) {
-        println("Web search enabled via Tavily API")
-        val webSearchTool = WebSearchTool(apiKey = tavilyApiKey, maxResults = 5)
-        createToolRegistry(webSearchTool)
-    } else {
-        println("Web search disabled (TAVILY_API_KEY not set)")
-        ToolRegistry.EMPTY
+    val tools: List<BrainiacTool> = buildList {
+        if (tavilyApiKey != null) {
+            println("Web search enabled via Tavily API")
+            add(WebSearchTool(apiKey = tavilyApiKey, maxResults = 5))
+        } else {
+            println("Web search disabled (TAVILY_API_KEY not set)")
+        }
     }
+    val toolRegistry = createToolRegistry(*tools.toTypedArray())
     val coreAgent = CoreAgent(
         config = CoreAgentConfig(
             highThoughtModel = stealthModel,

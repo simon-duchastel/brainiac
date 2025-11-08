@@ -20,10 +20,7 @@ data class WebSearchArgs(
 /**
  * Web search tool powered by Tavily API.
  *
- * This tool allows AI agents to search the web for information,
- * using Tavily's LLM-optimized search API that focuses on
- * high-quality, citable sources.
- *
+ * This tool allows AI agents to search the web for information.
  * @property apiKey The Tavily API key
  * @property maxResults Maximum number of search results to return per query
  *
@@ -50,7 +47,6 @@ class WebSearchTool(
 
             override suspend fun doExecute(args: WebSearchArgs): String {
                 return try {
-                    // Execute search
                     val response = tavilyClient.search(
                         query = args.query,
                         maxResults = maxResults,

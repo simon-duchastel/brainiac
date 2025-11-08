@@ -21,8 +21,9 @@ import kotlinx.serialization.json.Json
  * @property apiKey The Tavily API key (get one from https://app.tavily.com)
  * @see <a href="https://docs.tavily.com">Tavily Documentation</a>
  */
-class TavilyClient(private val apiKey: String) {
-    private val httpClient = HttpClient(CIO) {
+class TavilyClient(
+    private val apiKey: String,
+    private val httpClient: HttpClient = HttpClient(CIO) {
         install(ContentNegotiation) {
             json(Json {
                 ignoreUnknownKeys = true
@@ -34,7 +35,7 @@ class TavilyClient(private val apiKey: String) {
             level = LogLevel.INFO
         }
     }
-
+) {
     /**
      * Performs a web search using the Tavily API.
      *
