@@ -1,18 +1,23 @@
 package com.duchastel.simon.brainiac.cli
 
+import ai.koog.agents.core.tools.ToolRegistry
+import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.executor.clients.google.GoogleLLMClient
 import ai.koog.prompt.executor.clients.google.GoogleModels
 import ai.koog.prompt.executor.clients.openrouter.OpenRouterLLMClient
-import ai.koog.prompt.executor.clients.openrouter.OpenRouterModels
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
-import com.duchastel.simon.brainiac.core.process.CoreAgent
-import com.duchastel.simon.brainiac.core.process.CoreAgentContext
+import ai.koog.prompt.message.Message
+import com.duchastel.simon.brainiac.agent.CoreAgent
+import com.duchastel.simon.brainiac.agent.CoreAgentConfig
+import com.duchastel.simon.brainiac.core.process.CoreLoop
 import com.duchastel.simon.brainiac.core.process.callbacks.AgentEvent
 import com.duchastel.simon.brainiac.core.process.callbacks.ToolUse
+import com.duchastel.simon.brainiac.core.process.context.BrainiacContext
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRepository
 import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
+import com.duchastel.simon.brainiac.core.process.prompt.Prompts
 import okio.Path.Companion.toPath
 
 fun main() {
@@ -45,42 +50,40 @@ fun main() {
         ),
         contextLength = 256_000,
     )
-
-    val coreAgentContext = CoreAgentContext(
-        highThoughtModel = stealthModel,
-        mediumThoughtModel = GoogleModels.Gemini2_5Flash,
-        lowThoughtModel = GoogleModels.Gemini2_5FlashLite,
-        executionClients = mapOf(
-            LLMProvider.Google to GoogleLLMClient(googleApiKey),
-            LLMProvider.OpenRouter to OpenRouterLLMClient(openRouterApiKey),
-        ),
-    )
     val coreAgent = CoreAgent(
-        coreAgentContext = coreAgentContext,
+        config = CoreAgentConfig(
+            highThoughtModel = stealthModel,
+            mediumThoughtModel = GoogleModels.Gemini2_5Flash,
+            lowThoughtModel = GoogleModels.Gemini2_5FlashLite,
+            executionClients = mapOf(
+                LLMProvider.Google to GoogleLLMClient(googleApiKey),
+                LLMProvider.OpenRouter to OpenRouterLLMClient(openRouterApiKey),
+            ),
+            toolRegistry = ToolRegistry.EMPTY,
+            onEventHandler = { messages ->
+                messages.forEach { message ->
+                    when (message) {
+                        is Message.Assistant -> {
+                            println(message.content)
+                        }
+
+                        is Message.Tool.Call -> {
+                            val toolUseMessage = when (message.tool) {
+                                "store_short_term_memory" -> "Updating short term memory..."
+                                "store_long_term_memory" -> "Updating long term memory..."
+                                else -> return@forEach
+                            }
+                            println(toolUseMessage)
+                        }
+
+                        else -> {} // Ignore other message types
+                    }
+                }
+            }
+        ),
         shortTermMemoryRepository = shortTermMemoryRepository,
         longTermMemoryRepository = longTermMemoryRepository
-    ) { event ->
-        when (event) {
-            is AgentEvent.AssistantMessage -> {
-                println(event.content)
-            }
-            is AgentEvent.ToolCall -> {
-                val toolUseMessage = when (event.tool) {
-                    ToolUse.StoreShortTermMemory -> "Updating short term memory..."
-                    ToolUse.StoreLongTermMemory -> "Updating long term memory..."
-                }
-                println(toolUseMessage)
-            }
-            is AgentEvent.ToolResult -> {
-                val toolResultMessage = when (event.tool) {
-                    ToolUse.StoreShortTermMemory -> "Done updating short term memory!"
-                    ToolUse.StoreLongTermMemory -> "Done updating long term memory!"
-                }
-                val status = if (event.success) "SUCCESS" else "FAILED"
-                println("$toolResultMessage ($status)")
-            }
-        }
-    }
+    )
 
     print("> ")
     val input = readlnOrNull()?.trim()
