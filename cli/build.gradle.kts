@@ -17,6 +17,7 @@ kotlin {
     sourceSets {
         val jvmMain by getting {
             dependencies {
+                implementation(project(":core-agent"))
                 implementation(project(":core-loop"))
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.okio)
