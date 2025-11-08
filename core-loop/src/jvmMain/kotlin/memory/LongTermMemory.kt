@@ -1,5 +1,6 @@
 package com.duchastel.simon.brainiac.core.process.memory
 
+import ai.koog.agents.core.agent.entity.ToolSelectionStrategy
 import ai.koog.agents.core.agent.entity.createStorageKey
 import ai.koog.agents.core.dsl.builder.AIAgentBuilderDslMarker
 import ai.koog.agents.core.dsl.builder.AIAgentNodeDelegate
@@ -81,7 +82,10 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemor
     tokenThreshold: Int = 10_000,
     longTermMemoryRepository: LongTermMemoryRepository,
     shortTermMemoryRepository: ShortTermMemoryRepository,
-): AIAgentSubgraphDelegate<Pair<ShortTermMemory, T>, T> = subgraph(name) {
+): AIAgentSubgraphDelegate<Pair<ShortTermMemory, T>, T> = subgraph(
+    name = name,
+    toolSelectionStrategy = ToolSelectionStrategy.NONE,
+) {
     val initialInputKey = createStorageKey<T>("${name}_initial_input")
     val initialPromptKey = createStorageKey<Prompt>("${name}_initial_prompt")
     val shortTermMemoryKey = createStorageKey<ShortTermMemory>("${name}initial_stm")
