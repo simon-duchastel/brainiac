@@ -1,6 +1,10 @@
 package com.duchastel.simon.brainiac.cli
 
 import ai.koog.agents.core.tools.ToolRegistry
+import ai.koog.agents.ext.tool.file.EditFileTool
+import ai.koog.agents.ext.tool.file.ListDirectoryTool
+import ai.koog.agents.ext.tool.file.ReadFileTool
+import ai.koog.agents.ext.tool.file.WriteFileTool
 import ai.koog.prompt.executor.clients.google.GoogleLLMClient
 import ai.koog.prompt.executor.clients.google.GoogleModels
 import ai.koog.prompt.executor.clients.openrouter.OpenRouterLLMClient
@@ -8,12 +12,12 @@ import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Message
+import ai.koog.rag.base.files.JVMFileSystemProvider
 import com.duchastel.simon.brainiac.agent.CoreAgent
 import com.duchastel.simon.brainiac.agent.CoreAgentConfig
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRepository
 import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
-import com.duchastel.simon.brainiac.tools.BrainiacTool
-import com.duchastel.simon.brainiac.tools.createToolRegistry
+import com.duchastel.simon.brainiac.tools.bash.BashTool
 import com.duchastel.simon.brainiac.tools.websearch.WebSearchTool
 import okio.Path.Companion.toPath
 
@@ -49,15 +53,20 @@ fun main() {
         contextLength = 256_000,
     )
 
-    val tools: List<BrainiacTool> = buildList {
+    val toolRegistry = ToolRegistry {
         if (tavilyApiKey != null) {
             println("Web search enabled via Tavily API")
-            add(WebSearchTool(apiKey = tavilyApiKey, maxResults = 5))
+            tool(WebSearchTool(apiKey = tavilyApiKey, maxResults = 5))
         } else {
             println("Web search disabled (TAVILY_API_KEY not set)")
         }
+        tool(BashTool())
+
+        tool(ListDirectoryTool(JVMFileSystemProvider.ReadWrite))
+        tool(EditFileTool(JVMFileSystemProvider.ReadWrite))
+        tool(ReadFileTool(JVMFileSystemProvider.ReadWrite))
+        tool(WriteFileTool(JVMFileSystemProvider.ReadWrite))
     }
-    val toolRegistry = createToolRegistry(*tools.toTypedArray())
     val coreAgent = CoreAgent(
         config = CoreAgentConfig(
             highThoughtModel = stealthModel,
