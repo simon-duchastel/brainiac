@@ -50,41 +50,23 @@ fun main() {
         ),
         contextLength = 256_000,
     )
-
-    // Set up BrainiacContext for models
-    val brainiacContext = BrainiacContext(
-        highThoughtModel = stealthModel,
-        mediumThoughtModel = GoogleModels.Gemini2_5Flash,
-        lowThoughtModel = GoogleModels.Gemini2_5FlashLite,
-    )
-
-    // Create CoreLoop strategy
-    val coreLoop = CoreLoop(
-        shortTermMemoryRepository = shortTermMemoryRepository,
-        longTermMemoryRepository = longTermMemoryRepository,
-        brainiacContext = brainiacContext,
-    )
-    val coreLoopStrategy = coreLoop.strategy("core-loop")
-
-    // Create CoreAgent with the strategy
     val coreAgent = CoreAgent(
         config = CoreAgentConfig(
-            strategy = coreLoopStrategy,
-            toolRegistry = ToolRegistry.EMPTY, // TODO: Will add tools in phase 2
-            model = stealthModel,
+            highThoughtModel = stealthModel,
+            mediumThoughtModel = GoogleModels.Gemini2_5Flash,
+            lowThoughtModel = GoogleModels.Gemini2_5FlashLite,
             executionClients = mapOf(
                 LLMProvider.Google to GoogleLLMClient(googleApiKey),
                 LLMProvider.OpenRouter to OpenRouterLLMClient(openRouterApiKey),
             ),
-            systemPrompt = Prompt.build("brainiac-core") {
-                system(Prompts.BRAINIAC_SYSTEM)
-            },
+            toolRegistry = ToolRegistry.EMPTY,
             onEventHandler = { messages ->
                 messages.forEach { message ->
                     when (message) {
                         is Message.Assistant -> {
                             println(message.content)
                         }
+
                         is Message.Tool.Call -> {
                             val toolUseMessage = when (message.tool) {
                                 "store_short_term_memory" -> "Updating short term memory..."
@@ -93,11 +75,14 @@ fun main() {
                             }
                             println(toolUseMessage)
                         }
+
                         else -> {} // Ignore other message types
                     }
                 }
             }
-        )
+        ),
+        shortTermMemoryRepository = shortTermMemoryRepository,
+        longTermMemoryRepository = longTermMemoryRepository
     )
 
     print("> ")

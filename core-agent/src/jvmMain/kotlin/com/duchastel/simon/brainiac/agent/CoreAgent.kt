@@ -13,23 +13,33 @@ import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.tokenizer.SimpleRegexBasedTokenizer
+import com.duchastel.simon.brainiac.core.process.CoreLoop
+import com.duchastel.simon.brainiac.core.process.context.BrainiacContext
+import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRepository
+import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
+import com.duchastel.simon.brainiac.core.process.prompt.Prompts
 import kotlinx.coroutines.runBlocking
 
 /**
- * Core agent scaffolding for the Brainiac AI system.
- *
- * This is the main entry point that connects together:
- * - Agent strategies (how the agent behaves)
- * - Tools (what the agent can do)
- * - LLM execution (how the agent thinks)
- * - Event handling (how we observe the agent)
- *
- * This module provides the scaffolding but doesn't depend on specific
- * implementations like core-loop. Strategies and tools are injected from outside.
+ * Core agent for running a Brainiac instance.
  */
 class CoreAgent(
     private val config: CoreAgentConfig,
+    private val shortTermMemoryRepository: ShortTermMemoryRepository,
+    private val longTermMemoryRepository: LongTermMemoryRepository,
 ) {
+    private val brainiacContext = BrainiacContext(
+        highThoughtModel = config.highThoughtModel,
+        mediumThoughtModel = config.mediumThoughtModel,
+        lowThoughtModel = config.lowThoughtModel,
+    )
+    private val coreLoop = CoreLoop(
+        shortTermMemoryRepository = shortTermMemoryRepository,
+        longTermMemoryRepository = longTermMemoryRepository,
+        brainiacContext = brainiacContext,
+    )
+    private val coreLoopStrategy = coreLoop.strategy("core-loop")
+
     /**
      * Runs the agent with the given user query.
      *
@@ -40,11 +50,13 @@ class CoreAgent(
         val agent = AIAgent(
             promptExecutor = promptExecutor(config.executionClients),
             toolRegistry = config.toolRegistry,
-            strategy = config.strategy,
+            strategy = coreLoopStrategy,
             agentConfig = AIAgentConfig(
-                prompt = config.systemPrompt,
-                model = config.model,
-                maxAgentIterations = config.maxIterations,
+                prompt = Prompt.build("brainiac-core") {
+                    system(Prompts.BRAINIAC_SYSTEM)
+                },
+                model = config.highThoughtModel,
+                maxAgentIterations = Int.MAX_VALUE,
             ),
             installFeatures = {
                 install(MessageTokenizer) {
@@ -67,20 +79,15 @@ class CoreAgent(
 /**
  * Configuration for CoreAgent.
  *
- * @property strategy The agent strategy that defines behavior (e.g., CoreLoop)
  * @property toolRegistry Tools available to the agent
- * @property model The primary LLM model to use
  * @property executionClients Map of LLM providers to their clients
- * @property systemPrompt The system prompt to initialize the agent with
- * @property maxIterations Maximum number of agent iterations (default: no limit)
  * @property onEventHandler Optional handler for agent events (e.g., messages, tool calls)
  */
 data class CoreAgentConfig(
-    val strategy: AIAgentGraphStrategy<String, Unit>,
+    val highThoughtModel: LLModel,
+    val mediumThoughtModel: LLModel,
+    val lowThoughtModel: LLModel,
     val toolRegistry: ToolRegistry,
-    val model: LLModel,
     val executionClients: Map<LLMProvider, LLMClient>,
-    val systemPrompt: Prompt,
-    val maxIterations: Int = Int.MAX_VALUE,
     val onEventHandler: ((List<Message>) -> Unit)? = null,
 )

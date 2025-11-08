@@ -10,10 +10,8 @@ kotlin {
     sourceSets {
         val jvmMain by getting {
             dependencies {
-                // Koog agents for AIAgent, ToolRegistry, etc.
                 api(libs.koog.agents)
-
-                // Coroutines for async operations
+                api(project(":core-loop"))
                 implementation(libs.kotlinx.coroutines.core)
             }
         }
