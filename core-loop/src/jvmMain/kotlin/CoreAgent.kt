@@ -15,6 +15,7 @@ import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepositor
 import com.duchastel.simon.brainiac.core.process.callbacks.AgentEvent
 import com.duchastel.simon.brainiac.core.process.callbacks.ToolUse
 import com.duchastel.simon.brainiac.core.process.context.BrainiacContext
+import com.duchastel.simon.brainiac.core.process.prompt.Prompts
 import kotlinx.coroutines.runBlocking
 import kotlin.time.ExperimentalTime
 
@@ -55,15 +56,7 @@ class CoreAgent(
             strategy = coreLoopStrategy,
             agentConfig = AIAgentConfig(
                 prompt = Prompt.build("brainiac-core") {
-                    system(
-                        """
-                        You are Brainiac, an AI assistant with advanced memory capabilities.
-                        You have access to both short-term and long-term memory systems.
-
-                        Your goal is to provide helpful, accurate responses while maintaining
-                        and organizing your memory system.
-                        """.trimIndent()
-                    )
+                    system(Prompts.BRAINIAC_SYSTEM)
                 },
                 model = brainiacContext.highThoughtModel,
                 maxAgentIterations = Int.MAX_VALUE, // no limit on interactions

@@ -12,6 +12,7 @@ import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.text.TextContentBuilderBase
 import ai.koog.prompt.xml.xml
 import com.duchastel.simon.brainiac.core.process.context.BrainiacContext
+import com.duchastel.simon.brainiac.core.process.prompt.Prompts
 import com.duchastel.simon.brainiac.core.process.util.withModel
 import kotlinx.serialization.Serializable
 
@@ -28,15 +29,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.recallLongTermMemory(
                 system {
                     xml {
                         tag("instruction") {
-                            +"""
-                        Given the following user request and a mind map of available long-term memory files,
-                        identify which memory files would be helpful to retrieve, if any.
-
-                        Return a list of file paths (relative to the long-term-memory directory) in structured format.
-                        If no files would be helpful, return an empty list.
-
-                        Don't return memories just for the sake of it - only return memories that would be genuinely helpful. Be thorough yet selective!
-                        """.trimIndent()
+                            +Prompts.RECALL_LONG_TERM_MEMORY_INSTRUCTION
                         }
 
                         longTermMemoryRepository.generateXmlMindMap()
@@ -110,17 +103,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemor
             rewritePrompt {
                 prompt("identify_promotions") {
                     system {
-                        +"""
-                        Please analyze the short-term memory below and identify important information
-                        that should be saved to long-term memory.
-
-                        Return a list of memory promotions with filenames and content.
-                        If no memories need to be saved, return an empty list.
-
-                        Don't save memories just for the sake of it - only save memories that would be genuinely helpful for long-term storage. Consider memories which are either:
-                        1. useful pieces of information, or
-                        2. episodic (events which happened that were interesting or notable for summarization and storage)
-                        """.trimIndent()
+                        +Prompts.IDENTIFY_MEMORY_PROMOTIONS
 
                         stm.asXmlRepresentation()
                     }
@@ -147,15 +130,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemor
             rewritePrompt {
                 prompt("clean_short_term_memory") {
                     system {
-                        +"""
-                        The following short-term memory has been analyzed, and important information
-                        has been promoted to long-term memory.
-
-                        Return a cleaned version of the short-term memory that:
-                        1. Removes information that was promoted to long-term memory
-                        2. Removes any unneeded or redundant information
-                        3. Retains only recent, actionable context that is still relevant
-                        """.trimIndent()
+                        +Prompts.CLEAN_SHORT_TERM_MEMORY
 
                         stm.asXmlRepresentation()
                     }
@@ -175,7 +150,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemor
         llm.writeSession {
             rewritePrompt { originalPrompt }
             updatePrompt {
-                system { summarizeWorkingMemory(cleanedStm) }
+                system { with(Prompts) { summarizeWorkingMemory(cleanedStm) } }
             }
             val summaryMessage = requestLLM()
             rewriteWorkingMemory(cleanedStm, LongTermMemory(emptyList()))
