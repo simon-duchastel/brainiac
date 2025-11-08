@@ -1,7 +1,6 @@
 package com.duchastel.simon.brainiac.tools.bash
 
 import ai.koog.agents.core.tools.SimpleTool
-import com.duchastel.simon.brainiac.tools.BrainiacTool
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.serializer
@@ -27,55 +26,52 @@ data class BashArgs(
  * This tool allows AI agents to execute bash commands on the system.
  * Commands are executed with a configurable timeout for safety.
  */
-class BashTool : BrainiacTool {
-    override fun toKoogTool(): SimpleTool<BashArgs> {
-        return object : SimpleTool<BashArgs>() {
-            override val name: String = "bash_execute"
+class BashTool : SimpleTool<BashArgs>() {
 
-            override val description: String = """
-                Execute a bash command on the system.
-                This tool runs commands in a bash shell and returns the output (stdout and stderr).
-                Commands have a configurable timeout for safety.
-                Use this for system operations, file management, running scripts, etc.
-            """.trimIndent()
+    override val name: String = "bash_execute"
 
-            override val argsSerializer: KSerializer<BashArgs> = serializer()
+    override val description: String = """
+        Execute a bash command on the system.
+        This tool runs commands in a bash shell and returns the output (stdout and stderr).
+        Commands have a configurable timeout for safety.
+        Use this for system operations, file management, running scripts, etc.
+    """.trimIndent()
 
-            override suspend fun doExecute(args: BashArgs): String {
-                return try {
-                    val processBuilder = ProcessBuilder("bash", "-c", args.command)
-                    processBuilder.redirectErrorStream(true)
+    override val argsSerializer: KSerializer<BashArgs> = serializer()
 
-                    val process = processBuilder.start()
-                    val output = StringBuilder()
+    override suspend fun doExecute(args: BashArgs): String {
+        return try {
+            val processBuilder = ProcessBuilder("bash", "-c", args.command)
+            processBuilder.redirectErrorStream(true)
 
-                    // Read output
-                    BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
-                        var line: String?
-                        while (reader.readLine().also { line = it } != null) {
-                            output.append(line).append("\n")
-                        }
-                    }
+            val process = processBuilder.start()
+            val output = StringBuilder()
 
-                    // Wait for process with timeout
-                    val completed = process.waitFor(args.timeoutSeconds.toLong(), TimeUnit.SECONDS)
-
-                    if (!completed) {
-                        process.destroyForcibly()
-                        return """{"error": "Command timed out after ${args.timeoutSeconds} seconds"}"""
-                    }
-
-                    val exitCode = process.exitValue()
-
-                    if (exitCode == 0) {
-                        output.toString()
-                    } else {
-                        """{"error": "Command exited with code $exitCode", "output": "${output.toString().replace("\"", "\\\"")}"}"""
-                    }
-                } catch (e: Exception) {
-                    """{"error": "${e.message}"}"""
+            // Read output
+            BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
+                var line: String?
+                while (reader.readLine().also { line = it } != null) {
+                    output.append(line).append("\n")
                 }
             }
+
+            // Wait for process with timeout
+            val completed = process.waitFor(args.timeoutSeconds.toLong(), TimeUnit.SECONDS)
+
+            if (!completed) {
+                process.destroyForcibly()
+                return """{"error": "Command timed out after ${args.timeoutSeconds} seconds"}"""
+            }
+
+            val exitCode = process.exitValue()
+
+            if (exitCode == 0) {
+                output.toString()
+            } else {
+                """{"error": "Command exited with code $exitCode", "output": "${output.toString().replace("\"", "\\\"")}"}"""
+            }
+        } catch (e: Exception) {
+            """{"error": "${e.message}"}"""
         }
     }
 }
