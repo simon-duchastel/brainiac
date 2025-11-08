@@ -6,8 +6,15 @@ import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.features.eventHandler.feature.EventHandler
 import ai.koog.agents.features.tokenizer.feature.MessageTokenizer
 import ai.koog.prompt.dsl.Prompt
+import ai.koog.prompt.executor.clients.LLMClient
+import ai.koog.prompt.executor.clients.google.GoogleLLMClient
 import ai.koog.prompt.executor.clients.google.GoogleModels
+import ai.koog.prompt.executor.clients.openrouter.OpenRouterLLMClient
+import ai.koog.prompt.executor.llms.Executors.promptExecutor
 import ai.koog.prompt.executor.llms.all.simpleGoogleAIExecutor
+import ai.koog.prompt.executor.llms.all.simpleOpenRouterExecutor
+import ai.koog.prompt.llm.LLMProvider
+import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.tokenizer.SimpleRegexBasedTokenizer
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRepository
@@ -26,15 +33,15 @@ import kotlin.time.ExperimentalTime
  * for processing user queries through the memory system.
  */
 class CoreAgent(
-    private val googleApiKey: String,
+    private val coreAgentContext: CoreAgentContext,
     shortTermMemoryRepository: ShortTermMemoryRepository,
     longTermMemoryRepository: LongTermMemoryRepository,
     private val onEvent: (AgentEvent) -> Unit,
 ) {
     private val brainiacContext = BrainiacContext(
-        highThoughtModel = GoogleModels.Gemini2_5Pro,
-        mediumThoughtModel = GoogleModels.Gemini2_5Flash,
-        lowThoughtModel = GoogleModels.Gemini2_5FlashLite,
+        highThoughtModel = coreAgentContext.highThoughtModel,
+        mediumThoughtModel = coreAgentContext.mediumThoughtModel,
+        lowThoughtModel = coreAgentContext.lowThoughtModel,
     )
     private val coreLoop = CoreLoop(
         shortTermMemoryRepository = shortTermMemoryRepository,
@@ -47,11 +54,12 @@ class CoreAgent(
      *
      * @param userQuery The user's input query
      */
+    @Suppress("UnstableApiUsage")
     fun run(userQuery: String) = runBlocking {
         val coreLoopStrategy = coreLoop.strategy("core-loop")
 
         val agent = AIAgent(
-            promptExecutor = simpleGoogleAIExecutor(googleApiKey),
+            promptExecutor = promptExecutor(coreAgentContext.executionClients),
             toolRegistry = ToolRegistry.EMPTY,
             strategy = coreLoopStrategy,
             agentConfig = AIAgentConfig(
@@ -89,5 +97,20 @@ class CoreAgent(
         )
 
         agent.run(userQuery)
+    }
+}
+
+data class CoreAgentContext(
+    val highThoughtModel: LLModel,
+    val mediumThoughtModel: LLModel,
+    val lowThoughtModel: LLModel,
+    val executionClients: Map<LLMProvider, LLMClient>,
+) {
+    init {
+        for (model in listOf(highThoughtModel, mediumThoughtModel, lowThoughtModel)) {
+            require(executionClients.contains(model.provider)) {
+                "Missing provider ${model.provider} for executing $model"
+            }
+        }
     }
 }

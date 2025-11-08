@@ -43,7 +43,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.recallLongTermMemory(
         }
 
         val memoryPaths = withModel(brainiacContext.mediumThoughtModel) {
-            requestLLMStructured<List<String>>().getOrNull()!!.structure
+            requestLLMStructured<MemoryPaths>().getOrNull()!!.structure.filePaths
         }
         prompt = originalPrompt
 
@@ -61,7 +61,17 @@ fun AIAgentSubgraphBuilderBase<*, *>.recallLongTermMemory(
 @Serializable
 data class MemoryPromotion(
     val filename: String,
-    val content: String
+    val content: String,
+)
+
+@Serializable
+data class MemoryPromotions(
+    val promotions: List<MemoryPromotion>,
+)
+
+@Serializable
+data class MemoryPaths(
+    val filePaths: List<String>,
 )
 
 @AIAgentBuilderDslMarker
@@ -111,7 +121,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemor
             }
 
             withModel(brainiacContext.mediumThoughtModel) {
-                requestLLMStructured<List<MemoryPromotion>>().getOrNull()!!.structure
+                requestLLMStructured<MemoryPromotions>().getOrNull()!!.structure.promotions
             }
         }
     }

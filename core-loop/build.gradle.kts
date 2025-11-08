@@ -25,7 +25,7 @@ kotlin {
         }
         val jvmMain by getting {
             dependencies {
-                implementation(libs.koog.agents)
+                api(libs.koog.agents)
             }
         }
         val jvmTest by getting {

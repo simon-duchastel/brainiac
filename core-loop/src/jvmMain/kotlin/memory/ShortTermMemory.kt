@@ -41,7 +41,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
     val cleanup by node<Unit, T>("${name}_cleanup") {
         storage.getValue(initialInputKey)
     }
-    val evaluateNeedForShortTermMemoryUpdate by node<Unit, Boolean>("${name}_evalute_tokens") {
+    val evaluateNeedForShortTermMemoryUpdate by node<Unit, Boolean>("${name}_evaluate_tokens") {
         tokenizer.tokenCountFor(llm.prompt) >= tokenThreshold
     }
 
@@ -55,7 +55,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
                 }
             }
             withModel(brainiacContext.mediumThoughtModel) {
-                requestLLMStructured<List<String>>().getOrNull()!!.structure
+                requestLLMStructured<Events>().getOrNull()!!.structure.memoryEvents
             }
         }
     }
@@ -70,7 +70,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
             }
 
             val goals = withModel(brainiacContext.mediumThoughtModel) {
-                requestLLMStructured<List<Goal>>().getOrNull()!!.structure
+                requestLLMStructured<Goals>().getOrNull()!!.structure.goals
             }
             events to goals
         }
@@ -85,7 +85,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
                 }
             }
             val thoughts = withModel(brainiacContext.mediumThoughtModel) {
-                requestLLMStructured<List<String>>().getOrNull()!!.structure
+                requestLLMStructured<Events>().getOrNull()!!.structure.memoryEvents
             }
             Triple(events, goals, thoughts)
         }
@@ -129,6 +129,11 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
 }
 
 @Serializable
+data class Events(
+    val memoryEvents: List<String> = emptyList(),
+)
+
+@Serializable
 data class ShortTermMemory(
     val thoughts: List<String> = emptyList(),
     val goals: List<Goal> = emptyList(),
@@ -169,4 +174,9 @@ data class ShortTermMemory(
 data class Goal(
     val description: String,
     val completed: Boolean = false,
+)
+
+@Serializable
+data class Goals(
+    val goals: List<Goal>
 )
