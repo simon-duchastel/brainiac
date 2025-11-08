@@ -52,6 +52,43 @@ Return a cleaned version of the short-term memory that:
 2. Removes any unneeded or redundant information
 3. Retains only recent, actionable context that is still relevant"""
 
+    const val ANALYZE_MEMORY_PATTERNS = """You are analyzing access patterns for a long-term memory system.
+
+Given the access log data below, identify:
+1. Frequently accessed memories (files with high READ count)
+2. Frequently modified memories (files with high WRITE/MODIFY count)
+3. Co-accessed memories (files that tend to be accessed close together in time)
+4. Unused memories (files that haven't been accessed recently or at all)
+
+Provide insights about what these patterns reveal about the system's information needs.
+
+Return a structured MemoryAnalysis with:
+- frequentlyAccessed: List of file paths with high access counts
+- frequentlyModified: List of file paths with high modification counts
+- coAccessedPairs: List of pairs of file paths that are accessed together
+- unusedFiles: List of file paths that are rarely or never accessed
+- insights: String with your analysis of what these patterns mean"""
+
+    const val PROPOSE_REFACTORING = """You are optimizing a long-term memory system based on access patterns.
+
+Given the memory analysis and current LTM structure below, propose refactoring operations to improve organization.
+
+Consider:
+- Strengthening relationships between co-accessed concepts (add cross-references)
+- Moving frequently accessed memories to more accessible locations
+- Archiving memories that haven't been accessed (move to archive/)
+- Consolidating redundant or closely related memories into single files
+
+Be conservative - only propose changes with clear benefits. Avoid unnecessary churn.
+
+Return a RefactoringOperations structure with a list of specific operations to perform.
+
+Available operation types:
+- StrengthenRelation: Add a relationship link between two files
+- MoveMemory: Move a file to a new location in the hierarchy
+- ArchiveMemory: Move a rarely-used file to the archive
+- ConsolidateMemories: Merge multiple related files into one"""
+
     fun TextContentBuilderBase<*>.summarizeWorkingMemory(
         updatedShortTermMemory: ShortTermMemory,
     ) = markdown {

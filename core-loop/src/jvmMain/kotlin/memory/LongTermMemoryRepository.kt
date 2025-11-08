@@ -15,6 +15,7 @@ import okio.Path
 class LongTermMemoryRepository(
     brainiacRootDirectory: Path,
     private val fileSystem: FileSystem = FileSystem.SYSTEM,
+    private val accessLogRepository: AccessLogRepository? = null,
 ) {
     private val ltmDirectory: Path = defaultLTMDirectory(brainiacRootDirectory)
 
@@ -24,9 +25,14 @@ class LongTermMemoryRepository(
     fun getLongTermMemory(memoryPath: String): String {
         val fullPath = ltmDirectory / memoryPath
 
-        return fileSystem.read(fullPath) {
+        val content = fileSystem.read(fullPath) {
             readUtf8()
         }
+
+        // Log the read access
+        accessLogRepository?.logAccess(AccessAction.READ, fullPath.toString())
+
+        return content
     }
 
     /**
@@ -36,10 +42,21 @@ class LongTermMemoryRepository(
      */
     fun writeLongTermMemory(memoryPath: String, content: String) {
         val filePath = ltmDirectory / memoryPath
-        fileSystem.createDirectories(filePath)
+
+        // Determine if this is a new file (WRITE) or updating existing (MODIFY)
+        val action = if (fileSystem.exists(filePath)) {
+            AccessAction.MODIFY
+        } else {
+            AccessAction.WRITE
+        }
+
+        fileSystem.createDirectories(filePath.parent!!)
         fileSystem.write(filePath) {
             writeUtf8(content)
         }
+
+        // Log the write/modify access
+        accessLogRepository?.logAccess(action, filePath.toString())
     }
 
     /**
