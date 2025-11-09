@@ -95,12 +95,9 @@ fun main() {
                                         println(messageContent)
                                     }
                                 }
-                                "store_short_term_memory" -> {
-                                    println("Updating short term memory...")
-                                }
-                                "store_long_term_memory" -> {
-                                    println("Updating long term memory...")
-                                }
+                                "store_short_term_memory" -> println("Updating short term memory...")
+                                "store_long_term_memory" -> println("Updating long term memory...")
+                                else -> {}
                             }
                         }
 
