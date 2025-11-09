@@ -89,10 +89,12 @@ fun main() {
                         is Message.Tool.Call -> {
                             when (message.tool) {
                                 "talk" -> {
-                                    val args = message.arguments
-                                    val messageContent = args["message"]?.toString()?.removeSurrounding("\"")
-                                    if (messageContent != null) {
-                                        println(messageContent)
+                                    val toolContent = message.content
+                                    val messagePattern = """"message"\s*:\s*"([^"]*)"""".toRegex()
+                                    val match = messagePattern.find(toolContent)
+                                    val messageText = match?.groupValues?.get(1)
+                                    if (messageText != null) {
+                                        println(messageText)
                                     }
                                 }
                                 "store_short_term_memory" -> println("Updating short term memory...")
