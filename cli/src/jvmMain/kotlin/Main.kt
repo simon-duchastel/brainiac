@@ -18,6 +18,7 @@ import com.duchastel.simon.brainiac.agent.CoreAgentConfig
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRepository
 import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
 import com.duchastel.simon.brainiac.tools.bash.BashTool
+import com.duchastel.simon.brainiac.tools.talk.TalkTool
 import com.duchastel.simon.brainiac.tools.websearch.WebSearchTool
 import okio.Path.Companion.toPath
 
@@ -54,6 +55,8 @@ fun main() {
     )
 
     val toolRegistry = ToolRegistry {
+        tool(TalkTool())
+
         if (tavilyApiKey != null) {
             println("Web search enabled via Tavily API")
             tool(WebSearchTool(apiKey = tavilyApiKey, maxResults = 5))
@@ -81,19 +84,27 @@ fun main() {
                 messages.forEach { message ->
                     when (message) {
                         is Message.Assistant -> {
-                            println(message.content)
                         }
 
                         is Message.Tool.Call -> {
-                            val toolUseMessage = when (message.tool) {
-                                "store_short_term_memory" -> "Updating short term memory..."
-                                "store_long_term_memory" -> "Updating long term memory..."
-                                else -> return@forEach
+                            when (message.tool) {
+                                "talk" -> {
+                                    val args = message.arguments
+                                    val messageContent = args["message"]?.toString()?.removeSurrounding("\"")
+                                    if (messageContent != null) {
+                                        println(messageContent)
+                                    }
+                                }
+                                "store_short_term_memory" -> {
+                                    println("Updating short term memory...")
+                                }
+                                "store_long_term_memory" -> {
+                                    println("Updating long term memory...")
+                                }
                             }
-                            println(toolUseMessage)
                         }
 
-                        else -> {} // Ignore other message types
+                        else -> {}
                     }
                 }
             }
