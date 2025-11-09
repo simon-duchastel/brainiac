@@ -31,7 +31,7 @@ class TalkTool : SimpleTool<TalkArgs>() {
         The message will be displayed directly to the user.
     """.trimIndent()
 
-    override val argsSerializer: KSerializer<TalkArgs> = serializer()
+    override val argsSerializer: KSerializer<TalkArgs> = serializer<TalkArgs>()
 
     override suspend fun doExecute(args: TalkArgs): String {
         return "Message delivered to user"
