@@ -127,7 +127,6 @@ fun main() {
         longTermMemoryRepository = longTermMemoryRepository,
         awaitUserMessage = {
             print("> ")
-            readlnOrNull()
             val input = readlnOrNull()?.trim()
 
             val userMessage = when {
