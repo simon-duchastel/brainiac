@@ -27,8 +27,12 @@ import com.jakewharton.mosaic.layout.onKeyEvent
 import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.runMosaicMain
 import com.jakewharton.mosaic.ui.*
+import com.slack.circuit.foundation.Circuit
+import com.slack.circuit.foundation.CircuitCompositionLocals
+import com.slack.circuit.foundation.CircuitContent
 import com.slack.circuit.runtime.CircuitUiEvent
 import com.slack.circuit.runtime.CircuitUiState
+import com.slack.circuit.runtime.presenter.Presenter
 import com.slack.circuit.runtime.screen.Screen
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -97,24 +101,17 @@ data class ToolActivity(
 // Main Entry Point
 // ============================================================================
 
-fun main(args: Array<String>) = runMosaicMain {
+fun main(args: Array<String>) {
     // Configure logging before any other code runs
     val enableLogging = args.contains("--logging")
     configureLogging(enableLogging)
 
-    println("===== Brainiac AI =====")
-    if (enableLogging) {
-        println("Verbose logging enabled")
-    }
-    println("Type 'exit' or 'quit' to exit")
-
+    val brainiacRootDirectory = "~/.brainiac/".toPath()
     val googleApiKey = System.getenv("GOOGLE_API_KEY")
         ?: error("GOOGLE_API_KEY environment variable not set")
     val openRouterApiKey = System.getenv("OPEN_ROUTER_API_KEY")
         ?: error("OPEN_ROUTER_API_KEY environment variable not set")
     val tavilyApiKey = System.getenv("TAVILY_API_KEY")
-
-    val brainiacRootDirectory = "~/.brainiac/".toPath()
 
     val shortTermMemoryRepository = ShortTermMemoryRepository(
         brainiacRootDirectory = brainiacRootDirectory
@@ -135,21 +132,23 @@ fun main(args: Array<String>) = runMosaicMain {
         contextLength = 256_000,
     )
 
-    val state = BrainiacPresenter(
-        googleApiKey = googleApiKey,
-        openRouterApiKey = openRouterApiKey,
-        tavilyApiKey = tavilyApiKey,
-        stealthModel = stealthModel,
-        shortTermMemoryRepository = shortTermMemoryRepository,
-        longTermMemoryRepository = longTermMemoryRepository
-    )
+    val circuit: Circuit =
+        Circuit.Builder()
+            .addPresenter<BrainiacScreen, BrainiacState> { screen, navigator, context ->
+                BrainiacPresenter(
+                    googleApiKey = googleApiKey,
+                    openRouterApiKey = openRouterApiKey,
+                    tavilyApiKey = tavilyApiKey,
+                    shortTermMemoryRepository = shortTermMemoryRepository,
+                    longTermMemoryRepository = longTermMemoryRepository
+                )
+            }
+            .addUi<BrainiacScreen, BrainiacState> { state, _ -> BrainiacUi(state) }
+            .build()
 
-    BrainiacUi(state = state)
-
-    // Keep app running until exit is signaled
-    if (!state.shouldExit) {
-        LaunchedEffect(Unit) {
-            awaitCancellation()
+    runMosaicMain {
+        CircuitCompositionLocals(circuit) {
+            CircuitContent(BrainiacScreen)
         }
     }
 }
@@ -158,202 +157,217 @@ fun main(args: Array<String>) = runMosaicMain {
 // Circuit Presenter (Business Logic)
 // ============================================================================
 
-@Composable
-fun BrainiacPresenter(
-    googleApiKey: String,
-    openRouterApiKey: String,
-    tavilyApiKey: String?,
-    stealthModel: LLModel,
-    shortTermMemoryRepository: ShortTermMemoryRepository,
-    longTermMemoryRepository: LongTermMemoryRepository
-): BrainiacState {
-    var messages by remember { mutableStateOf<List<ChatMessage>>(emptyList()) }
-    var thinking by remember { mutableStateOf("") }
-    var isThinking by remember { mutableStateOf(false) }
-    var isThinkingExpanded by remember { mutableStateOf(false) }
-    var toolActivities by remember { mutableStateOf<List<ToolActivity>>(emptyList()) }
-    var showToolDetails by remember { mutableStateOf(false) }
-    var isWaitingForResponse by remember { mutableStateOf(false) }
-    var loadingDots by remember { mutableStateOf(0) }
-    var inputBuffer by remember { mutableStateOf("") }
-    var shouldExit by remember { mutableStateOf(false) }
 
-    val userInputChannel = remember { Channel<String>(Channel.UNLIMITED) }
+class BrainiacPresenter(
+    private val googleApiKey: String,
+    private val openRouterApiKey: String,
+    private val tavilyApiKey: String?,
+    private val shortTermMemoryRepository: ShortTermMemoryRepository,
+    private val longTermMemoryRepository: LongTermMemoryRepository
+): Presenter<BrainiacState> {
 
-    // Animation for loading dots
-    LaunchedEffect(isThinking, isWaitingForResponse) {
-        while (isThinking || isWaitingForResponse) {
-            delay(500)
-            loadingDots = (loadingDots + 1) % 4
-        }
-    }
+    val stealthModel = LLModel(
+        provider = LLMProvider.OpenRouter,
+        id = "openrouter/polaris-alpha",
+        capabilities = listOf(
+            LLMCapability.Temperature,
+            LLMCapability.Speculation,
+            LLMCapability.Tools,
+            LLMCapability.Completion
+        ),
+        contextLength = 256_000,
+    )
 
-    // Setup CoreAgent
-    LaunchedEffect(Unit) {
-        val toolRegistry = ToolRegistry {
-            tool(TalkTool { message ->
-                messages = messages + ChatMessage(
-                    content = message,
-                    sender = MessageSender.BRAINIAC
-                )
-                isWaitingForResponse = false
-                isThinking = false
-            })
+    @Composable
+    override fun present(): BrainiacState {
+        var messages by remember { mutableStateOf<List<ChatMessage>>(emptyList()) }
+        var thinking by remember { mutableStateOf("") }
+        var isThinking by remember { mutableStateOf(false) }
+        var isThinkingExpanded by remember { mutableStateOf(false) }
+        var toolActivities by remember { mutableStateOf<List<ToolActivity>>(emptyList()) }
+        var showToolDetails by remember { mutableStateOf(false) }
+        var isWaitingForResponse by remember { mutableStateOf(false) }
+        var loadingDots by remember { mutableStateOf(0) }
+        var inputBuffer by remember { mutableStateOf("") }
+        var shouldExit by remember { mutableStateOf(false) }
 
-            if (tavilyApiKey != null) {
-                tool(WebSearchTool(apiKey = tavilyApiKey, maxResults = 5))
+        val userInputChannel = remember { Channel<String>(Channel.UNLIMITED) }
+
+        // Animation for loading dots
+        LaunchedEffect(isThinking, isWaitingForResponse) {
+            while (isThinking || isWaitingForResponse) {
+                delay(500)
+                loadingDots = (loadingDots + 1) % 4
             }
-            tool(BashTool())
-            tool(ListDirectoryTool(JVMFileSystemProvider.ReadWrite))
-            tool(EditFileTool(JVMFileSystemProvider.ReadWrite))
-            tool(ReadFileTool(JVMFileSystemProvider.ReadWrite))
-            tool(WriteFileTool(JVMFileSystemProvider.ReadWrite))
         }
 
-        val coreAgent = CoreAgent(
-            config = CoreAgentConfig(
-                highThoughtModel = stealthModel,
-                mediumThoughtModel = GoogleModels.Gemini2_5Flash,
-                lowThoughtModel = GoogleModels.Gemini2_5FlashLite,
-                executionClients = mapOf(
-                    LLMProvider.Google to GoogleLLMClient(googleApiKey),
-                    LLMProvider.OpenRouter to OpenRouterLLMClient(openRouterApiKey),
-                ),
-                toolRegistry = toolRegistry,
-                onEventHandler = { messagesFromAgent ->
-                    messagesFromAgent.forEach { message ->
-                        when (message) {
-                            is Message.Assistant -> {
-                                thinking = message.content
-                                isThinking = true
-                            }
-                            is Message.Tool.Call -> {
-                                val toolName = message.tool
-                                val content = message.content
-                                val activity = when (toolName) {
-                                    BashTool().name -> ToolActivity(
-                                        toolName = "Bash",
-                                        summary = "Running command",
-                                        details = content
-                                    )
-                                    ListDirectoryTool(JVMFileSystemProvider.ReadWrite).name -> ToolActivity(
-                                        toolName = "ListDirectory",
-                                        summary = "Listing directory",
-                                        details = content
-                                    )
-                                    EditFileTool(JVMFileSystemProvider.ReadWrite).name -> ToolActivity(
-                                        toolName = "EditFile",
-                                        summary = "Editing file",
-                                        details = content
-                                    )
-                                    ReadFileTool(JVMFileSystemProvider.ReadWrite).name -> ToolActivity(
-                                        toolName = "ReadFile",
-                                        summary = "Reading file",
-                                        details = content
-                                    )
-                                    WriteFileTool(JVMFileSystemProvider.ReadWrite).name -> ToolActivity(
-                                        toolName = "WriteFile",
-                                        summary = "Writing file",
-                                        details = content
-                                    )
-                                    else -> ToolActivity(
-                                        toolName = toolName,
-                                        summary = "Using tool",
-                                        details = content
-                                    )
+        // Setup CoreAgent
+        LaunchedEffect(Unit) {
+            val toolRegistry = ToolRegistry {
+                tool(TalkTool { message ->
+                    messages = messages + ChatMessage(
+                        content = message,
+                        sender = MessageSender.BRAINIAC
+                    )
+                    isWaitingForResponse = false
+                    isThinking = false
+                })
+
+                if (tavilyApiKey != null) {
+                    tool(WebSearchTool(apiKey = tavilyApiKey, maxResults = 5))
+                }
+                tool(BashTool())
+                tool(ListDirectoryTool(JVMFileSystemProvider.ReadWrite))
+                tool(EditFileTool(JVMFileSystemProvider.ReadWrite))
+                tool(ReadFileTool(JVMFileSystemProvider.ReadWrite))
+                tool(WriteFileTool(JVMFileSystemProvider.ReadWrite))
+            }
+
+            val coreAgent = CoreAgent(
+                config = CoreAgentConfig(
+                    highThoughtModel = stealthModel,
+                    mediumThoughtModel = GoogleModels.Gemini2_5Flash,
+                    lowThoughtModel = GoogleModels.Gemini2_5FlashLite,
+                    executionClients = mapOf(
+                        LLMProvider.Google to GoogleLLMClient(googleApiKey),
+                        LLMProvider.OpenRouter to OpenRouterLLMClient(openRouterApiKey),
+                    ),
+                    toolRegistry = toolRegistry,
+                    onEventHandler = { messagesFromAgent ->
+                        messagesFromAgent.forEach { message ->
+                            when (message) {
+                                is Message.Assistant -> {
+                                    thinking = message.content
+                                    isThinking = true
                                 }
-                                toolActivities = (toolActivities + activity).takeLast(10)
+                                is Message.Tool.Call -> {
+                                    val toolName = message.tool
+                                    val content = message.content
+                                    val activity = when (toolName) {
+                                        BashTool().name -> ToolActivity(
+                                            toolName = "Bash",
+                                            summary = "Running command",
+                                            details = content
+                                        )
+                                        ListDirectoryTool(JVMFileSystemProvider.ReadWrite).name -> ToolActivity(
+                                            toolName = "ListDirectory",
+                                            summary = "Listing directory",
+                                            details = content
+                                        )
+                                        EditFileTool(JVMFileSystemProvider.ReadWrite).name -> ToolActivity(
+                                            toolName = "EditFile",
+                                            summary = "Editing file",
+                                            details = content
+                                        )
+                                        ReadFileTool(JVMFileSystemProvider.ReadWrite).name -> ToolActivity(
+                                            toolName = "ReadFile",
+                                            summary = "Reading file",
+                                            details = content
+                                        )
+                                        WriteFileTool(JVMFileSystemProvider.ReadWrite).name -> ToolActivity(
+                                            toolName = "WriteFile",
+                                            summary = "Writing file",
+                                            details = content
+                                        )
+                                        else -> ToolActivity(
+                                            toolName = toolName,
+                                            summary = "Using tool",
+                                            details = content
+                                        )
+                                    }
+                                    toolActivities = (toolActivities + activity).takeLast(10)
+                                }
+                                else -> {}
                             }
-                            else -> {}
+                        }
+                    }
+                ),
+                shortTermMemoryRepository = shortTermMemoryRepository,
+                longTermMemoryRepository = longTermMemoryRepository,
+                awaitUserMessage = {
+                    val input = userInputChannel.receive()
+                    when {
+                        input.lowercase() in listOf("exit", "quit") -> {
+                            shouldExit = true
+                            UserMessage.Stop
+                        }
+                        else -> {
+                            messages = messages + ChatMessage(
+                                content = input,
+                                sender = MessageSender.USER
+                            )
+                            isWaitingForResponse = true
+                            UserMessage.Message(input)
                         }
                     }
                 }
-            ),
-            shortTermMemoryRepository = shortTermMemoryRepository,
-            longTermMemoryRepository = longTermMemoryRepository,
-            awaitUserMessage = {
-                val input = userInputChannel.receive()
-                when {
-                    input.lowercase() in listOf("exit", "quit") -> {
-                        shouldExit = true
-                        UserMessage.Stop
+            )
+
+            try {
+                coreAgent.run()
+            } catch (e: Exception) {
+                messages = messages + ChatMessage(
+                    content = "Error: ${e.message}",
+                    sender = MessageSender.BRAINIAC
+                )
+            }
+        }
+
+        return BrainiacState(
+            messages = messages,
+            thinking = thinking,
+            isThinking = isThinking,
+            isThinkingExpanded = isThinkingExpanded,
+            toolActivities = toolActivities,
+            showToolDetails = showToolDetails,
+            isWaitingForResponse = isWaitingForResponse,
+            loadingDots = loadingDots,
+            inputBuffer = inputBuffer,
+            shouldExit = shouldExit,
+            eventSink = { event ->
+                when (event) {
+                    is BrainiacEvent.SendMessage -> {
+                        if (!isWaitingForResponse && event.message.isNotBlank()) {
+                            userInputChannel.trySend(event.message)
+                            inputBuffer = ""
+                        }
                     }
-                    else -> {
-                        messages = messages + ChatMessage(
-                            content = input,
-                            sender = MessageSender.USER
-                        )
-                        isWaitingForResponse = true
-                        UserMessage.Message(input)
+                    BrainiacEvent.ToggleThinking -> {
+                        isThinkingExpanded = !isThinkingExpanded
+                    }
+                    BrainiacEvent.ToggleToolDetails -> {
+                        showToolDetails = !showToolDetails
+                    }
+                    is BrainiacEvent.AppendToInput -> {
+                        if (!isWaitingForResponse) {
+                            inputBuffer += event.char
+                        }
+                    }
+                    BrainiacEvent.BackspaceInput -> {
+                        if (!isWaitingForResponse && inputBuffer.isNotEmpty()) {
+                            inputBuffer = inputBuffer.dropLast(1)
+                        }
+                    }
+                    BrainiacEvent.SubmitInput -> {
+                        if (!isWaitingForResponse && inputBuffer.isNotBlank()) {
+                            val trimmed = inputBuffer.trim()
+                            if (trimmed.lowercase() in listOf("exit", "quit")) {
+                                shouldExit = true
+                                userInputChannel.trySend(trimmed)
+                            } else {
+                                userInputChannel.trySend(trimmed)
+                            }
+                            inputBuffer = ""
+                        }
+                    }
+                    BrainiacEvent.ExitApp -> {
+                        shouldExit = true
+                        userInputChannel.trySend("exit")
                     }
                 }
             }
         )
-
-        try {
-            coreAgent.run()
-        } catch (e: Exception) {
-            messages = messages + ChatMessage(
-                content = "Error: ${e.message}",
-                sender = MessageSender.BRAINIAC
-            )
-        }
     }
-
-    return BrainiacState(
-        messages = messages,
-        thinking = thinking,
-        isThinking = isThinking,
-        isThinkingExpanded = isThinkingExpanded,
-        toolActivities = toolActivities,
-        showToolDetails = showToolDetails,
-        isWaitingForResponse = isWaitingForResponse,
-        loadingDots = loadingDots,
-        inputBuffer = inputBuffer,
-        shouldExit = shouldExit,
-        eventSink = { event ->
-            when (event) {
-                is BrainiacEvent.SendMessage -> {
-                    if (!isWaitingForResponse && event.message.isNotBlank()) {
-                        userInputChannel.trySend(event.message)
-                        inputBuffer = ""
-                    }
-                }
-                BrainiacEvent.ToggleThinking -> {
-                    isThinkingExpanded = !isThinkingExpanded
-                }
-                BrainiacEvent.ToggleToolDetails -> {
-                    showToolDetails = !showToolDetails
-                }
-                is BrainiacEvent.AppendToInput -> {
-                    if (!isWaitingForResponse) {
-                        inputBuffer += event.char
-                    }
-                }
-                BrainiacEvent.BackspaceInput -> {
-                    if (!isWaitingForResponse && inputBuffer.isNotEmpty()) {
-                        inputBuffer = inputBuffer.dropLast(1)
-                    }
-                }
-                BrainiacEvent.SubmitInput -> {
-                    if (!isWaitingForResponse && inputBuffer.isNotBlank()) {
-                        val trimmed = inputBuffer.trim()
-                        if (trimmed.lowercase() in listOf("exit", "quit")) {
-                            shouldExit = true
-                            userInputChannel.trySend(trimmed)
-                        } else {
-                            userInputChannel.trySend(trimmed)
-                        }
-                        inputBuffer = ""
-                    }
-                }
-                BrainiacEvent.ExitApp -> {
-                    shouldExit = true
-                    userInputChannel.trySend("exit")
-                }
-            }
-        }
-    )
 }
 
 // ============================================================================
