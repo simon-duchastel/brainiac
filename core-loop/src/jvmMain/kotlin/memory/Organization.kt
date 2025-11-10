@@ -222,6 +222,9 @@ inline fun <reified T : Any> AIAgentSubgraphBuilderBase<*, *>.organizeLongTermMe
                             }
                         }
                     }
+                    user {
+                        +"Please analyze the memory access patterns provided above."
+                    }
                 }
             }
 
@@ -270,6 +273,9 @@ inline fun <reified T : Any> AIAgentSubgraphBuilderBase<*, *>.organizeLongTermMe
                                 longTermMemoryRepository.generateXmlMindMap()
                             }
                         }
+                    }
+                    user {
+                        +"Please propose refactoring operations based on the memory analysis provided above."
                     }
                 }
             }

@@ -40,6 +40,9 @@ fun AIAgentSubgraphBuilderBase<*, *>.recallLongTermMemory(
                         }
                     }
                 }
+                user {
+                    +"Please recall the relevant long-term memories for the user request provided above."
+                }
             }
         }
 
@@ -121,6 +124,9 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemor
 
                         stm.asXmlRepresentation()
                     }
+                    user {
+                        +"Please analyze the short-term memory and identify promotions."
+                    }
                 }
             }
 
@@ -147,6 +153,9 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemor
                         +Prompts.CLEAN_SHORT_TERM_MEMORY
 
                         stm.asXmlRepresentation()
+                    }
+                    user {
+                        +"Please clean the short-term memory based on the promotions."
                     }
                 }
             }
