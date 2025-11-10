@@ -6,6 +6,7 @@ import ai.koog.agents.ext.tool.file.ListDirectoryTool
 import ai.koog.agents.ext.tool.file.ReadFileTool
 import ai.koog.agents.ext.tool.file.WriteFileTool
 import ai.koog.prompt.executor.clients.google.GoogleLLMClient
+import ai.koog.prompt.executor.clients.google.GoogleModels
 import ai.koog.prompt.executor.clients.openrouter.OpenRouterLLMClient
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
@@ -82,8 +83,8 @@ fun main(args: Array<String>) {
     val coreAgent = CoreAgent(
         config = CoreAgentConfig(
             highThoughtModel = stealthModel,
-            mediumThoughtModel = stealthModel,
-            lowThoughtModel = stealthModel,
+            mediumThoughtModel = GoogleModels.Gemini2_5Flash,
+            lowThoughtModel = GoogleModels.Gemini2_5FlashLite,
             executionClients = mapOf(
                 LLMProvider.Google to GoogleLLMClient(googleApiKey),
                 LLMProvider.OpenRouter to OpenRouterLLMClient(openRouterApiKey),

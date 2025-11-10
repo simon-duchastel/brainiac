@@ -48,6 +48,11 @@ If no files would be helpful, return an empty list.
 
 Don't return memories just for the sake of it - only return memories that would be genuinely helpful. Be thorough yet selective!"""
 
+    // Google's Gemini API requires at least one user message in the request's 'contents' field.
+    // When using rewritePrompt() with only system messages and then switching to a Google model
+    // via withModel(), we must include a user message or the API returns a 400 error.
+    const val RECALL_LONG_TERM_MEMORY_USER = "Please recall the relevant long-term memories for the user request provided above."
+
     const val IDENTIFY_MEMORY_PROMOTIONS = """Please analyze the short-term memory below and identify important information
 that should be saved to long-term memory.
 
@@ -58,6 +63,8 @@ Don't save memories just for the sake of it - only save memories that would be g
 1. useful pieces of information, or
 2. episodic (events which happened that were interesting or notable for summarization and storage)"""
 
+    const val IDENTIFY_MEMORY_PROMOTIONS_USER = "Please analyze the short-term memory and identify promotions."
+
     const val CLEAN_SHORT_TERM_MEMORY = """The following short-term memory has been analyzed, and important information
 has been promoted to long-term memory.
 
@@ -65,6 +72,8 @@ Return a cleaned version of the short-term memory that:
 1. Removes information that was promoted to long-term memory
 2. Removes any unneeded or redundant information
 3. Retains only recent, actionable context that is still relevant"""
+
+    const val CLEAN_SHORT_TERM_MEMORY_USER = "Please clean the short-term memory based on the promotions."
 
     const val ANALYZE_MEMORY_PATTERNS = """You are analyzing access patterns for a long-term memory system.
 
@@ -82,6 +91,8 @@ Return a structured MemoryAnalysis with:
 - coAccessedPairs: List of pairs of file paths that are accessed together
 - unusedFiles: List of file paths that are rarely or never accessed
 - insights: String with your analysis of what these patterns mean"""
+
+    const val ANALYZE_MEMORY_PATTERNS_USER = "Please analyze the memory access patterns provided above."
 
     const val PROPOSE_REFACTORING = """You are optimizing a long-term memory system based on access patterns.
 
@@ -102,6 +113,8 @@ Available operation types:
 - MoveMemory: Move a file to a new location in the hierarchy
 - ArchiveMemory: Move a rarely-used file to the archive
 - ConsolidateMemories: Merge multiple related files into one"""
+
+    const val PROPOSE_REFACTORING_USER = "Please propose refactoring operations based on the memory analysis provided above."
 
     fun TextContentBuilderBase<*>.summarizeWorkingMemory(
         updatedShortTermMemory: ShortTermMemory,
