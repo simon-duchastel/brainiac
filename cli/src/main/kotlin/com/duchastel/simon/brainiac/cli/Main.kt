@@ -22,8 +22,15 @@ import com.duchastel.simon.brainiac.tools.talk.TalkTool
 import com.duchastel.simon.brainiac.tools.websearch.WebSearchTool
 import okio.Path.Companion.toPath
 
-fun main() {
+fun main(args: Array<String>) {
+    // Configure logging before any other code runs
+    val enableLogging = args.contains("--logging")
+    configureLogging(enableLogging)
+
     println("===== Brainiac AI =====")
+    if (enableLogging) {
+        println("Verbose logging enabled")
+    }
     println("Type 'exit' or 'quit' to exit")
     println()
 
@@ -141,5 +148,21 @@ fun main() {
     } catch (e: Exception) {
         println("Error: ${e.message}")
         e.printStackTrace()
+    }
+}
+
+/**
+ * Configure logging levels for the application.
+ * By default, Koog logging is set to WARN to reduce verbosity.
+ * When enableLogging is true, all logging is set to INFO.
+ */
+private fun configureLogging(enableLogging: Boolean) {
+    if (enableLogging) {
+        // Enable verbose logging
+        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "INFO")
+    } else {
+        // Suppress verbose Koog logging by default
+        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "WARN")
+        System.setProperty("org.slf4j.simpleLogger.log.ai.koog", "WARN")
     }
 }
