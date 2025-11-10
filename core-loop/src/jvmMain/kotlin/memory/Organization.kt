@@ -223,7 +223,7 @@ inline fun <reified T : Any> AIAgentSubgraphBuilderBase<*, *>.organizeLongTermMe
                         }
                     }
                     user {
-                        +"Please analyze the memory access patterns provided above."
+                        +Prompts.ANALYZE_MEMORY_PATTERNS_USER
                     }
                 }
             }
@@ -275,7 +275,7 @@ inline fun <reified T : Any> AIAgentSubgraphBuilderBase<*, *>.organizeLongTermMe
                         }
                     }
                     user {
-                        +"Please propose refactoring operations based on the memory analysis provided above."
+                        +Prompts.PROPOSE_REFACTORING_USER
                     }
                 }
             }
