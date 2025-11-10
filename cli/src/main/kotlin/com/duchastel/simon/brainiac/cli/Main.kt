@@ -349,6 +349,7 @@ fun BrainiacPresenter(
                 }
                 BrainiacEvent.ExitApp -> {
                     shouldExit = true
+                    userInputChannel.trySend("exit")
                 }
             }
         }
@@ -364,12 +365,16 @@ fun BrainiacUi(state: BrainiacState) {
     Column(
         modifier = Modifier.onKeyEvent { keyEvent ->
             when (keyEvent) {
-                KeyEvent("t") -> {
+                KeyEvent("Ctrl-T"), KeyEvent("Ctrl-t") -> {
                     state.eventSink(BrainiacEvent.ToggleThinking)
                     true
                 }
-                KeyEvent("a") -> {
+                KeyEvent("Ctrl-A"), KeyEvent("Ctrl-a") -> {
                     state.eventSink(BrainiacEvent.ToggleToolDetails)
+                    true
+                }
+                KeyEvent("Ctrl-C"), KeyEvent("Ctrl-c") -> {
+                    state.eventSink(BrainiacEvent.ExitApp)
                     true
                 }
                 KeyEvent("Enter") -> {
@@ -438,7 +443,7 @@ fun ThinkingPanel(thinking: String, isThinking: Boolean, isExpanded: Boolean, do
     if (!isThinking && thinking.isEmpty()) return
 
     val dotsText = ".".repeat(dots)
-    Text("💭 Thinking${if (!isExpanded) " [Press 't' to expand]" else " [Press 't' to collapse]"}$dotsText", color = Color.Yellow)
+    Text("💭 Thinking${if (!isExpanded) " [Press Ctrl-T to expand]" else " [Press Ctrl-T to collapse]"}$dotsText", color = Color.Yellow)
 
     if (isExpanded && thinking.isNotEmpty()) {
         Text("   ${thinking.take(500)}", color = Color.Yellow)
@@ -449,7 +454,7 @@ fun ThinkingPanel(thinking: String, isThinking: Boolean, isExpanded: Boolean, do
 fun ToolActivityPanel(activities: List<ToolActivity>, showDetails: Boolean) {
     if (activities.isEmpty()) return
 
-    Text("🔧 Tool Activity${if (!showDetails) " [Press 'a' to show details]" else " [Press 'a' to hide details]"}", color = Color.Green)
+    Text("🔧 Tool Activity${if (!showDetails) " [Press Ctrl-A to show details]" else " [Press Ctrl-A to hide details]"}", color = Color.Green)
 
     activities.takeLast(5).forEach { activity ->
         val icon = when (activity.toolName) {
@@ -516,7 +521,7 @@ fun InputPanel(inputBuffer: String, isDisabled: Boolean) {
 @Composable
 fun FooterPanel() {
     Text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", color = Color.White)
-    Text("   Shortcuts: [t] Toggle Thinking | [a] Toggle Tool Details | Type 'exit' or 'quit' to quit", color = Color.White)
+    Text("   Shortcuts: [Ctrl-T] Toggle Thinking | [Ctrl-A] Toggle Tool Details | [Ctrl-C] Quit", color = Color.White)
 }
 
 @Composable
