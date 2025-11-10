@@ -21,6 +21,7 @@ dependencies {
     implementation(libs.okio)
     implementation(libs.slf4j.simple)
     implementation(libs.mosaic.runtime)
+    implementation(libs.circuit.foundation)
 }
 
 tasks.withType<JavaExec> {

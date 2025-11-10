@@ -24,11 +24,46 @@ import com.duchastel.simon.brainiac.tools.websearch.WebSearchTool
 import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.runMosaic
 import com.jakewharton.mosaic.ui.*
+import com.slack.circuit.runtime.CircuitUiEvent
+import com.slack.circuit.runtime.CircuitUiState
+import com.slack.circuit.runtime.screen.Screen
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import okio.Path.Companion.toPath
 import java.text.SimpleDateFormat
 import java.util.*
+
+// ============================================================================
+// Circuit Screen
+// ============================================================================
+
+data object BrainiacScreen : Screen
+
+// ============================================================================
+// Circuit State
+// ============================================================================
+
+data class BrainiacState(
+    val messages: List<ChatMessage> = emptyList(),
+    val thinking: String = "",
+    val isThinking: Boolean = false,
+    val isThinkingExpanded: Boolean = false,
+    val toolActivities: List<ToolActivity> = emptyList(),
+    val showToolDetails: Boolean = false,
+    val isWaitingForResponse: Boolean = false,
+    val loadingDots: Int = 0,
+    val eventSink: (BrainiacEvent) -> Unit = {}
+) : CircuitUiState
+
+// ============================================================================
+// Circuit Events
+// ============================================================================
+
+sealed interface BrainiacEvent : CircuitUiEvent {
+    data class SendMessage(val message: String) : BrainiacEvent
+    data object ToggleThinking : BrainiacEvent
+    data object ToggleToolDetails : BrainiacEvent
+}
 
 // ============================================================================
 // Data Models
@@ -47,17 +82,6 @@ data class ToolActivity(
     val summary: String,
     val details: String,
     val timestamp: Long = System.currentTimeMillis()
-)
-
-data class UIState(
-    val messages: List<ChatMessage> = emptyList(),
-    val thinking: String = "",
-    val isThinking: Boolean = false,
-    val isThinkingExpanded: Boolean = false,
-    val toolActivities: List<ToolActivity> = emptyList(),
-    val showToolDetails: Boolean = false,
-    val isWaitingForResponse: Boolean = false,
-    val loadingDots: Int = 0
 )
 
 // ============================================================================
@@ -93,7 +117,7 @@ suspend fun main() {
     )
 
     runMosaic {
-        BrainiacTUI(
+        val state = BrainiacPresenter(
             googleApiKey = googleApiKey,
             openRouterApiKey = openRouterApiKey,
             tavilyApiKey = tavilyApiKey,
@@ -101,31 +125,39 @@ suspend fun main() {
             shortTermMemoryRepository = shortTermMemoryRepository,
             longTermMemoryRepository = longTermMemoryRepository
         )
+        BrainiacUi(state = state)
     }
 }
 
 // ============================================================================
-// Main TUI Component
+// Circuit Presenter (Business Logic)
 // ============================================================================
 
 @Composable
-fun BrainiacTUI(
+fun BrainiacPresenter(
     googleApiKey: String,
     openRouterApiKey: String,
     tavilyApiKey: String?,
     stealthModel: LLModel,
     shortTermMemoryRepository: ShortTermMemoryRepository,
     longTermMemoryRepository: LongTermMemoryRepository
-) {
-    var uiState by remember { mutableStateOf(UIState()) }
+): BrainiacState {
+    var messages by remember { mutableStateOf<List<ChatMessage>>(emptyList()) }
+    var thinking by remember { mutableStateOf("") }
+    var isThinking by remember { mutableStateOf(false) }
+    var isThinkingExpanded by remember { mutableStateOf(false) }
+    var toolActivities by remember { mutableStateOf<List<ToolActivity>>(emptyList()) }
+    var showToolDetails by remember { mutableStateOf(false) }
+    var isWaitingForResponse by remember { mutableStateOf(false) }
+    var loadingDots by remember { mutableStateOf(0) }
+
     val userInputChannel = remember { Channel<String>(Channel.UNLIMITED) }
-    val scope = rememberCoroutineScope()
 
     // Animation for loading dots
-    LaunchedEffect(uiState.isThinking, uiState.isWaitingForResponse) {
-        while (uiState.isThinking || uiState.isWaitingForResponse) {
+    LaunchedEffect(isThinking, isWaitingForResponse) {
+        while (isThinking || isWaitingForResponse) {
             delay(500)
-            uiState = uiState.copy(loadingDots = (uiState.loadingDots + 1) % 4)
+            loadingDots = (loadingDots + 1) % 4
         }
     }
 
@@ -133,14 +165,12 @@ fun BrainiacTUI(
     LaunchedEffect(Unit) {
         val toolRegistry = ToolRegistry {
             tool(TalkTool { message ->
-                uiState = uiState.copy(
-                    messages = uiState.messages + ChatMessage(
-                        content = message,
-                        sender = MessageSender.BRAINIAC
-                    ),
-                    isWaitingForResponse = false,
-                    isThinking = false
+                messages = messages + ChatMessage(
+                    content = message,
+                    sender = MessageSender.BRAINIAC
                 )
+                isWaitingForResponse = false
+                isThinking = false
             })
 
             if (tavilyApiKey != null) {
@@ -163,14 +193,12 @@ fun BrainiacTUI(
                     LLMProvider.OpenRouter to OpenRouterLLMClient(openRouterApiKey),
                 ),
                 toolRegistry = toolRegistry,
-                onEventHandler = { messages ->
-                    messages.forEach { message ->
+                onEventHandler = { messagesFromAgent ->
+                    messagesFromAgent.forEach { message ->
                         when (message) {
                             is Message.Assistant -> {
-                                uiState = uiState.copy(
-                                    thinking = message.content,
-                                    isThinking = true
-                                )
+                                thinking = message.content
+                                isThinking = true
                             }
                             is Message.Tool.Call -> {
                                 val toolName = message.tool
@@ -207,9 +235,7 @@ fun BrainiacTUI(
                                         details = content
                                     )
                                 }
-                                uiState = uiState.copy(
-                                    toolActivities = (uiState.toolActivities + activity).takeLast(10)
-                                )
+                                toolActivities = (toolActivities + activity).takeLast(10)
                             }
                             else -> {}
                         }
@@ -223,13 +249,11 @@ fun BrainiacTUI(
                 when {
                     input.lowercase() in listOf("exit", "quit") -> UserMessage.Stop
                     else -> {
-                        uiState = uiState.copy(
-                            messages = uiState.messages + ChatMessage(
-                                content = input,
-                                sender = MessageSender.USER
-                            ),
-                            isWaitingForResponse = true
+                        messages = messages + ChatMessage(
+                            content = input,
+                            sender = MessageSender.USER
                         )
+                        isWaitingForResponse = true
                         UserMessage.Message(input)
                     }
                 }
@@ -239,11 +263,9 @@ fun BrainiacTUI(
         try {
             coreAgent.run()
         } catch (e: Exception) {
-            uiState = uiState.copy(
-                messages = uiState.messages + ChatMessage(
-                    content = "Error: ${e.message}",
-                    sender = MessageSender.BRAINIAC
-                )
+            messages = messages + ChatMessage(
+                content = "Error: ${e.message}",
+                sender = MessageSender.BRAINIAC
             )
         }
     }
@@ -258,12 +280,12 @@ fun BrainiacTUI(
 
                     when {
                         trimmed.equals("t", ignoreCase = true) -> {
-                            uiState = uiState.copy(isThinkingExpanded = !uiState.isThinkingExpanded)
+                            isThinkingExpanded = !isThinkingExpanded
                         }
                         trimmed.equals("a", ignoreCase = true) -> {
-                            uiState = uiState.copy(showToolDetails = !uiState.showToolDetails)
+                            showToolDetails = !showToolDetails
                         }
-                        trimmed.isNotEmpty() && !uiState.isWaitingForResponse -> {
+                        trimmed.isNotEmpty() && !isWaitingForResponse -> {
                             userInputChannel.send(trimmed)
                         }
                     }
@@ -274,19 +296,62 @@ fun BrainiacTUI(
         }
     }
 
-    // Render UI
+    return BrainiacState(
+        messages = messages,
+        thinking = thinking,
+        isThinking = isThinking,
+        isThinkingExpanded = isThinkingExpanded,
+        toolActivities = toolActivities,
+        showToolDetails = showToolDetails,
+        isWaitingForResponse = isWaitingForResponse,
+        loadingDots = loadingDots,
+        eventSink = { event ->
+            when (event) {
+                is BrainiacEvent.SendMessage -> {
+                    if (!isWaitingForResponse) {
+                        userInputChannel.trySend(event.message)
+                    }
+                }
+                BrainiacEvent.ToggleThinking -> {
+                    isThinkingExpanded = !isThinkingExpanded
+                }
+                BrainiacEvent.ToggleToolDetails -> {
+                    showToolDetails = !showToolDetails
+                }
+            }
+        }
+    )
+}
+
+// ============================================================================
+// Circuit UI (Pure Presentation)
+// ============================================================================
+
+@Composable
+fun BrainiacUi(state: BrainiacState) {
     Column {
         HeaderPanel()
         Spacer()
-        ThinkingPanel(uiState.thinking, uiState.isThinking, uiState.isThinkingExpanded, uiState.loadingDots)
+        ThinkingPanel(
+            thinking = state.thinking,
+            isThinking = state.isThinking,
+            isExpanded = state.isThinkingExpanded,
+            dots = state.loadingDots
+        )
         Spacer()
-        ToolActivityPanel(uiState.toolActivities, uiState.showToolDetails)
+        ToolActivityPanel(
+            activities = state.toolActivities,
+            showDetails = state.showToolDetails
+        )
         Spacer()
-        ConversationPanel(uiState.messages.takeLast(10))
+        ConversationPanel(messages = state.messages.takeLast(10))
         Spacer()
-        StatusPanel(uiState.isWaitingForResponse, uiState.loadingDots)
+        StatusPanel(
+            isWaiting = state.isWaitingForResponse,
+            dots = state.loadingDots
+        )
         Spacer()
-        InputPanel(uiState.isWaitingForResponse)
+        InputPanel(isDisabled = state.isWaitingForResponse)
         FooterPanel()
     }
 }
