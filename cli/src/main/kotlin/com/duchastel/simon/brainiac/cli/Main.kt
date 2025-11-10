@@ -18,6 +18,7 @@ import com.duchastel.simon.brainiac.agent.CoreAgentConfig
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRepository
 import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
 import com.duchastel.simon.brainiac.tools.bash.BashTool
+import com.duchastel.simon.brainiac.tools.talk.TalkTool
 import com.duchastel.simon.brainiac.tools.websearch.WebSearchTool
 import okio.Path.Companion.toPath
 
@@ -54,6 +55,10 @@ fun main() {
     )
 
     val toolRegistry = ToolRegistry {
+        tool(TalkTool { message ->
+            println("Brainiac: $message")
+        })
+
         if (tavilyApiKey != null) {
             println("Web search enabled via Tavily API")
             tool(WebSearchTool(apiKey = tavilyApiKey, maxResults = 5))
@@ -70,8 +75,8 @@ fun main() {
     val coreAgent = CoreAgent(
         config = CoreAgentConfig(
             highThoughtModel = stealthModel,
-            mediumThoughtModel = GoogleModels.Gemini2_5Flash,
-            lowThoughtModel = GoogleModels.Gemini2_5FlashLite,
+            mediumThoughtModel = stealthModel,
+            lowThoughtModel = stealthModel,
             executionClients = mapOf(
                 LLMProvider.Google to GoogleLLMClient(googleApiKey),
                 LLMProvider.OpenRouter to OpenRouterLLMClient(openRouterApiKey),
@@ -81,19 +86,39 @@ fun main() {
                 messages.forEach { message ->
                     when (message) {
                         is Message.Assistant -> {
-                            println(message.content)
+                            println("**Thinking**... ${message.content}")
                         }
 
                         is Message.Tool.Call -> {
-                            val toolUseMessage = when (message.tool) {
-                                "store_short_term_memory" -> "Updating short term memory..."
-                                "store_long_term_memory" -> "Updating long term memory..."
-                                else -> return@forEach
+                            when (message.tool) {
+                                TalkTool({}).name -> {
+                                    val toolContent = message.content
+                                    val messagePattern = """"message"\s*:\s*"([^"]*)"""".toRegex()
+                                    val match = messagePattern.find(toolContent)
+                                    val messageText = match?.groupValues?.get(1)
+                                    if (messageText != null) {
+                                        println("Brainiac (FROM TOOL): messageText")
+                                    }
+                                }
+                                BashTool().name -> {
+                                    println("Running on cmd: ${message.content}")
+                                }
+                                ListDirectoryTool(JVMFileSystemProvider.ReadWrite).name -> {
+                                    println("Listing directory: ${message.content}")
+                                }
+                                EditFileTool(JVMFileSystemProvider.ReadWrite).name -> {
+                                    println("Editing file: ${message.content}")
+                                }
+                                ReadFileTool(JVMFileSystemProvider.ReadWrite).name -> {
+                                    println("Reading file: ${message.content}")
+                                }
+                                WriteFileTool(JVMFileSystemProvider.ReadWrite).name -> {
+                                    println("Writing File: ${message.content}")
+                                }
                             }
-                            println(toolUseMessage)
                         }
 
-                        else -> {} // Ignore other message types
+                        else -> {}
                     }
                 }
             }

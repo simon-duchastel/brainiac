@@ -1,29 +1,23 @@
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.jetbrains.kotlin.jvm)
+    application
 }
 
 group = "com.duchastel.simon.brainiac.cli"
 
+application {
+    mainClass.set("com.duchastel.simon.brainiac.cli.MainKt")
+}
+
 kotlin {
-    jvm {
-        @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
-        mainRun {
-            mainClass.set("com.duchastel.simon.brainiac.cli.MainKt")
-        }
-    }
-
     jvmToolchain(17)
+}
 
-    sourceSets {
-        val jvmMain by getting {
-            dependencies {
-                implementation(project(":core-agent"))
-                implementation(project(":tools"))
-                implementation(libs.kotlinx.coroutines.core)
-                implementation(libs.okio)
-            }
-        }
-    }
+dependencies {
+    implementation(project(":core-agent"))
+    implementation(project(":tools"))
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.okio)
 }
 
 tasks.withType<JavaExec> {
