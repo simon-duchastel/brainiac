@@ -12,6 +12,8 @@ mokkery = "2.10.0"
 test-logger = "4.0.0"
 jetbrains-kotlin-jvm = "2.2.10"
 slf4j = "2.0.9"
+mosaic = "0.18.0"
+compose-compiler = "1.5.15"
 
 [libraries]
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
@@ -19,6 +21,7 @@ kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 
 koog-agents = { module = "ai.koog:koog-agents", version.ref = "koog" }
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+mosaic-runtime = { module = "com.jakewharton.mosaic:mosaic-runtime", version.ref = "mosaic" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
@@ -38,3 +41,4 @@ kotest = { id = "io.kotest", version.ref = "kotest" }
 mokkery = { id = "dev.mokkery", version.ref = "mokkery" }
 test-logger = { id = "com.adarshr.test-logger", version.ref = "test-logger" }
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrains-kotlin-jvm" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

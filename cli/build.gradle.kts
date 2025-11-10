@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.jetbrains.kotlin.jvm)
+    alias(libs.plugins.compose.compiler)
     application
 }
 
@@ -19,6 +20,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.okio)
     implementation(libs.slf4j.simple)
+    implementation(libs.mosaic.runtime)
 }
 
 tasks.withType<JavaExec> {
