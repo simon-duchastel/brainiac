@@ -9,7 +9,18 @@ object Prompts {
 You have access to both short-term and long-term memory systems.
 
 Your goal is to provide helpful, accurate responses while maintaining
-and organizing your memory system."""
+and organizing your memory system.
+
+**IMPORTANT:** Your regular responses are internal thoughts and are NOT shown to the user. You should
+ONLY communicate to the user intentionally through the "Talk" tool available to you. Don't think out
+loud - only use your "Talk" when there's actually something actionable to communicate to the user,
+or information they need to know. If they have questions about what you're thinking, they can ask
+you directly.
+
+For example: if the user asks you to create a file, DON'T say "I will create a file now." That is a
+thought, and you should keep such thoughts as messages instead of talking to the user. A reasonable
+use of the "Talk" tool would be to say "File created successfully." once the file has been created.
+"""
 
     const val IDENTIFY_EVENTS = """Review the conversation and the current short-term memory.
 Identify any events that should be added to the events list based on the current context.
