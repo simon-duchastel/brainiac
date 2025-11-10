@@ -88,18 +88,8 @@ fun main() {
                         is Message.Assistant -> {
                             println("**Thinking**... ${message.content}")
                         }
-
                         is Message.Tool.Call -> {
                             when (message.tool) {
-                                TalkTool({}).name -> {
-                                    val toolContent = message.content
-                                    val messagePattern = """"message"\s*:\s*"([^"]*)"""".toRegex()
-                                    val match = messagePattern.find(toolContent)
-                                    val messageText = match?.groupValues?.get(1)
-                                    if (messageText != null) {
-                                        println("Brainiac (FROM TOOL): messageText")
-                                    }
-                                }
                                 BashTool().name -> {
                                     println("Running on cmd: ${message.content}")
                                 }
@@ -117,7 +107,6 @@ fun main() {
                                 }
                             }
                         }
-
                         else -> {}
                     }
                 }
@@ -139,7 +128,6 @@ fun main() {
                     UserMessage.Stop
                 }
                 else -> {
-                    println()
                     UserMessage.Message(input)
                 }
             }
