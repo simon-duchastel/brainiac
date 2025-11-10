@@ -6,6 +6,7 @@ import ai.koog.agents.ext.tool.file.ListDirectoryTool
 import ai.koog.agents.ext.tool.file.ReadFileTool
 import ai.koog.agents.ext.tool.file.WriteFileTool
 import ai.koog.prompt.executor.clients.google.GoogleLLMClient
+import ai.koog.prompt.executor.clients.google.GoogleModels
 import ai.koog.prompt.executor.clients.openrouter.OpenRouterLLMClient
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
@@ -88,7 +89,24 @@ data class ToolActivity(
 // Main Entry Point
 // ============================================================================
 
-suspend fun main() {
+fun main(args: Array<String>) {
+    // Configure logging before any other code runs
+    val enableLogging = args.contains("--logging")
+    configureLogging(enableLogging)
+
+    println("===== Brainiac AI =====")
+    if (enableLogging) {
+        println("Verbose logging enabled")
+    }
+    println("Type 'exit' or 'quit' to exit")
+    println()
+
+    kotlinx.coroutines.runBlocking {
+        runBrainiacTUI()
+    }
+}
+
+suspend fun runBrainiacTUI() {
     val googleApiKey = System.getenv("GOOGLE_API_KEY")
         ?: error("GOOGLE_API_KEY environment variable not set")
     val openRouterApiKey = System.getenv("OPEN_ROUTER_API_KEY")
@@ -186,8 +204,8 @@ fun BrainiacPresenter(
         val coreAgent = CoreAgent(
             config = CoreAgentConfig(
                 highThoughtModel = stealthModel,
-                mediumThoughtModel = stealthModel,
-                lowThoughtModel = stealthModel,
+                mediumThoughtModel = GoogleModels.Gemini2_5Flash,
+                lowThoughtModel = GoogleModels.Gemini2_5FlashLite,
                 executionClients = mapOf(
                     LLMProvider.Google to GoogleLLMClient(googleApiKey),
                     LLMProvider.OpenRouter to OpenRouterLLMClient(openRouterApiKey),
@@ -456,4 +474,20 @@ fun FooterPanel() {
 @Composable
 fun Spacer() {
     Text("")
+}
+
+/**
+ * Configure logging levels for the application.
+ * By default, Koog logging is set to WARN to reduce verbosity.
+ * When enableLogging is true, all logging is set to INFO.
+ */
+private fun configureLogging(enableLogging: Boolean) {
+    if (enableLogging) {
+        // Enable verbose logging
+        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "INFO")
+    } else {
+        // Suppress verbose Koog logging by default
+        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "WARN")
+        System.setProperty("org.slf4j.simpleLogger.log.ai.koog", "WARN")
+    }
 }

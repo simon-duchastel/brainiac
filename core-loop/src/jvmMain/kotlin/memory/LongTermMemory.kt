@@ -40,6 +40,9 @@ fun AIAgentSubgraphBuilderBase<*, *>.recallLongTermMemory(
                         }
                     }
                 }
+                user {
+                    +Prompts.RECALL_LONG_TERM_MEMORY_USER
+                }
             }
         }
 
@@ -121,6 +124,9 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemor
 
                         stm.asXmlRepresentation()
                     }
+                    user {
+                        +Prompts.IDENTIFY_MEMORY_PROMOTIONS_USER
+                    }
                 }
             }
 
@@ -147,6 +153,9 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemor
                         +Prompts.CLEAN_SHORT_TERM_MEMORY
 
                         stm.asXmlRepresentation()
+                    }
+                    user {
+                        +Prompts.CLEAN_SHORT_TERM_MEMORY_USER
                     }
                 }
             }

@@ -222,6 +222,9 @@ inline fun <reified T : Any> AIAgentSubgraphBuilderBase<*, *>.organizeLongTermMe
                             }
                         }
                     }
+                    user {
+                        +Prompts.ANALYZE_MEMORY_PATTERNS_USER
+                    }
                 }
             }
 
@@ -270,6 +273,9 @@ inline fun <reified T : Any> AIAgentSubgraphBuilderBase<*, *>.organizeLongTermMe
                                 longTermMemoryRepository.generateXmlMindMap()
                             }
                         }
+                    }
+                    user {
+                        +Prompts.PROPOSE_REFACTORING_USER
                     }
                 }
             }
