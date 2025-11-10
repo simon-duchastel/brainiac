@@ -21,6 +21,7 @@ import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepositor
 import com.duchastel.simon.brainiac.tools.bash.BashTool
 import com.duchastel.simon.brainiac.tools.talk.TalkTool
 import com.duchastel.simon.brainiac.tools.websearch.WebSearchTool
+import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.runMosaic
 import com.jakewharton.mosaic.ui.*
 import kotlinx.coroutines.*
@@ -296,9 +297,9 @@ fun BrainiacTUI(
 
 @Composable
 fun HeaderPanel() {
-    Text("╔════════════════════════════════════════════════════════════════════════╗", color = Color.BrightCyan, style = TextStyle.Bold)
-    Text("║                          🧠 BRAINIAC AI                                ║", color = Color.BrightCyan, style = TextStyle.Bold)
-    Text("╚════════════════════════════════════════════════════════════════════════╝", color = Color.BrightCyan, style = TextStyle.Bold)
+    Text("╔════════════════════════════════════════════════════════════════════════╗", color = Color.Cyan, textStyle = TextStyle.Bold)
+    Text("║                          🧠 BRAINIAC AI                                ║", color = Color.Cyan, textStyle = TextStyle.Bold)
+    Text("╚════════════════════════════════════════════════════════════════════════╝", color = Color.Cyan, textStyle = TextStyle.Bold)
 }
 
 @Composable
@@ -309,7 +310,7 @@ fun ThinkingPanel(thinking: String, isThinking: Boolean, isExpanded: Boolean, do
     Text("💭 Thinking${if (!isExpanded) " [Press 't' to expand]" else " [Press 't' to collapse]"}$dotsText", color = Color.Yellow)
 
     if (isExpanded && thinking.isNotEmpty()) {
-        Text("   ${thinking.take(500)}", color = Color.BrightYellow)
+        Text("   ${thinking.take(500)}", color = Color.Yellow)
     }
 }
 
@@ -330,16 +331,16 @@ fun ToolActivityPanel(activities: List<ToolActivity>, showDetails: Boolean) {
         }
 
         if (showDetails) {
-            Text("   $icon ${activity.toolName}: ${activity.details.take(60)}", color = Color.BrightGreen)
+            Text("   $icon ${activity.toolName}: ${activity.details.take(60)}", color = Color.Green)
         } else {
-            Text("   $icon ${activity.toolName}: ${activity.summary}", color = Color.BrightGreen)
+            Text("   $icon ${activity.toolName}: ${activity.summary}", color = Color.Green)
         }
     }
 }
 
 @Composable
 fun ConversationPanel(messages: List<ChatMessage>) {
-    Text("━━━━━━━━━━━━━━━━━━━━━━━━ Conversation ━━━━━━━━━━━━━━━━━━━━━━━━", color = Color.BrightBlue, style = TextStyle.Bold)
+    Text("━━━━━━━━━━━━━━━━━━━━━━━━ Conversation ━━━━━━━━━━━━━━━━━━━━━━━━", color = Color.Cyan, textStyle = TextStyle.Bold)
 
     if (messages.isEmpty()) {
         Text("   Welcome! Type your message below to start chatting with Brainiac.", color = Color.White)
@@ -351,7 +352,7 @@ fun ConversationPanel(messages: List<ChatMessage>) {
 
         when (message.sender) {
             MessageSender.USER -> {
-                Text("   [$time] You: ${message.content}", color = Color.BrightWhite)
+                Text("   [$time] You: ${message.content}", color = Color.White)
             }
             MessageSender.BRAINIAC -> {
                 Text("   [$time] 🧠 Brainiac: ${message.content}", color = Color.Cyan)
@@ -370,7 +371,7 @@ fun StatusPanel(isWaiting: Boolean, dots: Int) {
 
 @Composable
 fun InputPanel(isDisabled: Boolean) {
-    Text("━━━━━━━━━━━━━━━━━━━━━━━━━━ Input ━━━━━━━━━━━━━━━━━━━━━━━━━━━", color = Color.BrightBlue)
+    Text("━━━━━━━━━━━━━━━━━━━━━━━━━━ Input ━━━━━━━━━━━━━━━━━━━━━━━━━━━", color = Color.Blue)
 
     val prompt = if (isDisabled) {
         "   ⏸  Waiting for response... (input disabled)"
@@ -378,7 +379,7 @@ fun InputPanel(isDisabled: Boolean) {
         "   > Type your message and press Enter█"
     }
 
-    Text(prompt, color = if (isDisabled) Color.White else Color.BrightWhite)
+    Text(prompt, color = if (isDisabled) Color.White else Color.White)
 }
 
 @Composable
