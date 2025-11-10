@@ -22,6 +22,15 @@ import com.duchastel.simon.brainiac.core.process.memory.recallLongTermMemory
 import com.duchastel.simon.brainiac.core.process.memory.recallShortTermMemory
 import com.duchastel.simon.brainiac.core.process.memory.updateLongTermMemory
 import com.duchastel.simon.brainiac.core.process.memory.updateShortTermMemory
+import kotlinx.coroutines.CompletableDeferred
+
+/**
+ * Instruction for the core loop resting state.
+ */
+sealed class CoreLoopInstruction {
+    data object Stop : CoreLoopInstruction()
+    data class Query(val userQuery: String) : CoreLoopInstruction()
+}
 
 /**
  * Core loop process that handles user prompts with memory retrieval and assembly.
@@ -61,12 +70,13 @@ import com.duchastel.simon.brainiac.core.process.memory.updateShortTermMemory
 class CoreLoop(
     private val shortTermMemoryRepository: ShortTermMemoryRepository,
     private val longTermMemoryRepository: LongTermMemoryRepository,
-    private val brainiacContext: BrainiacContext
+    private val brainiacContext: BrainiacContext,
+    private val awaitNextInstruction: suspend () -> CoreLoopInstruction
 ) {
     fun strategy(
         name: String,
-    ): AIAgentGraphStrategy<String, Unit> = with(brainiacContext) {
-        strategy<String, Unit>(name) {
+    ): AIAgentGraphStrategy<Unit, Unit> = with(brainiacContext) {
+        strategy<Unit, Unit>(name) {
             val userQueryKey = createStorageKey<String>("${name}_user_prompt")
             val shortTermMemoryKey =
                 createStorageKey<ShortTermMemory>("${name}_short_term_memory")
@@ -116,10 +126,11 @@ class CoreLoop(
             val executeTool by nodeExecuteTool()
             val sendToolResult by nodeLLMSendToolResult()
 
-            edge(
-                nodeStart forwardTo recallShortTermMemory
-                transformed { userQuery -> storage.set(userQueryKey, userQuery) }
-            )
+            val restingNode by node<Unit, CoreLoopInstruction>("resting_node") {
+                awaitNextInstruction()
+            }
+
+            edge(nodeStart forwardTo restingNode)
             edge(
                 recallShortTermMemory forwardTo recallLongTermMemory
                 transformed { shortTermMemory ->
@@ -143,9 +154,24 @@ class CoreLoop(
                 onToolCall { true }
             )
             edge(
-                updateLongTermMemory forwardTo nodeFinish
+                updateLongTermMemory forwardTo restingNode
                     onAssistantMessage { true }
                     transformed { }
+            )
+
+            edge(
+                restingNode forwardTo nodeFinish
+                onCondition { instruction -> instruction is CoreLoopInstruction.Stop }
+                transformed { }
+            )
+
+            edge(
+                restingNode forwardTo recallShortTermMemory
+                onCondition { instruction -> instruction is CoreLoopInstruction.Query }
+                transformed { instruction ->
+                    val query = (instruction as CoreLoopInstruction.Query).userQuery
+                    storage.set(userQueryKey, query)
+                }
             )
 
             executeTool then sendToolResult then updateShortTermMemory
