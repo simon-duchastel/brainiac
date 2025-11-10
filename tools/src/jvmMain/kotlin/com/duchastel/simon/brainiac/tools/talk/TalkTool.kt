@@ -10,7 +10,7 @@ data class TalkArgs(
     val message: String
 )
 
-class TalkTool : SimpleTool<TalkArgs>() {
+class TalkTool(val onMessage: (String) -> Unit) : SimpleTool<TalkArgs>(){
 
     override val name: String = "talk"
 
@@ -34,6 +34,7 @@ class TalkTool : SimpleTool<TalkArgs>() {
     override val argsSerializer: KSerializer<TalkArgs> = serializer()
 
     override suspend fun doExecute(args: TalkArgs): String {
-        return "Message delivered to user"
+        onMessage(args.message)
+        return "Message sent to user"
     }
 }

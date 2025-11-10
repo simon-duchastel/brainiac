@@ -55,7 +55,9 @@ fun main() {
     )
 
     val toolRegistry = ToolRegistry {
-        tool(TalkTool())
+        tool(TalkTool { message ->
+            println("Brainiac: $message")
+        })
 
         if (tavilyApiKey != null) {
             println("Web search enabled via Tavily API")
@@ -73,8 +75,8 @@ fun main() {
     val coreAgent = CoreAgent(
         config = CoreAgentConfig(
             highThoughtModel = stealthModel,
-            mediumThoughtModel = GoogleModels.Gemini2_5Flash,
-            lowThoughtModel = GoogleModels.Gemini2_5FlashLite,
+            mediumThoughtModel = stealthModel,
+            lowThoughtModel = stealthModel,
             executionClients = mapOf(
                 LLMProvider.Google to GoogleLLMClient(googleApiKey),
                 LLMProvider.OpenRouter to OpenRouterLLMClient(openRouterApiKey),
@@ -89,13 +91,13 @@ fun main() {
 
                         is Message.Tool.Call -> {
                             when (message.tool) {
-                                TalkTool().name -> {
+                                TalkTool({}).name -> {
                                     val toolContent = message.content
                                     val messagePattern = """"message"\s*:\s*"([^"]*)"""".toRegex()
                                     val match = messagePattern.find(toolContent)
                                     val messageText = match?.groupValues?.get(1)
                                     if (messageText != null) {
-                                        println("Brainiac: messageText")
+                                        println("Brainiac (FROM TOOL): messageText")
                                     }
                                 }
                                 BashTool().name -> {
