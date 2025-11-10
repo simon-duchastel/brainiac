@@ -22,8 +22,10 @@ import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepositor
 import com.duchastel.simon.brainiac.tools.bash.BashTool
 import com.duchastel.simon.brainiac.tools.talk.TalkTool
 import com.duchastel.simon.brainiac.tools.websearch.WebSearchTool
+import com.jakewharton.mosaic.layout.KeyEvent
+import com.jakewharton.mosaic.layout.onKeyEvent
 import com.jakewharton.mosaic.modifier.Modifier
-import com.jakewharton.mosaic.runMosaic
+import com.jakewharton.mosaic.runMosaicMain
 import com.jakewharton.mosaic.ui.*
 import com.slack.circuit.runtime.CircuitUiEvent
 import com.slack.circuit.runtime.CircuitUiState
@@ -53,6 +55,8 @@ data class BrainiacState(
     val showToolDetails: Boolean = false,
     val isWaitingForResponse: Boolean = false,
     val loadingDots: Int = 0,
+    val inputBuffer: String = "",
+    val shouldExit: Boolean = false,
     val eventSink: (BrainiacEvent) -> Unit = {}
 ) : CircuitUiState
 
@@ -64,6 +68,10 @@ sealed interface BrainiacEvent : CircuitUiEvent {
     data class SendMessage(val message: String) : BrainiacEvent
     data object ToggleThinking : BrainiacEvent
     data object ToggleToolDetails : BrainiacEvent
+    data class AppendToInput(val char: String) : BrainiacEvent
+    data object BackspaceInput : BrainiacEvent
+    data object SubmitInput : BrainiacEvent
+    data object ExitApp : BrainiacEvent
 }
 
 // ============================================================================
@@ -89,7 +97,7 @@ data class ToolActivity(
 // Main Entry Point
 // ============================================================================
 
-fun main(args: Array<String>) {
+fun main(args: Array<String>) = runMosaicMain {
     // Configure logging before any other code runs
     val enableLogging = args.contains("--logging")
     configureLogging(enableLogging)
@@ -100,12 +108,6 @@ fun main(args: Array<String>) {
     }
     println("Type 'exit' or 'quit' to exit")
 
-    kotlinx.coroutines.runBlocking {
-        runBrainiacTUI()
-    }
-}
-
-suspend fun runBrainiacTUI() {
     val googleApiKey = System.getenv("GOOGLE_API_KEY")
         ?: error("GOOGLE_API_KEY environment variable not set")
     val openRouterApiKey = System.getenv("OPEN_ROUTER_API_KEY")
@@ -133,16 +135,22 @@ suspend fun runBrainiacTUI() {
         contextLength = 256_000,
     )
 
-    runMosaic {
-        val state = BrainiacPresenter(
-            googleApiKey = googleApiKey,
-            openRouterApiKey = openRouterApiKey,
-            tavilyApiKey = tavilyApiKey,
-            stealthModel = stealthModel,
-            shortTermMemoryRepository = shortTermMemoryRepository,
-            longTermMemoryRepository = longTermMemoryRepository
-        )
-        BrainiacUi(state = state)
+    val state = BrainiacPresenter(
+        googleApiKey = googleApiKey,
+        openRouterApiKey = openRouterApiKey,
+        tavilyApiKey = tavilyApiKey,
+        stealthModel = stealthModel,
+        shortTermMemoryRepository = shortTermMemoryRepository,
+        longTermMemoryRepository = longTermMemoryRepository
+    )
+
+    BrainiacUi(state = state)
+
+    // Keep app running until exit is signaled
+    if (!state.shouldExit) {
+        LaunchedEffect(Unit) {
+            awaitCancellation()
+        }
     }
 }
 
@@ -167,6 +175,8 @@ fun BrainiacPresenter(
     var showToolDetails by remember { mutableStateOf(false) }
     var isWaitingForResponse by remember { mutableStateOf(false) }
     var loadingDots by remember { mutableStateOf(0) }
+    var inputBuffer by remember { mutableStateOf("") }
+    var shouldExit by remember { mutableStateOf(false) }
 
     val userInputChannel = remember { Channel<String>(Channel.UNLIMITED) }
 
@@ -264,7 +274,10 @@ fun BrainiacPresenter(
             awaitUserMessage = {
                 val input = userInputChannel.receive()
                 when {
-                    input.lowercase() in listOf("exit", "quit") -> UserMessage.Stop
+                    input.lowercase() in listOf("exit", "quit") -> {
+                        shouldExit = true
+                        UserMessage.Stop
+                    }
                     else -> {
                         messages = messages + ChatMessage(
                             content = input,
@@ -287,32 +300,6 @@ fun BrainiacPresenter(
         }
     }
 
-    // Terminal input handling in background
-    LaunchedEffect(Unit) {
-        launch(Dispatchers.IO) {
-            while (true) {
-                try {
-                    val line = readlnOrNull() ?: break
-                    val trimmed = line.trim()
-
-                    when {
-                        trimmed.equals("t", ignoreCase = true) -> {
-                            isThinkingExpanded = !isThinkingExpanded
-                        }
-                        trimmed.equals("a", ignoreCase = true) -> {
-                            showToolDetails = !showToolDetails
-                        }
-                        trimmed.isNotEmpty() && !isWaitingForResponse -> {
-                            userInputChannel.send(trimmed)
-                        }
-                    }
-                } catch (e: Exception) {
-                    break
-                }
-            }
-        }
-    }
-
     return BrainiacState(
         messages = messages,
         thinking = thinking,
@@ -322,11 +309,14 @@ fun BrainiacPresenter(
         showToolDetails = showToolDetails,
         isWaitingForResponse = isWaitingForResponse,
         loadingDots = loadingDots,
+        inputBuffer = inputBuffer,
+        shouldExit = shouldExit,
         eventSink = { event ->
             when (event) {
                 is BrainiacEvent.SendMessage -> {
-                    if (!isWaitingForResponse) {
+                    if (!isWaitingForResponse && event.message.isNotBlank()) {
                         userInputChannel.trySend(event.message)
+                        inputBuffer = ""
                     }
                 }
                 BrainiacEvent.ToggleThinking -> {
@@ -334,6 +324,31 @@ fun BrainiacPresenter(
                 }
                 BrainiacEvent.ToggleToolDetails -> {
                     showToolDetails = !showToolDetails
+                }
+                is BrainiacEvent.AppendToInput -> {
+                    if (!isWaitingForResponse) {
+                        inputBuffer += event.char
+                    }
+                }
+                BrainiacEvent.BackspaceInput -> {
+                    if (!isWaitingForResponse && inputBuffer.isNotEmpty()) {
+                        inputBuffer = inputBuffer.dropLast(1)
+                    }
+                }
+                BrainiacEvent.SubmitInput -> {
+                    if (!isWaitingForResponse && inputBuffer.isNotBlank()) {
+                        val trimmed = inputBuffer.trim()
+                        if (trimmed.lowercase() in listOf("exit", "quit")) {
+                            shouldExit = true
+                            userInputChannel.trySend(trimmed)
+                        } else {
+                            userInputChannel.trySend(trimmed)
+                        }
+                        inputBuffer = ""
+                    }
+                }
+                BrainiacEvent.ExitApp -> {
+                    shouldExit = true
                 }
             }
         }
@@ -346,7 +361,38 @@ fun BrainiacPresenter(
 
 @Composable
 fun BrainiacUi(state: BrainiacState) {
-    Column {
+    Column(
+        modifier = Modifier.onKeyEvent { keyEvent ->
+            when (keyEvent) {
+                KeyEvent("t") -> {
+                    state.eventSink(BrainiacEvent.ToggleThinking)
+                    true
+                }
+                KeyEvent("a") -> {
+                    state.eventSink(BrainiacEvent.ToggleToolDetails)
+                    true
+                }
+                KeyEvent("Enter") -> {
+                    state.eventSink(BrainiacEvent.SubmitInput)
+                    true
+                }
+                KeyEvent("Backspace") -> {
+                    state.eventSink(BrainiacEvent.BackspaceInput)
+                    true
+                }
+                else -> {
+                    // Handle printable characters
+                    val char = keyEvent.key
+                    if (char.length == 1 && (char[0].isLetterOrDigit() || char[0].isWhitespace() || char[0] in "!@#$%^&*()_+-=[]{}|;:',.<>?/`~\"\\")) {
+                        state.eventSink(BrainiacEvent.AppendToInput(char))
+                        true
+                    } else {
+                        false
+                    }
+                }
+            }
+        }
+    ) {
         HeaderPanel()
         Spacer()
         ThinkingPanel(
@@ -368,7 +414,10 @@ fun BrainiacUi(state: BrainiacState) {
             dots = state.loadingDots
         )
         Spacer()
-        InputPanel(isDisabled = state.isWaitingForResponse)
+        InputPanel(
+            inputBuffer = state.inputBuffer,
+            isDisabled = state.isWaitingForResponse
+        )
         FooterPanel()
     }
 }
@@ -452,13 +501,13 @@ fun StatusPanel(isWaiting: Boolean, dots: Int) {
 }
 
 @Composable
-fun InputPanel(isDisabled: Boolean) {
+fun InputPanel(inputBuffer: String, isDisabled: Boolean) {
     Text("━━━━━━━━━━━━━━━━━━━━━━━━━━ Input ━━━━━━━━━━━━━━━━━━━━━━━━━━━", color = Color.Blue)
 
     val prompt = if (isDisabled) {
         "   ⏸  Waiting for response... (input disabled)"
     } else {
-        "   > Type your message and press Enter█"
+        "   > $inputBuffer█"
     }
 
     Text(prompt, color = if (isDisabled) Color.White else Color.White)
