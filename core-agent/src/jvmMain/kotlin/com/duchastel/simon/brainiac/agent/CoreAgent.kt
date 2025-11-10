@@ -34,12 +34,14 @@ class CoreAgent(
     private val shortTermMemoryRepository: ShortTermMemoryRepository,
     private val longTermMemoryRepository: LongTermMemoryRepository,
     private val awaitUserMessage: suspend () -> UserMessage,
+    private val onThinking: (String) -> Unit = {},
 ) {
     private val brainiacContext = BrainiacContext(
         highThoughtModel = config.highThoughtModel,
         mediumThoughtModel = config.mediumThoughtModel,
         lowThoughtModel = config.lowThoughtModel,
     )
+    val thinkingTool = ThinkingTool(onThinking)
     private val coreLoop = CoreLoop(
         shortTermMemoryRepository = shortTermMemoryRepository,
         longTermMemoryRepository = longTermMemoryRepository,
@@ -49,7 +51,9 @@ class CoreAgent(
                 UserMessage.Stop -> CoreLoopInstruction.Stop
                 is UserMessage.Message -> CoreLoopInstruction.Query(message.userQuery)
             }
-        }
+        },
+        onThinking = onThinking,
+        thinkingToolName = thinkingTool.name
     )
     private val coreLoopStrategy = coreLoop.strategy("core-loop")
 
@@ -58,9 +62,15 @@ class CoreAgent(
      */
     @Suppress("UnstableApiUsage")
     fun run() = runBlocking {
+        // Add ThinkingTool to the tool registry
+        val enhancedToolRegistry = ToolRegistry {
+            config.toolRegistry.tools.forEach { tool(it) }
+            tool(thinkingTool)
+        }
+
         val agent = AIAgent(
             promptExecutor = promptExecutor(config.executionClients),
-            toolRegistry = config.toolRegistry,
+            toolRegistry = enhancedToolRegistry,
             strategy = coreLoopStrategy,
             agentConfig = AIAgentConfig(
                 prompt = Prompt.build("brainiac-core") {

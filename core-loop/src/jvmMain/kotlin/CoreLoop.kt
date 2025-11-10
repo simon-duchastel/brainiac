@@ -6,6 +6,7 @@ import ai.koog.agents.core.agent.entity.AIAgentGraphStrategy
 import ai.koog.agents.core.agent.entity.createStorageKey
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.extension.nodeExecuteMultipleTools
 import ai.koog.agents.core.dsl.extension.nodeExecuteTool
 import ai.koog.agents.core.dsl.extension.nodeLLMSendToolResult
 import ai.koog.agents.core.dsl.extension.onAssistantMessage
@@ -71,7 +72,9 @@ class CoreLoop(
     private val shortTermMemoryRepository: ShortTermMemoryRepository,
     private val longTermMemoryRepository: LongTermMemoryRepository,
     private val brainiacContext: BrainiacContext,
-    private val awaitNextInstruction: suspend () -> CoreLoopInstruction
+    private val awaitNextInstruction: suspend () -> CoreLoopInstruction,
+    private val onThinking: (String) -> Unit = {},
+    private val thinkingToolName: String? = null
 ) {
     fun strategy(
         name: String,
@@ -123,7 +126,28 @@ class CoreLoop(
                 shortTermMemoryRepository = shortTermMemoryRepository
             )
 
-            val executeTool by nodeExecuteTool()
+            val checkAndExecuteTool by node<Message.Tool.Call, Message.Tool.Response>("check_and_execute_tool") { toolCall ->
+                // Check if this is the special ThinkingTool
+                if (thinkingToolName != null && toolCall.tool == thinkingToolName) {
+                    // Extract the thought from the tool call arguments
+                    val thoughtPattern = """"thought"\s*:\s*"([^"]*)"""".toRegex()
+                    val match = thoughtPattern.find(toolCall.content)
+                    val thought = match?.groupValues?.get(1) ?: toolCall.content
+
+                    // Route to the callback instead of normal execution
+                    onThinking(thought)
+
+                    // Return a synthetic tool response
+                    Message.Tool.Response(
+                        id = toolCall.id,
+                        tool = toolCall.tool,
+                        content = "Thought recorded"
+                    )
+                } else {
+                    // Normal tool execution
+                    tools.executeTool(toolCall)
+                }
+            }
             val sendToolResult by nodeLLMSendToolResult()
 
             val restingNode by node<Unit, CoreLoopInstruction>("resting_node") {
@@ -150,7 +174,7 @@ class CoreLoop(
             )
 
             edge(
-                updateLongTermMemory forwardTo executeTool
+                updateLongTermMemory forwardTo checkAndExecuteTool
                 onToolCall { true }
             )
             edge(
@@ -174,7 +198,7 @@ class CoreLoop(
                 }
             )
 
-            executeTool then sendToolResult then updateShortTermMemory
+            checkAndExecuteTool then sendToolResult then updateShortTermMemory
         }
     }
 }
