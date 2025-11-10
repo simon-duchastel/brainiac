@@ -84,22 +84,35 @@ fun main() {
                 messages.forEach { message ->
                     when (message) {
                         is Message.Assistant -> {
+                            println("**Thinking**... ${message.content}")
                         }
 
                         is Message.Tool.Call -> {
                             when (message.tool) {
-                                "talk" -> {
+                                TalkTool().name -> {
                                     val toolContent = message.content
                                     val messagePattern = """"message"\s*:\s*"([^"]*)"""".toRegex()
                                     val match = messagePattern.find(toolContent)
                                     val messageText = match?.groupValues?.get(1)
                                     if (messageText != null) {
-                                        println(messageText)
+                                        println("Brainiac: messageText")
                                     }
                                 }
-                                "store_short_term_memory" -> println("Updating short term memory...")
-                                "store_long_term_memory" -> println("Updating long term memory...")
-                                else -> {}
+                                BashTool().name -> {
+                                    println("Running on cmd: ${message.content}")
+                                }
+                                ListDirectoryTool(JVMFileSystemProvider.ReadWrite).name -> {
+                                    println("Listing directory: ${message.content}")
+                                }
+                                EditFileTool(JVMFileSystemProvider.ReadWrite).name -> {
+                                    println("Editing file: ${message.content}")
+                                }
+                                ReadFileTool(JVMFileSystemProvider.ReadWrite).name -> {
+                                    println("Reading file: ${message.content}")
+                                }
+                                WriteFileTool(JVMFileSystemProvider.ReadWrite).name -> {
+                                    println("Writing File: ${message.content}")
+                                }
                             }
                         }
 
