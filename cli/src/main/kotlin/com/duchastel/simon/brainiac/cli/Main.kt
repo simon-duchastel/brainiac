@@ -125,9 +125,6 @@ fun main() {
         ),
         shortTermMemoryRepository = shortTermMemoryRepository,
         longTermMemoryRepository = longTermMemoryRepository,
-        onThinking = { thought ->
-            println("**Thinking**: $thought")
-        },
         awaitUserMessage = {
             print("> ")
             val input = readlnOrNull()?.trim()
