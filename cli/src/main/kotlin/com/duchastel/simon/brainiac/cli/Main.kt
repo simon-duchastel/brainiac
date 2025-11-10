@@ -55,7 +55,6 @@ data class UIState(
     val isThinkingExpanded: Boolean = false,
     val toolActivities: List<ToolActivity> = emptyList(),
     val showToolDetails: Boolean = false,
-    val inputText: String = "",
     val isWaitingForResponse: Boolean = false,
     val loadingDots: Int = 0
 )
@@ -168,13 +167,13 @@ fun BrainiacTUI(
                         when (message) {
                             is Message.Assistant -> {
                                 uiState = uiState.copy(
-                                    thinking = message.content.firstOrNull()?.text ?: "",
+                                    thinking = message.content,
                                     isThinking = true
                                 )
                             }
                             is Message.Tool.Call -> {
                                 val toolName = message.tool
-                                val content = message.content.firstOrNull()?.text ?: ""
+                                val content = message.content
                                 val activity = when (toolName) {
                                     BashTool().name -> ToolActivity(
                                         toolName = "Bash",
@@ -228,7 +227,6 @@ fun BrainiacTUI(
                                 content = input,
                                 sender = MessageSender.USER
                             ),
-                            inputText = "",
                             isWaitingForResponse = true
                         )
                         UserMessage.Message(input)
@@ -287,7 +285,7 @@ fun BrainiacTUI(
         Spacer()
         StatusPanel(uiState.isWaitingForResponse, uiState.loadingDots)
         Spacer()
-        InputPanel(uiState.inputText, uiState.isWaitingForResponse)
+        InputPanel(uiState.isWaitingForResponse)
         FooterPanel()
     }
 }
@@ -298,30 +296,9 @@ fun BrainiacTUI(
 
 @Composable
 fun HeaderPanel() {
-    Box(
-        style = Style(
-            foreground = Color.BrightCyan,
-            bold = true
-        )
-    ) {
-        Text("╔════════════════════════════════════════════════════════════════════════╗")
-    }
-    Box(
-        style = Style(
-            foreground = Color.BrightCyan,
-            bold = true
-        )
-    ) {
-        Text("║                          🧠 BRAINIAC AI                                ║")
-    }
-    Box(
-        style = Style(
-            foreground = Color.BrightCyan,
-            bold = true
-        )
-    ) {
-        Text("╚════════════════════════════════════════════════════════════════════════╝")
-    }
+    Text("╔════════════════════════════════════════════════════════════════════════╗", color = Color.BrightCyan, style = TextStyle.Bold)
+    Text("║                          🧠 BRAINIAC AI                                ║", color = Color.BrightCyan, style = TextStyle.Bold)
+    Text("╚════════════════════════════════════════════════════════════════════════╝", color = Color.BrightCyan, style = TextStyle.Bold)
 }
 
 @Composable
@@ -329,22 +306,10 @@ fun ThinkingPanel(thinking: String, isThinking: Boolean, isExpanded: Boolean, do
     if (!isThinking && thinking.isEmpty()) return
 
     val dotsText = ".".repeat(dots)
-    Box(
-        style = Style(
-            foreground = Color.Yellow
-        )
-    ) {
-        Text("💭 Thinking${if (!isExpanded) " [Press 't' to expand]" else " [Press 't' to collapse]"}$dotsText")
-    }
+    Text("💭 Thinking${if (!isExpanded) " [Press 't' to expand]" else " [Press 't' to collapse]"}$dotsText", color = Color.Yellow)
 
     if (isExpanded && thinking.isNotEmpty()) {
-        Box(
-            style = Style(
-                foreground = Color.BrightYellow
-            )
-        ) {
-            Text("   ${thinking.take(500)}")
-        }
+        Text("   ${thinking.take(500)}", color = Color.BrightYellow)
     }
 }
 
@@ -352,13 +317,7 @@ fun ThinkingPanel(thinking: String, isThinking: Boolean, isExpanded: Boolean, do
 fun ToolActivityPanel(activities: List<ToolActivity>, showDetails: Boolean) {
     if (activities.isEmpty()) return
 
-    Box(
-        style = Style(
-            foreground = Color.Green
-        )
-    ) {
-        Text("🔧 Tool Activity${if (!showDetails) " [Press 'a' to show details]" else " [Press 'a' to hide details]"}")
-    }
+    Text("🔧 Tool Activity${if (!showDetails) " [Press 'a' to show details]" else " [Press 'a' to hide details]"}", color = Color.Green)
 
     activities.takeLast(5).forEach { activity ->
         val icon = when (activity.toolName) {
@@ -371,44 +330,19 @@ fun ToolActivityPanel(activities: List<ToolActivity>, showDetails: Boolean) {
         }
 
         if (showDetails) {
-            Box(
-                style = Style(
-                    foreground = Color.BrightGreen
-                )
-            ) {
-                Text("   $icon ${activity.toolName}: ${activity.details.take(60)}")
-            }
+            Text("   $icon ${activity.toolName}: ${activity.details.take(60)}", color = Color.BrightGreen)
         } else {
-            Box(
-                style = Style(
-                    foreground = Color.BrightGreen
-                )
-            ) {
-                Text("   $icon ${activity.toolName}: ${activity.summary}")
-            }
+            Text("   $icon ${activity.toolName}: ${activity.summary}", color = Color.BrightGreen)
         }
     }
 }
 
 @Composable
 fun ConversationPanel(messages: List<ChatMessage>) {
-    Box(
-        style = Style(
-            foreground = Color.BrightBlue,
-            bold = true
-        )
-    ) {
-        Text("━━━━━━━━━━━━━━━━━━━━━━━━ Conversation ━━━━━━━━━━━━━━━━━━━━━━━━")
-    }
+    Text("━━━━━━━━━━━━━━━━━━━━━━━━ Conversation ━━━━━━━━━━━━━━━━━━━━━━━━", color = Color.BrightBlue, style = TextStyle.Bold)
 
     if (messages.isEmpty()) {
-        Box(
-            style = Style(
-                foreground = Color.Gray
-            )
-        ) {
-            Text("   Welcome! Type your message below to start chatting with Brainiac.")
-        }
+        Text("   Welcome! Type your message below to start chatting with Brainiac.", color = Color.White)
     }
 
     messages.forEach { message ->
@@ -417,22 +351,10 @@ fun ConversationPanel(messages: List<ChatMessage>) {
 
         when (message.sender) {
             MessageSender.USER -> {
-                Box(
-                    style = Style(
-                        foreground = Color.BrightWhite
-                    )
-                ) {
-                    Text("   [$time] You: ${message.content}")
-                }
+                Text("   [$time] You: ${message.content}", color = Color.BrightWhite)
             }
             MessageSender.BRAINIAC -> {
-                Box(
-                    style = Style(
-                        foreground = Color.Cyan
-                    )
-                ) {
-                    Text("   [$time] 🧠 Brainiac: ${message.content}")
-                }
+                Text("   [$time] 🧠 Brainiac: ${message.content}", color = Color.Cyan)
             }
         }
     }
@@ -442,25 +364,13 @@ fun ConversationPanel(messages: List<ChatMessage>) {
 fun StatusPanel(isWaiting: Boolean, dots: Int) {
     if (isWaiting) {
         val dotsText = ".".repeat(dots)
-        Box(
-            style = Style(
-                foreground = Color.Magenta
-            )
-        ) {
-            Text("   ⏳ Waiting for Brainiac's response$dotsText")
-        }
+        Text("   ⏳ Waiting for Brainiac's response$dotsText", color = Color.Magenta)
     }
 }
 
 @Composable
-fun InputPanel(inputText: String, isDisabled: Boolean) {
-    Box(
-        style = Style(
-            foreground = Color.BrightBlue
-        )
-    ) {
-        Text("━━━━━━━━━━━━━━━━━━━━━━━━━━ Input ━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    }
+fun InputPanel(isDisabled: Boolean) {
+    Text("━━━━━━━━━━━━━━━━━━━━━━━━━━ Input ━━━━━━━━━━━━━━━━━━━━━━━━━━━", color = Color.BrightBlue)
 
     val prompt = if (isDisabled) {
         "   ⏸  Waiting for response... (input disabled)"
@@ -468,31 +378,13 @@ fun InputPanel(inputText: String, isDisabled: Boolean) {
         "   > Type your message and press Enter█"
     }
 
-    Box(
-        style = Style(
-            foreground = if (isDisabled) Color.Gray else Color.BrightWhite
-        )
-    ) {
-        Text(prompt)
-    }
+    Text(prompt, color = if (isDisabled) Color.White else Color.BrightWhite)
 }
 
 @Composable
 fun FooterPanel() {
-    Box(
-        style = Style(
-            foreground = Color.Gray
-        )
-    ) {
-        Text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    }
-    Box(
-        style = Style(
-            foreground = Color.Gray
-        )
-    ) {
-        Text("   Shortcuts: [t] Toggle Thinking | [a] Toggle Tool Details | Type 'exit' or 'quit' to quit")
-    }
+    Text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", color = Color.White)
+    Text("   Shortcuts: [t] Toggle Thinking | [a] Toggle Tool Details | Type 'exit' or 'quit' to quit", color = Color.White)
 }
 
 @Composable
