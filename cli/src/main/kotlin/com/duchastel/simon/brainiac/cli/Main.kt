@@ -99,7 +99,6 @@ fun main(args: Array<String>) {
         println("Verbose logging enabled")
     }
     println("Type 'exit' or 'quit' to exit")
-    println()
 
     kotlinx.coroutines.runBlocking {
         runBrainiacTUI()
