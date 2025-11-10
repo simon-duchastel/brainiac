@@ -18,6 +18,7 @@ dependencies {
     implementation(project(":tools"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.okio)
+    implementation(libs.slf4j.simple)
 }
 
 tasks.withType<JavaExec> {
