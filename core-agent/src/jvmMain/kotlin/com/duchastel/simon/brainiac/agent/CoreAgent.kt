@@ -14,11 +14,17 @@ import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.tokenizer.SimpleRegexBasedTokenizer
 import com.duchastel.simon.brainiac.core.process.CoreLoop
+import com.duchastel.simon.brainiac.core.process.CoreLoopInstruction
 import com.duchastel.simon.brainiac.core.process.context.BrainiacContext
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRepository
 import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
 import com.duchastel.simon.brainiac.core.process.prompt.Prompts
 import kotlinx.coroutines.runBlocking
+
+sealed interface UserMessage {
+    data object Stop : UserMessage
+    data class Message(val userQuery: String) : UserMessage
+}
 
 /**
  * Core agent for running a Brainiac instance.
@@ -27,6 +33,7 @@ class CoreAgent(
     private val config: CoreAgentConfig,
     private val shortTermMemoryRepository: ShortTermMemoryRepository,
     private val longTermMemoryRepository: LongTermMemoryRepository,
+    private val awaitUserMessage: suspend () -> UserMessage,
 ) {
     private val brainiacContext = BrainiacContext(
         highThoughtModel = config.highThoughtModel,
@@ -37,16 +44,20 @@ class CoreAgent(
         shortTermMemoryRepository = shortTermMemoryRepository,
         longTermMemoryRepository = longTermMemoryRepository,
         brainiacContext = brainiacContext,
+        awaitNextInstruction = {
+            when (val message = awaitUserMessage()) {
+                UserMessage.Stop -> CoreLoopInstruction.Stop
+                is UserMessage.Message -> CoreLoopInstruction.Query(message.userQuery)
+            }
+        }
     )
     private val coreLoopStrategy = coreLoop.strategy("core-loop")
 
     /**
      * Runs the agent with the given user query.
-     *
-     * @param userQuery The user's input query
      */
     @Suppress("UnstableApiUsage")
-    fun run(userQuery: String) = runBlocking {
+    fun run() = runBlocking {
         val agent = AIAgent(
             promptExecutor = promptExecutor(config.executionClients),
             toolRegistry = config.toolRegistry,
@@ -72,7 +83,7 @@ class CoreAgent(
             }
         )
 
-        agent.run(userQuery)
+        agent.run(Unit)
     }
 }
 

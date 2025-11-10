@@ -22,10 +22,13 @@ fun AIAgentLLMWriteSession.rewriteWorkingMemory(
     longTermMemory: LongTermMemory,
 ) {
     rewritePrompt { originalPrompt ->
-        originalPrompt.withMessages {
-            prompt("initial_working_memory") {
+        originalPrompt.withMessages { messages ->
+            // first message is system message, next is long term memory, next is short term memory
+            messages.take(1) + prompt("initial_working_memory") {
                 system {
                     longTermMemory.asXmlRepresentation()
+                }
+                system {
                     shortTermMemory.asXmlRepresentation()
                 }
             }.messages

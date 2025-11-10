@@ -14,6 +14,7 @@ import ai.koog.prompt.message.Message
 import ai.koog.rag.base.files.JVMFileSystemProvider
 import com.duchastel.simon.brainiac.agent.CoreAgent
 import com.duchastel.simon.brainiac.agent.CoreAgentConfig
+import com.duchastel.simon.brainiac.agent.UserMessage
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRepository
 import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
 import com.duchastel.simon.brainiac.tools.bash.BashTool
@@ -87,18 +88,8 @@ fun main() {
                         is Message.Assistant -> {
                             println("**Thinking**... ${message.content}")
                         }
-
                         is Message.Tool.Call -> {
                             when (message.tool) {
-                                TalkTool({}).name -> {
-                                    val toolContent = message.content
-                                    val messagePattern = """"message"\s*:\s*"([^"]*)"""".toRegex()
-                                    val match = messagePattern.find(toolContent)
-                                    val messageText = match?.groupValues?.get(1)
-                                    if (messageText != null) {
-                                        println("Brainiac (FROM TOOL): messageText")
-                                    }
-                                }
                                 BashTool().name -> {
                                     println("Running on cmd: ${message.content}")
                                 }
@@ -116,31 +107,37 @@ fun main() {
                                 }
                             }
                         }
-
                         else -> {}
                     }
                 }
             }
         ),
         shortTermMemoryRepository = shortTermMemoryRepository,
-        longTermMemoryRepository = longTermMemoryRepository
+        longTermMemoryRepository = longTermMemoryRepository,
+        awaitUserMessage = {
+            print("> ")
+            val input = readlnOrNull()?.trim()
+
+            val userMessage = when {
+                input.isNullOrBlank() -> {
+                    println("No input received, exiting...")
+                    UserMessage.Stop
+                }
+                input.lowercase() in listOf("exit", "quit") -> {
+                    println("Goodbye!")
+                    UserMessage.Stop
+                }
+                else -> {
+                    UserMessage.Message(input)
+                }
+            }
+
+            userMessage
+        }
     )
 
-    print("> ")
-    val input = readlnOrNull()?.trim()
-
-    if (input.isNullOrBlank()) {
-        println("No input received, exiting...")
-        return
-    }
-
-    if (input.lowercase() in listOf("exit", "quit")) {
-        println("Goodbye!")
-        return
-    }
-
     try {
-        coreAgent.run(input)
+        coreAgent.run()
     } catch (e: Exception) {
         println("Error: ${e.message}")
         e.printStackTrace()

@@ -20,6 +20,9 @@ you directly.
 For example: if the user asks you to create a file, DON'T say "I will create a file now." That is a
 thought, and you should keep such thoughts as messages instead of talking to the user. A reasonable
 use of the "Talk" tool would be to say "File created successfully." once the file has been created.
+
+Once you are done with your task and done talking, you should simply think to yourself that
+there's nothing left to do and you'll enter a resting state, ready for the next task.
 """
 
     const val IDENTIFY_EVENTS = """Review the conversation and the current short-term memory.
