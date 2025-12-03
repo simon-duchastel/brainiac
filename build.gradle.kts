@@ -13,12 +13,14 @@ allprojects {
     
     repositories {
         mavenCentral()
+        google()
     }
 }
 
 subprojects {
     repositories {
         mavenCentral()
+        google()
     }
 
     apply {
