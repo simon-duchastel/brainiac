@@ -12,8 +12,9 @@ import com.jakewharton.mosaic.ui.TextStyle
 fun Divider(
     char: Char = '━',
     color: Color = Color.White,
-    textStyle: TextStyle = TextStyle.None
+    textStyle: TextStyle = TextStyle.Bold
 ) {
+    // TODO remove hard-coded '76' and use actual width instead
     Text(char.toString().repeat(76), color = color, textStyle = textStyle)
 }
 
@@ -25,9 +26,9 @@ fun LabeledDivider(
     label: String,
     char: Char = '━',
     color: Color = Color.White,
-    textStyle: TextStyle = TextStyle.None
+    textStyle: TextStyle = TextStyle.Bold
 ) {
-    val padding = (76 - label.length - 2) / 2
+    val padding = (76 - label.length - 2) / 2 // TODO remove hard-coded '76' and use actual width instead
     val left = char.toString().repeat(padding)
     val right = char.toString().repeat(76 - padding - label.length - 2)
     Text("$left $label $right", color = color, textStyle = textStyle)

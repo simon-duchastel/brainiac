@@ -5,14 +5,18 @@ import ai.koog.agents.ext.tool.file.EditFileTool
 import ai.koog.agents.ext.tool.file.ListDirectoryTool
 import ai.koog.agents.ext.tool.file.ReadFileTool
 import ai.koog.agents.ext.tool.file.WriteFileTool
-import ai.koog.prompt.executor.clients.google.GoogleLLMClient
-import ai.koog.prompt.executor.clients.google.GoogleModels
 import ai.koog.prompt.executor.clients.openrouter.OpenRouterLLMClient
+import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Message
 import ai.koog.rag.base.files.JVMFileSystemProvider
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.duchastel.simon.brainiac.agent.CoreAgent
 import com.duchastel.simon.brainiac.agent.CoreAgentConfig
 import com.duchastel.simon.brainiac.agent.UserMessage
@@ -29,16 +33,15 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 
 class BrainiacPresenter(
-    private val googleApiKey: String,
     private val openRouterApiKey: String,
     private val tavilyApiKey: String?,
     private val shortTermMemoryRepository: ShortTermMemoryRepository,
     private val longTermMemoryRepository: LongTermMemoryRepository
 ) : Presenter<BrainiacState> {
 
-    val stealthModel = LLModel(
+    val mainModel = LLModel(
         provider = LLMProvider.OpenRouter,
-        id = "openrouter/polaris-alpha",
+        id = "x-ai/grok-4.1-fast:free",
         capabilities = listOf(
             LLMCapability.Temperature,
             LLMCapability.Speculation,
@@ -95,11 +98,10 @@ class BrainiacPresenter(
 
         val coreAgent = CoreAgent(
             config = CoreAgentConfig(
-                highThoughtModel = stealthModel,
-                mediumThoughtModel = GoogleModels.Gemini2_5Flash,
-                lowThoughtModel = GoogleModels.Gemini2_5FlashLite,
+                highThoughtModel = mainModel,
+                mediumThoughtModel = mainModel,
+                lowThoughtModel = mainModel,
                 executionClients = mapOf(
-                    LLMProvider.Google to GoogleLLMClient(googleApiKey),
                     LLMProvider.OpenRouter to OpenRouterLLMClient(openRouterApiKey),
                 ),
                 toolRegistry = toolRegistry,
