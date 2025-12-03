@@ -1,6 +1,7 @@
 package com.duchastel.simon.brainiac.cli.ui.utils
 
 import androidx.compose.runtime.Composable
+import com.jakewharton.mosaic.LocalTerminalState
 import com.jakewharton.mosaic.ui.Color
 import com.jakewharton.mosaic.ui.Text
 import com.jakewharton.mosaic.ui.TextStyle
@@ -14,8 +15,8 @@ fun Divider(
     color: Color = Color.White,
     textStyle: TextStyle = TextStyle.Bold
 ) {
-    // TODO remove hard-coded '76' and use actual width instead
-    Text(char.toString().repeat(76), color = color, textStyle = textStyle)
+    val terminalWidth = LocalTerminalState.current.size?.width ?: 80
+    Text(char.toString().repeat(terminalWidth), color = color, textStyle = textStyle)
 }
 
 /**
@@ -28,9 +29,10 @@ fun LabeledDivider(
     color: Color = Color.White,
     textStyle: TextStyle = TextStyle.Bold
 ) {
-    val padding = (76 - label.length - 2) / 2 // TODO remove hard-coded '76' and use actual width instead
-    val left = char.toString().repeat(padding)
-    val right = char.toString().repeat(76 - padding - label.length - 2)
+    val terminalWidth = LocalTerminalState.current.size?.width ?: 80
+    val padding = (terminalWidth - label.length - 2) / 2
+    val left = char.toString().repeat(padding.coerceAtLeast(0))
+    val right = char.toString().repeat((terminalWidth - padding - label.length - 2).coerceAtLeast(0))
     Text("$left $label $right", color = color, textStyle = textStyle)
 }
 
