@@ -109,7 +109,6 @@ class AccessLogRepository(
         )
 
         synchronized(this) {
-            // Safe parent access
             logFilePath.parent?.let { parentDir ->
                 fileSystem.createDirectories(parentDir)
             }
