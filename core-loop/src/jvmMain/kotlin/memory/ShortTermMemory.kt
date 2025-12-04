@@ -18,7 +18,8 @@ import com.duchastel.simon.brainiac.core.process.util.withModel
 import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
 
-private val logger = LoggerFactory.getLogger("ShortTermMemory")
+@PublishedApi
+internal val logger = LoggerFactory.getLogger("ShortTermMemory")
 
 @AIAgentBuilderDslMarker
 fun AIAgentSubgraphBuilderBase<*, *>.recallShortTermMemory(
