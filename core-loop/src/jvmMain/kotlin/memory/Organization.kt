@@ -233,15 +233,7 @@ inline fun <reified T : Any> AIAgentSubgraphBuilderBase<*, *>.organizeLongTermMe
             }
 
             withModel(brainiacContext.mediumThoughtModel) {
-                requestLLMStructured<MemoryAnalysis>().fold(
-                    onSuccess = { response -> response.structure },
-                    onFailure = { error ->
-                        logger.warn("Failed to analyze memory patterns: {}", error.message)
-                        logger.info("Skipping organization cycle")
-                        // Return empty analysis
-                        MemoryAnalysis()
-                    }
-                )
+                requestLLMStructured<MemoryAnalysis>().getOrNull()!!.structure
             }
         }
     }
@@ -293,15 +285,7 @@ inline fun <reified T : Any> AIAgentSubgraphBuilderBase<*, *>.organizeLongTermMe
             }
 
             withModel(brainiacContext.mediumThoughtModel) {
-                requestLLMStructured<RefactoringOperations>().fold(
-                    onSuccess = { response -> response.structure },
-                    onFailure = { error ->
-                        logger.warn("Failed to propose refactorings: {}", error.message)
-                        logger.info("Skipping refactoring operations")
-                        // Return empty operations list
-                        RefactoringOperations()
-                    }
-                )
+                requestLLMStructured<RefactoringOperations>().getOrNull()!!.structure
             }
         }
     }
