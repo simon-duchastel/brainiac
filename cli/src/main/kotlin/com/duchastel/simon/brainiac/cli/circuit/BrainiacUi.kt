@@ -34,7 +34,6 @@ fun BrainiacUi(state: BrainiacState) {
                     true
                 }
                 else -> {
-                    // Handle printable characters
                     val char = keyEvent.key
                     if (char.length == 1 && (char[0].isLetterOrDigit() || char[0].isWhitespace() || char[0] in "!@#$%^&*()_+-=[]{}|;:',.<>?/`~\"\\")) {
                         state.eventSink(BrainiacEvent.AppendToInput(char))
