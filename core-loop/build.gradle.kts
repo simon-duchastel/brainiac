@@ -26,6 +26,7 @@ kotlin {
         val jvmMain by getting {
             dependencies {
                 api(libs.koog.agents)
+                implementation(libs.slf4j.simple)
             }
         }
         val jvmTest by getting {

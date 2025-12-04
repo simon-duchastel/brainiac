@@ -13,15 +13,15 @@ fun BrainiacUi(state: BrainiacState) {
     Column(
         modifier = Modifier.onKeyEvent { keyEvent ->
             when (keyEvent) {
-                KeyEvent("Ctrl-T"), KeyEvent("Ctrl-t") -> {
+                KeyEvent("T", ctrl = true), KeyEvent("t", ctrl = true) -> {
                     state.eventSink(BrainiacEvent.ToggleThinking)
                     true
                 }
-                KeyEvent("Ctrl-A"), KeyEvent("Ctrl-a") -> {
+                KeyEvent("A", ctrl = true), KeyEvent("a", ctrl = true) -> {
                     state.eventSink(BrainiacEvent.ToggleToolDetails)
                     true
                 }
-                KeyEvent("Ctrl-C"), KeyEvent("Ctrl-c") -> {
+                KeyEvent("C", ctrl = true), KeyEvent("c", ctrl = true) -> {
                     state.eventSink(BrainiacEvent.ExitApp)
                     true
                 }
