@@ -16,6 +16,9 @@ import com.duchastel.simon.brainiac.core.process.context.BrainiacContext
 import com.duchastel.simon.brainiac.core.process.prompt.Prompts
 import com.duchastel.simon.brainiac.core.process.util.withModel
 import kotlinx.serialization.Serializable
+import org.slf4j.LoggerFactory
+
+private val logger = LoggerFactory.getLogger("LongTermMemory")
 
 @AIAgentBuilderDslMarker
 context(brainiacContext: BrainiacContext)
@@ -50,8 +53,8 @@ fun AIAgentSubgraphBuilderBase<*, *>.recallLongTermMemory(
             requestLLMStructured<MemoryPaths>().fold(
                 onSuccess = { response -> response.structure.filePaths },
                 onFailure = { error ->
-                    println("Warning: Failed to identify relevant memories: ${error.message}")
-                    println("Continuing without long-term memory context")
+                    logger.warn("Failed to identify relevant memories: {}", error.message)
+                    logger.info("Continuing without long-term memory context")
                     emptyList()
                 }
             )
@@ -66,7 +69,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.recallLongTermMemory(
         try {
             longTermMemoryRepository.getLongTermMemory(memoryPath)
         } catch (e: Exception) {
-            println("Warning: Failed to read memory file '$memoryPath': ${e.message}")
+            logger.warn("Failed to read memory file '{}': {}", memoryPath, e.message)
             null
         }
     }
@@ -146,8 +149,8 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemor
                 requestLLMStructured<MemoryPromotions>().fold(
                     onSuccess = { response -> response.structure.promotions },
                     onFailure = { error ->
-                        println("Warning: Failed to identify memory promotions: ${error.message}")
-                        println("Skipping LTM promotion this cycle")
+                        logger.warn("Failed to identify memory promotions: {}", error.message)
+                        logger.info("Skipping LTM promotion this cycle")
                         emptyList()
                     }
                 )
@@ -183,8 +186,8 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemor
                 requestLLMStructured<ShortTermMemory>().fold(
                     onSuccess = { response -> response.structure },
                     onFailure = { error ->
-                        println("Warning: Failed to clean short-term memory: ${error.message}")
-                        println("Keeping original short-term memory contents")
+                        logger.warn("Failed to clean short-term memory: {}", error.message)
+                        logger.info("Keeping original short-term memory contents")
                         // Return original STM unchanged
                         stm
                     }
