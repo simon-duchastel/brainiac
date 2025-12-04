@@ -81,12 +81,15 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
             }
 
             val goals = withModel(brainiacContext.mediumThoughtModel) {
-                requestLLMStructured<Goals>().getOrElse { error ->
-                    // Log error and fall back to existing goals
-                    println("Warning: Failed to update goals: ${error.message}")
-                    // Return current goals wrapped in Goals structure
-                    Goals(goals = shortTermMemoryRepository.getShortTermMemory().goals)
-                }.structure.goals
+                requestLLMStructured<Goals>().fold(
+                    onSuccess = { response -> response.structure.goals },
+                    onFailure = { error ->
+                        // Log error and fall back to existing goals
+                        println("Warning: Failed to update goals: ${error.message}")
+                        // Return current goals
+                        shortTermMemoryRepository.getShortTermMemory().goals
+                    }
+                )
             }
             events to goals
         }
