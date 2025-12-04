@@ -14,7 +14,8 @@ import com.duchastel.simon.brainiac.core.process.util.withModel
 import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
 
-private val logger = LoggerFactory.getLogger("Organization")
+@PublishedApi
+internal val logger = LoggerFactory.getLogger("Organization")
 
 /**
  * Analysis of memory access patterns.
