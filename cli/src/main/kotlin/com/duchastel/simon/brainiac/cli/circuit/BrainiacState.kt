@@ -15,7 +15,6 @@ data class BrainiacState(
     val isWaitingForResponse: Boolean = false,
     val loadingDots: Int = 0,
     val inputBuffer: String = "",
-    val shouldExit: Boolean = false,
     val eventSink: (BrainiacEvent) -> Unit = {}
 ) : CircuitUiState
 

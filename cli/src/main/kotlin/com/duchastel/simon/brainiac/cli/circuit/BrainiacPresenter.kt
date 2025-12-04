@@ -63,7 +63,6 @@ class BrainiacPresenter(
     var isWaitingForResponse by remember { mutableStateOf(false) }
     var loadingDots by remember { mutableStateOf(0) }
     var inputBuffer by remember { mutableStateOf("") }
-    var shouldExit by remember { mutableStateOf(false) }
 
     val userInputChannel = remember { Channel<String>(Channel.UNLIMITED) }
 
@@ -161,7 +160,6 @@ class BrainiacPresenter(
                 val input = userInputChannel.receive()
                 when {
                     input.lowercase() in listOf("exit", "quit") -> {
-                        shouldExit = true
                         UserMessage.Stop
                     }
                     else -> {
@@ -196,7 +194,6 @@ class BrainiacPresenter(
         isWaitingForResponse = isWaitingForResponse,
         loadingDots = loadingDots,
         inputBuffer = inputBuffer,
-        shouldExit = shouldExit,
         eventSink = { event ->
             when (event) {
                 is BrainiacEvent.SendMessage -> {
@@ -224,12 +221,7 @@ class BrainiacPresenter(
                 BrainiacEvent.SubmitInput -> {
                     if (!isWaitingForResponse && inputBuffer.isNotBlank()) {
                         val trimmed = inputBuffer.trim()
-                        if (trimmed.lowercase() in listOf("exit", "quit")) {
-                            shouldExit = true
-                            userInputChannel.trySend(trimmed)
-                        } else {
-                            userInputChannel.trySend(trimmed)
-                        }
+                        userInputChannel.trySend(trimmed)
                         inputBuffer = ""
                     }
                 }
