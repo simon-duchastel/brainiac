@@ -50,7 +50,6 @@ class LongTermMemoryRepository(
             AccessAction.WRITE
         }
 
-        // Safe parent access with fallback
         val parentDir = filePath.parent ?: ltmDirectory
         fileSystem.createDirectories(parentDir)
         fileSystem.write(filePath) {
