@@ -19,7 +19,7 @@ dependencies {
     implementation(project(":tools"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.okio)
-    implementation(libs.slf4j.nop)
+    implementation(libs.slf4j.simple)
     implementation(libs.mosaic.runtime)
     implementation(libs.circuit.foundation)
 }
