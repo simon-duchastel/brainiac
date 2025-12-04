@@ -234,7 +234,6 @@ class BrainiacPresenter(
                     }
                 }
                 BrainiacEvent.ExitApp -> {
-                    // Call exitProcess directly instead of sending to channel
                     exitProcess(130)
                 }
             }
