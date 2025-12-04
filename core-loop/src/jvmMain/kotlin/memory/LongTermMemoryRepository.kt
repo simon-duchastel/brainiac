@@ -50,7 +50,9 @@ class LongTermMemoryRepository(
             AccessAction.WRITE
         }
 
-        fileSystem.createDirectories(filePath.parent!!)
+        // Safe parent access with fallback
+        val parentDir = filePath.parent ?: ltmDirectory
+        fileSystem.createDirectories(parentDir)
         fileSystem.write(filePath) {
             writeUtf8(content)
         }

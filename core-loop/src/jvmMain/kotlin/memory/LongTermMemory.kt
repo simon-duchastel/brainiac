@@ -47,7 +47,14 @@ fun AIAgentSubgraphBuilderBase<*, *>.recallLongTermMemory(
         }
 
         val memoryPaths = withModel(brainiacContext.mediumThoughtModel) {
-            requestLLMStructured<MemoryPaths>().getOrNull()!!.structure.filePaths
+            requestLLMStructured<MemoryPaths>().fold(
+                onSuccess = { response -> response.structure.filePaths },
+                onFailure = { error ->
+                    println("Warning: Failed to identify relevant memories: ${error.message}")
+                    println("Continuing without long-term memory context")
+                    emptyList()
+                }
+            )
         }
         prompt = originalPrompt
 
@@ -55,8 +62,13 @@ fun AIAgentSubgraphBuilderBase<*, *>.recallLongTermMemory(
     }
 
     // Read and concatenate relevant files
-    val memories = filePaths.map { memoryPath ->
-        longTermMemoryRepository.getLongTermMemory(memoryPath)
+    val memories = filePaths.mapNotNull { memoryPath ->
+        try {
+            longTermMemoryRepository.getLongTermMemory(memoryPath)
+        } catch (e: Exception) {
+            println("Warning: Failed to read memory file '$memoryPath': ${e.message}")
+            null
+        }
     }
 
     LongTermMemory(memories)
@@ -131,7 +143,14 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemor
             }
 
             withModel(brainiacContext.mediumThoughtModel) {
-                requestLLMStructured<MemoryPromotions>().getOrNull()!!.structure.promotions
+                requestLLMStructured<MemoryPromotions>().fold(
+                    onSuccess = { response -> response.structure.promotions },
+                    onFailure = { error ->
+                        println("Warning: Failed to identify memory promotions: ${error.message}")
+                        println("Skipping LTM promotion this cycle")
+                        emptyList()
+                    }
+                )
             }
         }
     }
@@ -161,7 +180,15 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemor
             }
 
             withModel(brainiacContext.mediumThoughtModel) {
-                requestLLMStructured<ShortTermMemory>().getOrNull()!!.structure
+                requestLLMStructured<ShortTermMemory>().fold(
+                    onSuccess = { response -> response.structure },
+                    onFailure = { error ->
+                        println("Warning: Failed to clean short-term memory: ${error.message}")
+                        println("Keeping original short-term memory contents")
+                        // Return original STM unchanged
+                        stm
+                    }
+                )
             }
         }
     }

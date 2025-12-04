@@ -59,7 +59,14 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
                 }
             }
             withModel(brainiacContext.mediumThoughtModel) {
-                requestLLMStructured<Events>().getOrNull()!!.structure.memoryEvents
+                requestLLMStructured<Events>().fold(
+                    onSuccess = { response -> response.structure.memoryEvents },
+                    onFailure = { error ->
+                        // Log error but continue with empty events
+                        println("Warning: Failed to extract events from conversation: ${error.message}")
+                        emptyList()
+                    }
+                )
             }
         }
     }
@@ -74,7 +81,12 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
             }
 
             val goals = withModel(brainiacContext.mediumThoughtModel) {
-                requestLLMStructured<Goals>().getOrNull()!!.structure.goals
+                requestLLMStructured<Goals>().getOrElse { error ->
+                    // Log error and fall back to existing goals
+                    println("Warning: Failed to update goals: ${error.message}")
+                    // Return current goals wrapped in Goals structure
+                    Goals(goals = shortTermMemoryRepository.getShortTermMemory().goals)
+                }.structure.goals
             }
             events to goals
         }
@@ -89,7 +101,13 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
                 }
             }
             val thoughts = withModel(brainiacContext.mediumThoughtModel) {
-                requestLLMStructured<Events>().getOrNull()!!.structure.memoryEvents
+                requestLLMStructured<Events>().fold(
+                    onSuccess = { response -> response.structure.memoryEvents },
+                    onFailure = { error ->
+                        println("Warning: Failed to extract thoughts: ${error.message}")
+                        emptyList()
+                    }
+                )
             }
             Triple(events, goals, thoughts)
         }
