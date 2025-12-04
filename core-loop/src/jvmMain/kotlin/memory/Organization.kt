@@ -14,7 +14,8 @@ import com.duchastel.simon.brainiac.core.process.util.withModel
 import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
 
-private val logger = LoggerFactory.getLogger("Organization")
+@PublishedApi
+internal val organizationLogger = LoggerFactory.getLogger("Organization")
 
 /**
  * Analysis of memory access patterns.
@@ -102,9 +103,9 @@ internal fun executeMoveMemory(
         // Delete source (by writing empty - actual deletion would require FileSystem access)
         // For now, we'll leave the old file in place
         // TODO: Add deleteMemory method to repository
-        logger.info("Moved memory: {} -> {} (reason: {})", fromPath, toPath, reason)
+        organizationLogger.info("Moved memory: {} -> {} (reason: {})", fromPath, toPath, reason)
     } catch (e: Exception) {
-        logger.error("Failed to move memory {} -> {}: {}", fromPath, toPath, e.message, e)
+        organizationLogger.error("Failed to move memory {} -> {}: {}", fromPath, toPath, e.message, e)
     }
 }
 
@@ -123,9 +124,9 @@ internal fun executeArchiveMemory(
         repository.writeLongTermMemory(archivePath, content)
 
         // TODO: Add deleteMemory method to repository
-        logger.info("Archived memory: {} -> {} (reason: {})", filePath, archivePath, reason)
+        organizationLogger.info("Archived memory: {} -> {} (reason: {})", filePath, archivePath, reason)
     } catch (e: Exception) {
-        logger.error("Failed to archive memory {}: {}", filePath, e.message, e)
+        organizationLogger.error("Failed to archive memory {}: {}", filePath, e.message, e)
     }
 }
 
@@ -144,10 +145,10 @@ internal fun executeConsolidateMemories(
         repository.writeLongTermMemory(targetPath, consolidatedContent)
 
         // TODO: Delete source files
-        logger.info("Consolidated {} memories into {}", sourcePaths.size, targetPath)
-        sourcePaths.forEach { logger.info("  - {}", it) }
+        organizationLogger.info("Consolidated {} memories into {}", sourcePaths.size, targetPath)
+        sourcePaths.forEach { organizationLogger.info("  - {}", it) }
     } catch (e: Exception) {
-        logger.error("Failed to consolidate memories into {}: {}", targetPath, e.message, e)
+        organizationLogger.error("Failed to consolidate memories into {}: {}", targetPath, e.message, e)
     }
 }
 
@@ -232,7 +233,15 @@ inline fun <reified T : Any> AIAgentSubgraphBuilderBase<*, *>.organizeLongTermMe
             }
 
             withModel(brainiacContext.mediumThoughtModel) {
-                requestLLMStructured<MemoryAnalysis>().getOrNull()!!.structure
+                requestLLMStructured<MemoryAnalysis>().fold(
+                    onSuccess = { response -> response.structure },
+                    onFailure = { error ->
+                        organizationLogger.warn("Failed to analyze memory patterns: {}", error.message)
+                        organizationLogger.info("Skipping organization cycle")
+                        // Return empty analysis
+                        MemoryAnalysis()
+                    }
+                )
             }
         }
     }
@@ -284,7 +293,15 @@ inline fun <reified T : Any> AIAgentSubgraphBuilderBase<*, *>.organizeLongTermMe
             }
 
             withModel(brainiacContext.mediumThoughtModel) {
-                requestLLMStructured<RefactoringOperations>().getOrNull()!!.structure
+                requestLLMStructured<RefactoringOperations>().fold(
+                    onSuccess = { response -> response.structure },
+                    onFailure = { error ->
+                        organizationLogger.warn("Failed to propose refactorings: {}", error.message)
+                        organizationLogger.info("Skipping refactoring operations")
+                        // Return empty operations list
+                        RefactoringOperations()
+                    }
+                )
             }
         }
     }
@@ -295,7 +312,7 @@ inline fun <reified T : Any> AIAgentSubgraphBuilderBase<*, *>.organizeLongTermMe
                 is RefactoringOperation.StrengthenRelation -> {
                     // TODO: Implement when _index.md support is added
                     // For now, just log the intention
-                    logger.debug("Would strengthen relation: {} -> {}: {}", operation.fromFile, operation.toFile, operation.relationDescription)
+                    organizationLogger.debug("Would strengthen relation: {} -> {}: {}", operation.fromFile, operation.toFile, operation.relationDescription)
                 }
 
                 is RefactoringOperation.MoveMemory -> {

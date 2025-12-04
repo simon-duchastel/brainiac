@@ -18,7 +18,8 @@ import com.duchastel.simon.brainiac.core.process.util.withModel
 import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
 
-private val logger = LoggerFactory.getLogger("ShortTermMemory")
+@PublishedApi
+internal val shortTermMemoryLogger = LoggerFactory.getLogger("ShortTermMemory")
 
 @AIAgentBuilderDslMarker
 fun AIAgentSubgraphBuilderBase<*, *>.recallShortTermMemory(
@@ -66,7 +67,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
                     onSuccess = { response -> response.structure.memoryEvents },
                     onFailure = { error ->
                         // Log error but continue with empty events
-                        logger.warn("Failed to extract events from conversation: {}", error.message)
+                        shortTermMemoryLogger.warn("Failed to extract events from conversation: {}", error.message)
                         emptyList()
                     }
                 )
@@ -88,7 +89,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
                     onSuccess = { response -> response.structure.goals },
                     onFailure = { error ->
                         // Log error and fall back to existing goals
-                        logger.warn("Failed to update goals: {}", error.message)
+                        shortTermMemoryLogger.warn("Failed to update goals: {}", error.message)
                         // Return current goals
                         shortTermMemoryRepository.getShortTermMemory().goals
                     }
@@ -110,7 +111,7 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
                 requestLLMStructured<Events>().fold(
                     onSuccess = { response -> response.structure.memoryEvents },
                     onFailure = { error ->
-                        logger.warn("Failed to extract thoughts: {}", error.message)
+                        shortTermMemoryLogger.warn("Failed to extract thoughts: {}", error.message)
                         emptyList()
                     }
                 )
