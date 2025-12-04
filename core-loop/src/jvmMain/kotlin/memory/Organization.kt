@@ -14,7 +14,8 @@ import com.duchastel.simon.brainiac.core.process.util.withModel
 import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
 
-private val logger = LoggerFactory.getLogger("Organization")
+@PublishedApi
+internal val logger = LoggerFactory.getLogger("Organization")
 
 /**
  * Analysis of memory access patterns.
@@ -104,7 +105,7 @@ internal fun executeMoveMemory(
         // TODO: Add deleteMemory method to repository
         logger.info("Moved memory: {} -> {} (reason: {})", fromPath, toPath, reason)
     } catch (e: Exception) {
-        logger.error("Failed to move memory {} -> {}: {}", fromPath, toPath, e.message)
+        logger.error("Failed to move memory {} -> {}: {}", fromPath, toPath, e.message, e)
     }
 }
 
@@ -125,7 +126,7 @@ internal fun executeArchiveMemory(
         // TODO: Add deleteMemory method to repository
         logger.info("Archived memory: {} -> {} (reason: {})", filePath, archivePath, reason)
     } catch (e: Exception) {
-        logger.error("Failed to archive memory {}: {}", filePath, e.message)
+        logger.error("Failed to archive memory {}: {}", filePath, e.message, e)
     }
 }
 
@@ -147,7 +148,7 @@ internal fun executeConsolidateMemories(
         logger.info("Consolidated {} memories into {}", sourcePaths.size, targetPath)
         sourcePaths.forEach { logger.info("  - {}", it) }
     } catch (e: Exception) {
-        logger.error("Failed to consolidate memories into {}: {}", targetPath, e.message)
+        logger.error("Failed to consolidate memories into {}: {}", targetPath, e.message, e)
     }
 }
 
@@ -311,7 +312,7 @@ inline fun <reified T : Any> AIAgentSubgraphBuilderBase<*, *>.organizeLongTermMe
                 is RefactoringOperation.StrengthenRelation -> {
                     // TODO: Implement when _index.md support is added
                     // For now, just log the intention
-                    logger.info("Would strengthen relation: {} -> {}: {}", operation.fromFile, operation.toFile, operation.relationDescription)
+                    logger.debug("Would strengthen relation: {} -> {}: {}", operation.fromFile, operation.toFile, operation.relationDescription)
                 }
 
                 is RefactoringOperation.MoveMemory -> {

@@ -31,6 +31,7 @@ import com.duchastel.simon.brainiac.tools.websearch.WebSearchTool
 import com.slack.circuit.runtime.presenter.Presenter
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlin.system.exitProcess
 
 class BrainiacPresenter(
     private val openRouterApiKey: String,
@@ -233,8 +234,7 @@ class BrainiacPresenter(
                     }
                 }
                 BrainiacEvent.ExitApp -> {
-                    shouldExit = true
-                    userInputChannel.trySend("exit")
+                    exitProcess(130)
                 }
             }
         }
