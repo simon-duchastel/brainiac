@@ -1,7 +1,9 @@
 package com.duchastel.simon.brainiac.fallback
 
-import ai.koog.agents.*
-import ai.koog.agents.chat.llm.model.LLModel
+import ai.koog.agents.core.agent.entity.AIAgentGraphStrategy
+import ai.koog.agents.core.agent.entity.createStorageKey
+import ai.koog.agents.core.dsl.builder.forwardTo
+import ai.koog.agents.core.dsl.builder.strategy
 
 /**
  * Creates a complete koog strategy for selecting a fallback free model from OpenRouter.

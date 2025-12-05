@@ -6,6 +6,10 @@ plugins {
 kotlin {
     jvm()
 
+    compilerOptions {
+        freeCompilerArgs.add("-Xcontext-parameters")
+    }
+
     sourceSets {
         val jvmMain by getting {
             dependencies {

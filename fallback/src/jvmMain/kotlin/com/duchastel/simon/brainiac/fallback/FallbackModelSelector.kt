@@ -1,7 +1,14 @@
 package com.duchastel.simon.brainiac.fallback
 
-import ai.koog.agents.*
-import ai.koog.agents.chat.llm.model.LLModel
+import ai.koog.agents.core.agent.entity.ToolSelectionStrategy
+import ai.koog.agents.core.agent.entity.createStorageKey
+import ai.koog.agents.core.dsl.builder.AIAgentBuilderDslMarker
+import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
+import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
+import ai.koog.agents.core.dsl.builder.forwardTo
+import ai.koog.prompt.dsl.prompt
+import ai.koog.prompt.llm.LLModel
+import ai.koog.prompt.text.TextContentBuilderBase
 import kotlinx.serialization.Serializable
 
 /**
@@ -191,7 +198,8 @@ inline fun <reified T : Any> AIAgentSubgraphBuilderBase<*, *>.selectFallbackMode
     // If models available, continue with selection
     edge(
         checkModelsAvailable forwardTo formatModelsForAnalysis
-        onCondition { it }
+                onCondition { it }
+                transformed { }
     )
     edge(formatModelsForAnalysis forwardTo selectBestModel)
     edge(selectBestModel forwardTo extractSelectedModel)
@@ -200,7 +208,8 @@ inline fun <reified T : Any> AIAgentSubgraphBuilderBase<*, *>.selectFallbackMode
     // If no models available, error
     edge(
         checkModelsAvailable forwardTo handleNoModels
-        onCondition { !it }
+                onCondition { !it }
+                transformed { }
     )
     edge(handleNoModels forwardTo nodeFinish)
 }
