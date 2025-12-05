@@ -16,6 +16,10 @@ import com.duchastel.simon.brainiac.core.process.context.BrainiacContext
 import com.duchastel.simon.brainiac.core.process.prompt.Prompts
 import com.duchastel.simon.brainiac.core.process.util.withModel
 import kotlinx.serialization.Serializable
+import org.slf4j.LoggerFactory
+
+@PublishedApi
+internal val longTermMemoryLogger = LoggerFactory.getLogger("LongTermMemory")
 
 @AIAgentBuilderDslMarker
 context(brainiacContext: BrainiacContext)
@@ -47,7 +51,14 @@ fun AIAgentSubgraphBuilderBase<*, *>.recallLongTermMemory(
         }
 
         val memoryPaths = withModel(brainiacContext.mediumThoughtModel) {
-            requestLLMStructured<MemoryPaths>().getOrNull()!!.structure.filePaths
+            requestLLMStructured<MemoryPaths>().fold(
+                onSuccess = { response -> response.structure.filePaths },
+                onFailure = { error ->
+                    longTermMemoryLogger.warn("Failed to identify relevant memories: {}", error.message)
+                    longTermMemoryLogger.info("Continuing without long-term memory context")
+                    emptyList()
+                }
+            )
         }
         prompt = originalPrompt
 
@@ -55,8 +66,13 @@ fun AIAgentSubgraphBuilderBase<*, *>.recallLongTermMemory(
     }
 
     // Read and concatenate relevant files
-    val memories = filePaths.map { memoryPath ->
-        longTermMemoryRepository.getLongTermMemory(memoryPath)
+    val memories = filePaths.mapNotNull { memoryPath ->
+        try {
+            longTermMemoryRepository.getLongTermMemory(memoryPath)
+        } catch (e: Exception) {
+            longTermMemoryLogger.warn("Failed to read memory file '{}': {}", memoryPath, e.message)
+            null
+        }
     }
 
     LongTermMemory(memories)
@@ -131,7 +147,14 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemor
             }
 
             withModel(brainiacContext.mediumThoughtModel) {
-                requestLLMStructured<MemoryPromotions>().getOrNull()!!.structure.promotions
+                requestLLMStructured<MemoryPromotions>().fold(
+                    onSuccess = { response -> response.structure.promotions },
+                    onFailure = { error ->
+                        longTermMemoryLogger.warn("Failed to identify memory promotions: {}", error.message)
+                        longTermMemoryLogger.info("Skipping LTM promotion this cycle")
+                        emptyList()
+                    }
+                )
             }
         }
     }
@@ -161,7 +184,15 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateLongTermMemor
             }
 
             withModel(brainiacContext.mediumThoughtModel) {
-                requestLLMStructured<ShortTermMemory>().getOrNull()!!.structure
+                requestLLMStructured<ShortTermMemory>().fold(
+                    onSuccess = { response -> response.structure },
+                    onFailure = { error ->
+                        longTermMemoryLogger.warn("Failed to clean short-term memory: {}", error.message)
+                        longTermMemoryLogger.info("Keeping original short-term memory contents")
+                        // Return original STM unchanged
+                        stm
+                    }
+                )
             }
         }
     }

@@ -109,7 +109,9 @@ class AccessLogRepository(
         )
 
         synchronized(this) {
-            fileSystem.createDirectories(logFilePath.parent!!)
+            logFilePath.parent?.let { parentDir ->
+                fileSystem.createDirectories(parentDir)
+            }
 
             // Read existing content if file exists
             val existingContent = if (fileSystem.exists(logFilePath)) {

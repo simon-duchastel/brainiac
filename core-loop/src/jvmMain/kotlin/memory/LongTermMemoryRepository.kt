@@ -50,7 +50,8 @@ class LongTermMemoryRepository(
             AccessAction.WRITE
         }
 
-        fileSystem.createDirectories(filePath.parent!!)
+        val parentDir = filePath.parent ?: ltmDirectory
+        fileSystem.createDirectories(parentDir)
         fileSystem.write(filePath) {
             writeUtf8(content)
         }

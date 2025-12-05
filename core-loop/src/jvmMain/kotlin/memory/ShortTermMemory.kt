@@ -16,6 +16,10 @@ import com.duchastel.simon.brainiac.core.process.context.BrainiacContext
 import com.duchastel.simon.brainiac.core.process.prompt.Prompts
 import com.duchastel.simon.brainiac.core.process.util.withModel
 import kotlinx.serialization.Serializable
+import org.slf4j.LoggerFactory
+
+@PublishedApi
+internal val shortTermMemoryLogger = LoggerFactory.getLogger("ShortTermMemory")
 
 @AIAgentBuilderDslMarker
 fun AIAgentSubgraphBuilderBase<*, *>.recallShortTermMemory(
@@ -59,7 +63,14 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
                 }
             }
             withModel(brainiacContext.mediumThoughtModel) {
-                requestLLMStructured<Events>().getOrNull()!!.structure.memoryEvents
+                requestLLMStructured<Events>().fold(
+                    onSuccess = { response -> response.structure.memoryEvents },
+                    onFailure = { error ->
+                        // Log error but continue with empty events
+                        shortTermMemoryLogger.warn("Failed to extract events from conversation: {}", error.message)
+                        emptyList()
+                    }
+                )
             }
         }
     }
@@ -74,7 +85,15 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
             }
 
             val goals = withModel(brainiacContext.mediumThoughtModel) {
-                requestLLMStructured<Goals>().getOrNull()!!.structure.goals
+                requestLLMStructured<Goals>().fold(
+                    onSuccess = { response -> response.structure.goals },
+                    onFailure = { error ->
+                        // Log error and fall back to existing goals
+                        shortTermMemoryLogger.warn("Failed to update goals: {}", error.message)
+                        // Return current goals
+                        shortTermMemoryRepository.getShortTermMemory().goals
+                    }
+                )
             }
             events to goals
         }
@@ -89,7 +108,13 @@ inline fun <reified T: Any> AIAgentSubgraphBuilderBase<*, *>.updateShortTermMemo
                 }
             }
             val thoughts = withModel(brainiacContext.mediumThoughtModel) {
-                requestLLMStructured<Events>().getOrNull()!!.structure.memoryEvents
+                requestLLMStructured<Events>().fold(
+                    onSuccess = { response -> response.structure.memoryEvents },
+                    onFailure = { error ->
+                        shortTermMemoryLogger.warn("Failed to extract thoughts: {}", error.message)
+                        emptyList()
+                    }
+                )
             }
             Triple(events, goals, thoughts)
         }
