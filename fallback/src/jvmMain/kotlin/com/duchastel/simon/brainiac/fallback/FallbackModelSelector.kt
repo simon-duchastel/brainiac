@@ -51,7 +51,7 @@ data class ModelSelectionCriteria(
  */
 @AIAgentBuilderDslMarker
 context(fallbackContext: FallbackContext)
-inline fun <reified T : Any> AIAgentSubgraphBuilderBase<*, *>.selectFallbackModel(
+fun AIAgentSubgraphBuilderBase<*, *>.selectFallbackModel(
     name: String? = null,
     selectionCriteria: ModelSelectionCriteria = ModelSelectionCriteria(),
 ): AIAgentSubgraphDelegate<ModelSelectionCriteria, OpenRouterModel> = subgraph(
@@ -105,7 +105,7 @@ inline fun <reified T : Any> AIAgentSubgraphBuilderBase<*, *>.selectFallbackMode
     }
 
     // Node 5: Format models for AI analysis
-    val formatModelsForAnalysis by node<List<OpenRouterModel>, String>("${name}_format_models") {
+    val formatModelsForAnalysis by node<Unit, String>("${name}_format_models") {
         val models = storage.getValue(filteredModelsKey)
         val criteria = storage.getValue(criteriaKey)
 
@@ -185,7 +185,7 @@ inline fun <reified T : Any> AIAgentSubgraphBuilderBase<*, *>.selectFallbackMode
     }
 
     // Node 8: Handle no models available case
-    val handleNoModels by node<Boolean, OpenRouterModel>("${name}_handle_no_models") {
+    val handleNoModels by node<Unit, OpenRouterModel>("${name}_handle_no_models") {
         error("No free models available from OpenRouter matching the criteria")
     }
 
