@@ -32,18 +32,77 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Check for required tools
+# Install Java 17 if not present
+install_java() {
+    log_info "Installing Java 17..."
+
+    if command -v apt-get &> /dev/null; then
+        sudo apt-get update
+        sudo apt-get install -y openjdk-17-jdk
+    elif command -v dnf &> /dev/null; then
+        sudo dnf install -y java-17-openjdk java-17-openjdk-devel
+    elif command -v yum &> /dev/null; then
+        sudo yum install -y java-17-openjdk java-17-openjdk-devel
+    elif command -v pacman &> /dev/null; then
+        sudo pacman -S --noconfirm jdk17-openjdk
+    elif command -v brew &> /dev/null; then
+        brew install openjdk@17
+    else
+        log_error "Could not detect package manager. Please install Java 17 manually."
+        return 1
+    fi
+
+    log_success "Java 17 installed."
+}
+
+# Install Docker if not present
+install_docker() {
+    log_info "Installing Docker..."
+
+    if command -v apt-get &> /dev/null || command -v yum &> /dev/null || command -v dnf &> /dev/null; then
+        curl -fsSL https://get.docker.com | sh
+        sudo usermod -aG docker "$USER"
+        log_success "Docker installed. You may need to log out and back in for group changes to take effect."
+    elif command -v brew &> /dev/null; then
+        brew install --cask docker
+        log_success "Docker installed."
+    else
+        log_error "Could not install Docker automatically. Please install manually."
+        return 1
+    fi
+}
+
+# Check for required tools and install if missing
 check_dependencies() {
     log_info "Checking dependencies..."
 
+    # Git is required
     if ! command -v git &> /dev/null; then
         log_error "git is not installed. Please install git first."
         exit 1
     fi
 
+    # Install Docker if not present
     if ! command -v docker &> /dev/null; then
-        log_warn "Docker is not installed. Some services may require Docker."
-        log_warn "Install Docker with: curl -fsSL https://get.docker.com | sh"
+        log_warn "Docker is not installed. Installing Docker..."
+        install_docker || log_warn "Docker installation failed. Some services may not work."
+    else
+        log_success "Docker is installed."
+    fi
+
+    # Install Java if not present
+    if ! command -v java &> /dev/null; then
+        log_warn "Java is not installed. Installing Java 17..."
+        install_java || log_warn "Java installation failed. Brainiac may not build."
+    else
+        # Check Java version
+        java_version=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2 | cut -d'.' -f1)
+        if [ "$java_version" -lt 17 ] 2>/dev/null; then
+            log_warn "Java version is less than 17. Installing Java 17..."
+            install_java || log_warn "Java installation failed."
+        else
+            log_success "Java 17+ is installed."
+        fi
     fi
 
     log_success "Dependency check complete."
@@ -165,18 +224,13 @@ setup_brainiac() {
 
     cd "$repo_path"
 
-    # Check for Java/Gradle
-    if command -v java &> /dev/null; then
-        log_info "Building Brainiac..."
-        if [ -f "gradlew" ]; then
-            chmod +x gradlew
-            ./gradlew build || log_warn "Brainiac build failed. You may need to install Java 17+."
-        else
-            log_warn "gradlew not found. Please build manually with Gradle."
-        fi
+    # Build with Gradle
+    log_info "Building Brainiac..."
+    if [ -f "gradlew" ]; then
+        chmod +x gradlew
+        ./gradlew build || log_warn "Brainiac build failed."
     else
-        log_warn "Java not installed. Brainiac requires Java 17+ to build."
-        log_warn "Install Java and then run: cd $repo_path && ./gradlew build"
+        log_warn "gradlew not found. Please build manually with Gradle."
     fi
 
     cd - > /dev/null
