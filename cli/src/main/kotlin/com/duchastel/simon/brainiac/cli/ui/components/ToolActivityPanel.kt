@@ -2,14 +2,15 @@ package com.duchastel.simon.brainiac.cli.ui.components
 
 import androidx.compose.runtime.Composable
 import com.duchastel.simon.brainiac.cli.models.ToolActivity
-import com.jakewharton.mosaic.ui.Color
+import com.duchastel.simon.brainiac.cli.ui.theme.BrainiacTheme
 import com.jakewharton.mosaic.ui.Text
 
 @Composable
 fun ToolActivityPanel(activities: List<ToolActivity>, showDetails: Boolean) {
     if (activities.isEmpty()) return
 
-    Text("🔧 Tool Activity${if (!showDetails) " [Press Ctrl-A to show details]" else " [Press Ctrl-A to hide details]"}", color = Color.Green)
+    val colors = BrainiacTheme.colors
+    Text("🔧 Tool Activity${if (!showDetails) " [Press Ctrl-A to show details]" else " [Press Ctrl-A to hide details]"}", color = colors.success)
 
     activities.takeLast(5).forEach { activity ->
         val icon = when (activity.toolName) {
@@ -22,9 +23,9 @@ fun ToolActivityPanel(activities: List<ToolActivity>, showDetails: Boolean) {
         }
 
         if (showDetails) {
-            Text("   $icon ${activity.toolName}: ${activity.details.take(60)}", color = Color.Green)
+            Text("   $icon ${activity.toolName}: ${activity.details.take(60)}", color = colors.success)
         } else {
-            Text("   $icon ${activity.toolName}: ${activity.summary}", color = Color.Green)
+            Text("   $icon ${activity.toolName}: ${activity.summary}", color = colors.success)
         }
     }
 }

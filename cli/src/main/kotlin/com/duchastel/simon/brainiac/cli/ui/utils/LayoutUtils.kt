@@ -1,7 +1,7 @@
 package com.duchastel.simon.brainiac.cli.ui.utils
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import com.duchastel.simon.brainiac.cli.ui.theme.BrainiacTheme
 import com.jakewharton.mosaic.LocalTerminalState
 import com.jakewharton.mosaic.ui.Color
 import com.jakewharton.mosaic.ui.Text
@@ -13,7 +13,7 @@ import com.jakewharton.mosaic.ui.TextStyle
 @Composable
 fun Divider(
     char: Char = '━',
-    color: Color = Color.White,
+    color: Color = BrainiacTheme.colors.divider,
     textStyle: TextStyle = TextStyle.Bold
 ) {
     val terminalWidth = LocalTerminalState.current.size.columns
@@ -27,7 +27,7 @@ fun Divider(
 fun LabeledDivider(
     label: String,
     char: Char = '━',
-    color: Color = Color.White,
+    color: Color = BrainiacTheme.colors.sectionHeader,
     textStyle: TextStyle = TextStyle.Bold
 ) {
     val terminalWidth = LocalTerminalState.current.size.columns
@@ -51,7 +51,7 @@ fun Spacer() {
 @Composable
 fun BoxedHeader(
     label: String,
-    color: Color = Color.White,
+    color: Color = BrainiacTheme.colors.primary,
     textStyle: TextStyle = TextStyle.Bold
 ) {
     val terminalWidth = LocalTerminalState.current.size.columns
