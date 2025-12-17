@@ -25,17 +25,17 @@ fun HeaderPanel(animationFrame: Int = 0) {
     // Color cycling for the neural glow effect
     val colors = listOf(
         Color.Cyan,
-        Color.BrightCyan,
-        Color.BrightBlue,
-        Color.Blue,
-        Color.BrightMagenta,
-        Color.Magenta,
-        Color.BrightMagenta,
-        Color.Blue,
-        Color.BrightBlue,
-        Color.BrightCyan,
         Color.Cyan,
-        Color.BrightCyan
+        Color.Blue,
+        Color.Blue,
+        Color.Magenta,
+        Color.Magenta,
+        Color.Magenta,
+        Color.Blue,
+        Color.Blue,
+        Color.Cyan,
+        Color.Cyan,
+        Color.Cyan
     )
     val primaryColor = colors[animationFrame % colors.size]
     val secondaryColor = colors[(animationFrame + 4) % colors.size]
