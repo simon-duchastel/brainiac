@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import com.jakewharton.mosaic.LocalTerminalState
 import com.jakewharton.mosaic.ui.Color
 import com.jakewharton.mosaic.ui.Column
-import com.jakewharton.mosaic.ui.Row
 import com.jakewharton.mosaic.ui.Text
 import com.jakewharton.mosaic.ui.TextStyle
 
