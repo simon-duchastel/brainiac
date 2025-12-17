@@ -8,6 +8,7 @@ group = "com.duchastel.simon.brainiac.cli"
 
 application {
     mainClass.set("com.duchastel.simon.brainiac.cli.MainKt")
+    applicationDefaultJvmArgs = listOf("-Djansi.force=true")
 }
 
 kotlin {
