@@ -42,7 +42,7 @@ class BrainiacPresenter(
 
     val mainModel = LLModel(
         provider = LLMProvider.OpenRouter,
-        id = "x-ai/grok-4.1-fast:free",
+        id = "mistralai/devstral-2512:free",
         capabilities = listOf(
             LLMCapability.Temperature,
             LLMCapability.Speculation,
