@@ -6,6 +6,9 @@ import com.duchastel.simon.brainiac.cli.circuit.BrainiacState
 import com.duchastel.simon.brainiac.cli.circuit.BrainiacUi
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRepository
 import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
+import com.duchastel.simon.brainiac.logging.InteractionLogger
+import com.duchastel.simon.brainiac.logging.InteractionLoggerImpl
+import com.duchastel.simon.brainiac.logging.config.InteractionLoggingConfig
 import com.jakewharton.mosaic.runMosaicMain
 import com.slack.circuit.foundation.Circuit
 import com.slack.circuit.foundation.CircuitCompositionLocals
@@ -24,6 +27,7 @@ private val logger = LoggerFactory.getLogger("com.duchastel.simon.brainiac.cli.M
 
 fun main(args: Array<String>) {
     val enableLogging = args.contains("--logging")
+    val enableInteractionLogging = args.contains("--interaction-logging")
     configureLogging(enableLogging)
 
     // Register signal handlers for robust Ctrl-C handling
@@ -47,11 +51,27 @@ fun main(args: Array<String>) {
         ?: error("OPEN_ROUTER_API_KEY environment variable not set")
     val tavilyApiKey = System.getenv("TAVILY_API_KEY")
 
+    // Create interaction logger if enabled
+    val interactionLogger: InteractionLogger? = if (enableInteractionLogging) {
+        val config = InteractionLoggingConfig(
+            enabled = true,
+            logDirectory = brainiacRootDirectory / "logs" / "interactions"
+        )
+        InteractionLoggerImpl(config).also { logger ->
+            // Start a new thread for this session
+            logger.startThread()
+        }
+    } else {
+        null
+    }
+
     val shortTermMemoryRepository = ShortTermMemoryRepository(
-        brainiacRootDirectory = brainiacRootDirectory
+        brainiacRootDirectory = brainiacRootDirectory,
+        interactionLogger = interactionLogger
     )
     val longTermMemoryRepository = LongTermMemoryRepository(
-        brainiacRootDirectory = brainiacRootDirectory
+        brainiacRootDirectory = brainiacRootDirectory,
+        interactionLogger = interactionLogger
     )
 
     val circuit: Circuit =
@@ -61,7 +81,8 @@ fun main(args: Array<String>) {
                     openRouterApiKey = openRouterApiKey,
                     tavilyApiKey = tavilyApiKey,
                     shortTermMemoryRepository = shortTermMemoryRepository,
-                    longTermMemoryRepository = longTermMemoryRepository
+                    longTermMemoryRepository = longTermMemoryRepository,
+                    interactionLogger = interactionLogger
                 )
             }
             .addUi<BrainiacScreen, BrainiacState> { state, _ -> BrainiacUi(state) }

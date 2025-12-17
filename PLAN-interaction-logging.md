@@ -15,6 +15,7 @@ Add modular instrumentation to log AI interactions locally with **message dedupl
 | **Message** | A unique piece of content (user input, assistant response, tool call, etc.) | `messages/` directory, one file per message hash |
 | **Thread** | An ordered sequence of message references with positional metadata | `threads/` directory, one JSONL file per session |
 | **ThreadEntry** | A reference to a message at a specific position in context | Line in thread JSONL file |
+| **MemoryOperation** | A read/write/query operation on memory files (STM, LTM) | Logged as special thread entries |
 
 ### Why This Model?
 
@@ -85,10 +86,11 @@ enum class MessageRole {
 @Serializable
 data class ThreadEntry(
     val timestamp: Instant,            // When this entry was added to context
-    val messageId: String,             // Reference to LoggedMessage.id
-    val positionInContext: Int,        // 0-indexed position in LLM context
+    val messageId: String?,            // Reference to LoggedMessage.id (null for memory ops)
+    val positionInContext: Int?,       // 0-indexed position in LLM context (null for memory ops)
     val eventType: ThreadEventType,    // What happened
-    val contextSnapshot: ContextSnapshot? // Optional context metadata
+    val contextSnapshot: ContextSnapshot?, // Optional context metadata
+    val memoryOperation: MemoryOperation?  // Present for MEMORY_* event types
 )
 
 enum class ThreadEventType {
@@ -96,7 +98,10 @@ enum class ThreadEventType {
     CONTEXT_REPLAYED,   // Existing message replayed in new request
     CONTEXT_COMPACTED,  // Context was summarized/compacted
     LLM_REQUEST,        // An LLM request was made
-    LLM_RESPONSE        // LLM responded
+    LLM_RESPONSE,       // LLM responded
+    MEMORY_READ,        // Memory file was read (STM/LTM recall)
+    MEMORY_WRITE,       // Memory file was written (STM/LTM update)
+    MEMORY_QUERY        // Semantic search/query on memory
 }
 
 @Serializable
@@ -105,6 +110,19 @@ data class ContextSnapshot(
     val estimatedTokens: Int?,
     val modelUsed: String?
 )
+
+@Serializable
+data class MemoryOperation(
+    val memoryType: MemoryType,        // STM, LTM
+    val operation: MemoryOpType,       // READ, WRITE, QUERY
+    val filePath: String?,             // File accessed (for LTM)
+    val query: String?,                // Search query (for QUERY ops)
+    val resultCount: Int?,             // Number of results returned
+    val contentPreview: String?        // First ~100 chars of content
+)
+
+enum class MemoryType { STM, LTM }
+enum class MemoryOpType { READ, WRITE, QUERY }
 ```
 
 ### Thread File Format (JSONL)
@@ -154,6 +172,17 @@ interface InteractionLogger {
         threadId: String,
         messages: List<Message>,  // Koog Message type
         eventType: ThreadEventType
+    )
+
+    // Memory operations
+    suspend fun logMemoryOperation(
+        threadId: String,
+        memoryType: MemoryType,
+        operation: MemoryOpType,
+        filePath: String? = null,
+        query: String? = null,
+        resultCount: Int? = null,
+        contentPreview: String? = null
     )
 
     // Query

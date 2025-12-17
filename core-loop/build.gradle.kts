@@ -21,6 +21,7 @@ kotlin {
                 implementation(libs.okio)
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.serialization.core)
+                api(project(":interaction-logging"))
             }
         }
         val jvmMain by getting {

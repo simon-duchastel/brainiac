@@ -19,6 +19,10 @@ import com.duchastel.simon.brainiac.core.process.context.BrainiacContext
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRepository
 import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
 import com.duchastel.simon.brainiac.core.process.prompt.Prompts
+import com.duchastel.simon.brainiac.logging.InteractionLogger
+import com.duchastel.simon.brainiac.logging.models.ContextSnapshot
+import com.duchastel.simon.brainiac.logging.models.MessageMetadata
+import com.duchastel.simon.brainiac.logging.models.MessageRole
 import kotlinx.coroutines.runBlocking
 
 sealed interface UserMessage {
@@ -73,10 +77,70 @@ class CoreAgent(
                 install(MessageTokenizer) {
                     tokenizer = SimpleRegexBasedTokenizer()
                 }
-                config.onEventHandler?.let { handler ->
+                // Install EventHandler if we have either a handler or a logger
+                if (config.onEventHandler != null || config.interactionLogger != null) {
                     install(EventHandler) {
                         onLLMCallCompleted { ctx ->
-                            handler(ctx.responses)
+                            // Call the original handler if present
+                            config.onEventHandler?.invoke(ctx.responses)
+
+                            // Log interactions if logger is present
+                            config.interactionLogger?.let { logger ->
+                                // Log LLM response event
+                                logger.logLLMResponse(
+                                    responseMessageId = "response-${System.currentTimeMillis()}",
+                                    contextSnapshot = ContextSnapshot(
+                                        totalMessages = ctx.responses.size,
+                                        modelUsed = config.highThoughtModel.id
+                                    )
+                                )
+
+                                // Log each message in the response
+                                ctx.responses.forEach { message ->
+                                    when (message) {
+                                        is Message.Assistant -> {
+                                            val messageId = logger.logMessage(
+                                                content = message.content,
+                                                role = MessageRole.ASSISTANT,
+                                                metadata = MessageMetadata(
+                                                    model = config.highThoughtModel.id
+                                                )
+                                            )
+                                            logger.logMessageAdded(
+                                                messageId = messageId,
+                                                positionInContext = ctx.responses.indexOf(message)
+                                            )
+                                        }
+                                        is Message.Tool.Call -> {
+                                            val messageId = logger.logMessage(
+                                                content = message.content ?: "",
+                                                role = MessageRole.TOOL_CALL,
+                                                metadata = MessageMetadata(
+                                                    toolName = message.tool
+                                                )
+                                            )
+                                            logger.logMessageAdded(
+                                                messageId = messageId,
+                                                positionInContext = ctx.responses.indexOf(message)
+                                            )
+                                        }
+                                        is Message.Tool.Result -> {
+                                            val messageId = logger.logMessage(
+                                                content = message.content,
+                                                role = MessageRole.TOOL_RESULT,
+                                                metadata = MessageMetadata(
+                                                    toolName = message.tool
+                                                )
+                                            )
+                                            logger.logMessageAdded(
+                                                messageId = messageId,
+                                                positionInContext = ctx.responses.indexOf(message)
+                                            )
+                                        }
+                                        else -> {}
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -93,6 +157,7 @@ class CoreAgent(
  * @property toolRegistry Tools available to the agent
  * @property executionClients Map of LLM providers to their clients
  * @property onEventHandler Optional handler for agent events (e.g., messages, tool calls)
+ * @property interactionLogger Optional logger for recording AI interactions
  */
 data class CoreAgentConfig(
     val highThoughtModel: LLModel,
@@ -101,4 +166,5 @@ data class CoreAgentConfig(
     val toolRegistry: ToolRegistry,
     val executionClients: Map<LLMProvider, LLMClient>,
     val onEventHandler: ((List<Message>) -> Unit)? = null,
+    val interactionLogger: InteractionLogger? = null,
 )

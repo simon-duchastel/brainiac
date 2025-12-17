@@ -1,5 +1,8 @@
 package com.duchastel.simon.brainiac.core.process.memory
 
+import com.duchastel.simon.brainiac.logging.InteractionLogger
+import com.duchastel.simon.brainiac.logging.models.MemoryOpType
+import com.duchastel.simon.brainiac.logging.models.MemoryType
 import kotlinx.serialization.json.Json
 import okio.FileSystem
 import okio.Path
@@ -13,6 +16,7 @@ import okio.Path
 class ShortTermMemoryRepository(
     brainiacRootDirectory: Path,
     private val fileSystem: FileSystem = FileSystem.SYSTEM,
+    private val interactionLogger: InteractionLogger? = null,
 ) {
     private val memoryFilePath: Path = defaultMemoryPath(brainiacRootDirectory)
     private val json = Json { prettyPrint = true }
@@ -23,7 +27,7 @@ class ShortTermMemoryRepository(
      * @return The contents of the short-term memory file, or an empty ShortTermMemory if the file doesn't exist
      */
     fun getShortTermMemory(): ShortTermMemory {
-        return if (fileSystem.exists(memoryFilePath)) {
+        val memory = if (fileSystem.exists(memoryFilePath)) {
             val rawMemory = fileSystem.read(memoryFilePath) {
                 readUtf8()
             }
@@ -31,6 +35,15 @@ class ShortTermMemoryRepository(
         } else {
             ShortTermMemory()
         }
+
+        interactionLogger?.logMemoryOperation(
+            memoryType = MemoryType.STM,
+            operation = MemoryOpType.READ,
+            filePath = memoryFilePath.toString(),
+            contentPreview = "thoughts=${memory.thoughts.size}, goals=${memory.goals.size}, events=${memory.events.size}"
+        )
+
+        return memory
     }
 
     /**
@@ -46,6 +59,13 @@ class ShortTermMemoryRepository(
         fileSystem.write(memoryFilePath) {
             writeUtf8(jsonContent)
         }
+
+        interactionLogger?.logMemoryOperation(
+            memoryType = MemoryType.STM,
+            operation = MemoryOpType.WRITE,
+            filePath = memoryFilePath.toString(),
+            contentPreview = "thoughts=${shortTermMemory.thoughts.size}, goals=${shortTermMemory.goals.size}, events=${shortTermMemory.events.size}"
+        )
     }
 
     /**

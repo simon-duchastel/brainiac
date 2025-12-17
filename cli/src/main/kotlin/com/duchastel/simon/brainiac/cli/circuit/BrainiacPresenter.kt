@@ -25,6 +25,8 @@ import com.duchastel.simon.brainiac.cli.models.MessageSender
 import com.duchastel.simon.brainiac.cli.models.ToolActivity
 import com.duchastel.simon.brainiac.core.process.memory.LongTermMemoryRepository
 import com.duchastel.simon.brainiac.core.process.memory.ShortTermMemoryRepository
+import com.duchastel.simon.brainiac.logging.InteractionLogger
+import com.duchastel.simon.brainiac.logging.models.MessageRole
 import com.duchastel.simon.brainiac.tools.bash.BashTool
 import com.duchastel.simon.brainiac.tools.talk.TalkTool
 import com.duchastel.simon.brainiac.tools.websearch.WebSearchTool
@@ -37,7 +39,8 @@ class BrainiacPresenter(
     private val openRouterApiKey: String,
     private val tavilyApiKey: String?,
     private val shortTermMemoryRepository: ShortTermMemoryRepository,
-    private val longTermMemoryRepository: LongTermMemoryRepository
+    private val longTermMemoryRepository: LongTermMemoryRepository,
+    private val interactionLogger: InteractionLogger? = null,
 ) : Presenter<BrainiacState> {
 
     val mainModel = LLModel(
@@ -105,6 +108,7 @@ class BrainiacPresenter(
                         LLMProvider.OpenRouter to OpenRouterLLMClient(openRouterApiKey),
                     ),
                     toolRegistry = toolRegistry,
+                    interactionLogger = interactionLogger,
                     onEventHandler = { messagesFromAgent ->
                         messagesFromAgent.forEach { message ->
                             when (message) {
@@ -168,6 +172,19 @@ class BrainiacPresenter(
                                 sender = MessageSender.USER
                             )
                             isWaitingForResponse = true
+
+                            // Log user message
+                            interactionLogger?.let { logger ->
+                                val messageId = logger.logMessage(
+                                    content = input,
+                                    role = MessageRole.USER
+                                )
+                                logger.logMessageAdded(
+                                    messageId = messageId,
+                                    positionInContext = 0 // User messages start context
+                                )
+                            }
+
                             UserMessage.Message(input)
                         }
                     }

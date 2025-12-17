@@ -3,6 +3,9 @@ package com.duchastel.simon.brainiac.core.process.memory
 import ai.koog.prompt.text.TextContentBuilderBase
 import ai.koog.prompt.xml.XmlContentBuilder
 import ai.koog.prompt.xml.xml
+import com.duchastel.simon.brainiac.logging.InteractionLogger
+import com.duchastel.simon.brainiac.logging.models.MemoryOpType
+import com.duchastel.simon.brainiac.logging.models.MemoryType
 import okio.FileSystem
 import okio.Path
 
@@ -16,6 +19,7 @@ class LongTermMemoryRepository(
     brainiacRootDirectory: Path,
     private val fileSystem: FileSystem = FileSystem.SYSTEM,
     private val accessLogRepository: AccessLogRepository? = null,
+    private val interactionLogger: InteractionLogger? = null,
 ) {
     private val ltmDirectory: Path = defaultLTMDirectory(brainiacRootDirectory)
 
@@ -31,6 +35,12 @@ class LongTermMemoryRepository(
 
         // Log the read access
         accessLogRepository?.logAccess(AccessAction.READ, fullPath.toString())
+        interactionLogger?.logMemoryOperation(
+            memoryType = MemoryType.LTM,
+            operation = MemoryOpType.READ,
+            filePath = memoryPath,
+            contentPreview = content.take(100)
+        )
 
         return content
     }
@@ -58,6 +68,12 @@ class LongTermMemoryRepository(
 
         // Log the write/modify access
         accessLogRepository?.logAccess(action, filePath.toString())
+        interactionLogger?.logMemoryOperation(
+            memoryType = MemoryType.LTM,
+            operation = MemoryOpType.WRITE,
+            filePath = memoryPath,
+            contentPreview = content.take(100)
+        )
     }
 
     /**
