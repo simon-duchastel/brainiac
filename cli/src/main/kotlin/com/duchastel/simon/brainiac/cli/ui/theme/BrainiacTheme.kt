@@ -8,18 +8,20 @@ import com.jakewharton.mosaic.ui.Color
 /**
  * Brainiac Color Palette
  *
- * A modern, sleek theme with clean whites and greys accented by vibrant colors.
- * Designed for optimal terminal readability while maintaining visual appeal.
+ * A modern, sleek theme optimized for terminal display.
+ * Uses the available Mosaic Color palette effectively.
+ *
+ * Available Mosaic colors: Black, Blue, Cyan, Green, Magenta, Red, White, Yellow
  */
 object BrainiacColors {
     // ═══════════════════════════════════════════════════════════════════════
     // PRIMARY BRAND COLORS
     // ═══════════════════════════════════════════════════════════════════════
 
-    /** Primary brand color - Electric cyan for headers and branding */
-    val primary: Color = Color.BrightCyan
+    /** Primary brand color - Clean cyan for headers and branding */
+    val primary: Color = Color.Cyan
 
-    /** Secondary brand color - Softer cyan for AI responses */
+    /** Secondary brand color - Cyan for AI responses (consistent branding) */
     val secondary: Color = Color.Cyan
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -29,56 +31,56 @@ object BrainiacColors {
     /** Primary surface color - Clean white */
     val surface: Color = Color.White
 
-    /** Muted surface - Subtle grey for less prominent elements */
-    val surfaceMuted: Color = Color.BrightBlack
+    /** Muted surface - Black for contrast */
+    val surfaceMuted: Color = Color.Black
 
     // ═══════════════════════════════════════════════════════════════════════
     // TEXT COLORS
     // ═══════════════════════════════════════════════════════════════════════
 
-    /** Primary text - Bright white for maximum readability */
-    val textPrimary: Color = Color.BrightWhite
+    /** Primary text - White for maximum readability */
+    val textPrimary: Color = Color.White
 
-    /** Secondary text - Softer white for supporting content */
+    /** Secondary text - White for supporting content */
     val textSecondary: Color = Color.White
 
-    /** Muted text - Grey for hints and less important info */
-    val textMuted: Color = Color.BrightBlack
+    /** Muted text - White for hints (contextual usage) */
+    val textMuted: Color = Color.White
 
     // ═══════════════════════════════════════════════════════════════════════
     // SEMANTIC ACCENT COLORS (The "Pop"!)
     // ═══════════════════════════════════════════════════════════════════════
 
-    /** Success/Tools - Vibrant mint green */
-    val success: Color = Color.BrightGreen
+    /** Success/Tools - Vibrant green */
+    val success: Color = Color.Green
 
-    /** Warning/Thinking - Warm golden amber */
-    val warning: Color = Color.BrightYellow
+    /** Warning/Thinking - Warm yellow */
+    val warning: Color = Color.Yellow
 
     /** Info/Input - Sky blue */
-    val info: Color = Color.BrightBlue
+    val info: Color = Color.Blue
 
-    /** Status/Loading - Soft lavender */
-    val status: Color = Color.BrightMagenta
+    /** Status/Loading - Soft magenta */
+    val status: Color = Color.Magenta
 
-    /** Error state - Coral red */
-    val error: Color = Color.BrightRed
+    /** Error state - Red */
+    val error: Color = Color.Red
 
     // ═══════════════════════════════════════════════════════════════════════
     // UI ELEMENT COLORS
     // ═══════════════════════════════════════════════════════════════════════
 
-    /** Divider lines - Subtle grey */
-    val divider: Color = Color.BrightBlack
+    /** Divider lines - White */
+    val divider: Color = Color.White
 
-    /** Section headers/labels - Primary brand */
-    val sectionHeader: Color = Color.BrightCyan
+    /** Section headers/labels - Primary brand cyan */
+    val sectionHeader: Color = Color.Cyan
 
     /** User input cursor and text */
-    val input: Color = Color.BrightWhite
+    val input: Color = Color.White
 
     /** Disabled/inactive state */
-    val disabled: Color = Color.BrightBlack
+    val disabled: Color = Color.White
 }
 
 /**
