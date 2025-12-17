@@ -6,11 +6,23 @@ plugins {
 group = "com.duchastel.simon.brainiac.cli"
 
 kotlin {
-    jvm {
-        jvmToolchain(17)
-        withJava()
+    jvmToolchain(17)
+    jvm()
+    linuxX64("linux") {
+        binaries {
+            executable {
+                entryPoint = "com.duchastel.simon.brainiac.cli.main"
+            }
+        }
     }
-    linuxX64("native") {
+    macosX64("macos") {
+        binaries {
+            executable {
+                entryPoint = "com.duchastel.simon.brainiac.cli.main"
+            }
+        }
+    }
+    macosArm64("macosArm") {
         binaries {
             executable {
                 entryPoint = "com.duchastel.simon.brainiac.cli.main"
@@ -34,7 +46,18 @@ kotlin {
                 implementation(libs.mosaic.runtime)
             }
         }
-        val nativeMain by getting
+        val nativeMain by creating {
+            dependsOn(commonMain)
+        }
+        val linuxMain by getting {
+            dependsOn(nativeMain)
+        }
+        val macosMain by getting {
+            dependsOn(nativeMain)
+        }
+        val macosArmMain by getting {
+            dependsOn(nativeMain)
+        }
     }
 }
 
