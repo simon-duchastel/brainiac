@@ -13,11 +13,12 @@ import com.jakewharton.mosaic.ui.TextStyle
 @Composable
 fun Divider(
     char: Char = '━',
-    color: Color = BrainiacTheme.colors.divider,
+    color: Color = Color.Unspecified,
     textStyle: TextStyle = TextStyle.Bold
 ) {
     val terminalWidth = LocalTerminalState.current.size.columns
-    Text(char.toString().repeat(terminalWidth), color = color, textStyle = textStyle)
+    val resolvedColor = if (color == Color.Unspecified) BrainiacTheme.colors.divider else color
+    Text(char.toString().repeat(terminalWidth), color = resolvedColor, textStyle = textStyle)
 }
 
 /**
@@ -27,14 +28,15 @@ fun Divider(
 fun LabeledDivider(
     label: String,
     char: Char = '━',
-    color: Color = BrainiacTheme.colors.sectionHeader,
+    color: Color = Color.Unspecified,
     textStyle: TextStyle = TextStyle.Bold
 ) {
     val terminalWidth = LocalTerminalState.current.size.columns
     val padding = (terminalWidth - label.length - 2) / 2
     val left = char.toString().repeat(padding.coerceAtLeast(0))
     val right = char.toString().repeat((terminalWidth - padding - label.length - 2).coerceAtLeast(0))
-    Text("$left $label $right", color = color, textStyle = textStyle)
+    val resolvedColor = if (color == Color.Unspecified) BrainiacTheme.colors.sectionHeader else color
+    Text("$left $label $right", color = resolvedColor, textStyle = textStyle)
 }
 
 /**
@@ -51,15 +53,16 @@ fun Spacer() {
 @Composable
 fun BoxedHeader(
     label: String,
-    color: Color = BrainiacTheme.colors.primary,
+    color: Color = Color.Unspecified,
     textStyle: TextStyle = TextStyle.Bold
 ) {
     val terminalWidth = LocalTerminalState.current.size.columns
     val padding = (terminalWidth - label.length - 2) / 2
     val leftPad = " ".repeat(padding.coerceAtLeast(0))
     val rightPad = " ".repeat((terminalWidth - padding - label.length - 2).coerceAtLeast(0))
+    val resolvedColor = if (color == Color.Unspecified) BrainiacTheme.colors.primary else color
 
-    Text("╔${"═".repeat((terminalWidth - 2).coerceAtLeast(0))}╗", color = color, textStyle = textStyle)
-    Text("║$leftPad$label$rightPad║", color = color, textStyle = textStyle)
-    Text("╚${"═".repeat((terminalWidth - 2).coerceAtLeast(0))}╝", color = color, textStyle = textStyle)
+    Text("╔${"═".repeat((terminalWidth - 2).coerceAtLeast(0))}╗", color = resolvedColor, textStyle = textStyle)
+    Text("║$leftPad$label$rightPad║", color = resolvedColor, textStyle = textStyle)
+    Text("╚${"═".repeat((terminalWidth - 2).coerceAtLeast(0))}╝", color = resolvedColor, textStyle = textStyle)
 }
