@@ -45,7 +45,7 @@ fun BrainiacUi(state: BrainiacState) {
             }
         }
     ) {
-        HeaderPanel()
+        HeaderPanel(animationFrame = state.headerAnimationFrame)
         Spacer()
         ThinkingPanel(
             thinking = state.thinking,
