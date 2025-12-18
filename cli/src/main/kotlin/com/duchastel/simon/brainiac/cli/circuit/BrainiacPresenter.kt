@@ -62,6 +62,7 @@ class BrainiacPresenter(
         var showToolDetails by remember { mutableStateOf(false) }
         var isWaitingForResponse by remember { mutableStateOf(false) }
         var loadingDots by remember { mutableStateOf(0) }
+        var headerAnimationFrame by remember { mutableStateOf(0) }
         var inputBuffer by remember { mutableStateOf("") }
 
         val userInputChannel = remember { Channel<String>(Channel.UNLIMITED) }
@@ -71,6 +72,14 @@ class BrainiacPresenter(
             while (isThinking || isWaitingForResponse) {
                 delay(500)
                 loadingDots = (loadingDots + 1) % 4
+            }
+        }
+
+        // Continuous animation for header brain
+        LaunchedEffect(Unit) {
+            while (true) {
+                delay(150)
+                headerAnimationFrame = (headerAnimationFrame + 1) % 12
             }
         }
 
@@ -193,6 +202,7 @@ class BrainiacPresenter(
             showToolDetails = showToolDetails,
             isWaitingForResponse = isWaitingForResponse,
             loadingDots = loadingDots,
+            headerAnimationFrame = headerAnimationFrame,
             inputBuffer = inputBuffer,
             eventSink = { event ->
                 when (event) {
