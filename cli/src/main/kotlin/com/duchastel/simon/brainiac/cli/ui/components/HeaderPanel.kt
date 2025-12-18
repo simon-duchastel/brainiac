@@ -8,114 +8,45 @@ import com.jakewharton.mosaic.ui.Text
 import com.jakewharton.mosaic.ui.TextStyle
 
 /**
- * Animated ASCII brain header with neural pulse effects
+ * Elegant ASCII brain header
  */
 @Composable
 fun HeaderPanel(animationFrame: Int = 0) {
     val terminalWidth = LocalTerminalState.current.size.columns
 
-    // Neural pulse characters that cycle through animation frames
-    val pulseChars = listOf('·', '•', '●', '◉', '◎', '○', '◌', '◯', '●', '◉', '•', '·')
-    val currentPulse = pulseChars[animationFrame % pulseChars.size]
-
-    // Synaptic spark characters
-    val sparkChars = listOf('✦', '✧', '⚡', '★', '☆', '✶', '✴', '✸', '✹', '✺', '✧', '✦')
-    val currentSpark = sparkChars[animationFrame % sparkChars.size]
-
-    // Color cycling for the neural glow effect
-    val colors = listOf(
-        Color.Cyan,
-        Color.Cyan,
-        Color.Blue,
-        Color.Blue,
-        Color.Magenta,
-        Color.Magenta,
-        Color.Magenta,
-        Color.Blue,
-        Color.Blue,
-        Color.Cyan,
-        Color.Cyan,
-        Color.Cyan
-    )
-    val primaryColor = colors[animationFrame % colors.size]
-    val secondaryColor = colors[(animationFrame + 4) % colors.size]
-    val accentColor = colors[(animationFrame + 8) % colors.size]
-
-    // Neural activity indicators that pulse at different phases
-    val neuron1 = pulseChars[(animationFrame + 0) % pulseChars.size]
-    val neuron2 = pulseChars[(animationFrame + 3) % pulseChars.size]
-    val neuron3 = pulseChars[(animationFrame + 6) % pulseChars.size]
-    val neuron4 = pulseChars[(animationFrame + 9) % pulseChars.size]
-
-    // The magnificent ASCII brain with animated neural pulses
+    // Clean, artistic brain silhouette with cerebral folds
     val brainArt = listOf(
-        "                    $currentSpark        $currentSpark                     ",
-        "              ░░░▒▒▒▓▓▓▓▓▓▓▓▓▓▒▒▒░░░              ",
-        "          ░▒▓█$neuron1 ══════════════════ $neuron2█▓▒░          ",
-        "        ▒▓██$neuron3═══╗  NEURAL CORTEX  ╔═══$neuron4██▓▒        ",
-        "      ░▓██$currentPulse═══╬══════════════════╬═══$currentPulse██▓░      ",
-        "     ▒██$neuron1══╬══╝  ┌──────────┐  ╚══╬══$neuron2██▒     ",
-        "    ▒██$neuron3══╬════  │ BRAINIAC │  ════╬══$neuron4██▒    ",
-        "   ░██$currentPulse══╬════  │    AI    │  ════╬══$currentPulse██░   ",
-        "   ▓█$neuron1═══╬════  └──────────┘  ════╬═══$neuron2█▓   ",
-        "   ██$neuron3═══╬══╗  ┌────────────┐  ╔══╬═══$neuron4██   ",
-        "   ██$currentPulse═══╬══╬══│ SYNAPTIC   │══╬══╬═══$currentPulse██   ",
-        "   ██$neuron1═══╬══╬══│   NETWORK  │══╬══╬═══$neuron2██   ",
-        "   ▓█$neuron3═══╬══╬══└────────────┘══╬══╬═══$neuron4█▓   ",
-        "   ░██$currentPulse══╬══╚════════════════╝══╬══$currentPulse██░   ",
-        "    ▒██$neuron1══╬════════════════════╬══$neuron2██▒    ",
-        "     ▒██$neuron3══╬══════════════════╬══$neuron4██▒     ",
-        "      ░▓██$currentPulse═══════════════════$currentPulse██▓░      ",
-        "        ▒▓██$neuron1═══════════════$neuron2██▓▒        ",
-        "          ░▒▓█$neuron3═════════════$neuron4█▓▒░          ",
-        "              ░░░▒▒▒▓▓▓▓▓▓▓▓▒▒▒░░░              ",
-        "                    $currentSpark        $currentSpark                     "
+        "                                              ",
+        "               ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                ",
+        "           ▄▀▀▀                 ▀▀▀▄          ",
+        "         ▄▀   ▄▀▀▀▄     ▄▀▀▀▄     ▀▄         ",
+        "        █   ▄▀ ▄▄▄ ▀▄ ▄▀ ▄▄▄ ▀▄    █        ",
+        "       █   █  █▀▀▀█  █  █▀▀▀█  █    █       ",
+        "       █   █  ▀▄▄▄▀  █  ▀▄▄▄▀  █    █       ",
+        "       █   ▀▄      ▄▀▀▀▄      ▄▀    █       ",
+        "       █     ▀▀▄▄▄▀     ▀▄▄▄▀▀      █       ",
+        "        █        ▄▀▀▀▀▀▀▀▄         █        ",
+        "         ▀▄     █  ▄▀▀▄  █       ▄▀         ",
+        "           ▀▄   █  ▀▄▄▀  █     ▄▀           ",
+        "             ▀▀▄ ▀▄    ▄▀  ▄▀▀              ",
+        "                ▀▀▀▄▄▄▀▀▀▀                  ",
+        "                                              "
     )
 
-    // Top border with animated sparks
-    val topBorder = buildString {
-        append("╔")
-        for (i in 0 until (terminalWidth - 2).coerceAtLeast(0)) {
-            if (i % 8 == (animationFrame % 8)) {
-                append(currentSpark)
-            } else {
-                append("═")
-            }
-        }
-        append("╗")
-    }
-
-    // Bottom border with animated sparks
-    val bottomBorder = buildString {
-        append("╚")
-        for (i in 0 until (terminalWidth - 2).coerceAtLeast(0)) {
-            if (i % 8 == ((animationFrame + 4) % 8)) {
-                append(currentSpark)
-            } else {
-                append("═")
-            }
-        }
-        append("╝")
-    }
+    // Rounded borders
+    val topBorder = "╭${"─".repeat((terminalWidth - 2).coerceAtLeast(0))}╮"
+    val bottomBorder = "╰${"─".repeat((terminalWidth - 2).coerceAtLeast(0))}╯"
 
     Column {
-        // Top border
-        Text(topBorder, color = primaryColor, textStyle = TextStyle.Bold)
+        Text(topBorder, color = Color.Cyan, textStyle = TextStyle.Bold)
 
-        // Brain art with centered padding
-        brainArt.forEachIndexed { index, line ->
-            val lineColor = when {
-                index < 2 || index >= brainArt.size - 2 -> accentColor
-                index in 3..5 || index in brainArt.size - 6..brainArt.size - 4 -> secondaryColor
-                else -> primaryColor
-            }
+        brainArt.forEach { line ->
             val padding = ((terminalWidth - 2 - line.length) / 2).coerceAtLeast(0)
             val leftPad = " ".repeat(padding)
             val rightPad = " ".repeat((terminalWidth - 2 - padding - line.length).coerceAtLeast(0))
-            Text("║$leftPad$line$rightPad║", color = lineColor, textStyle = TextStyle.Bold)
+            Text("│$leftPad$line$rightPad│", color = Color.Cyan, textStyle = TextStyle.Bold)
         }
 
-        // Bottom border
-        Text(bottomBorder, color = primaryColor, textStyle = TextStyle.Bold)
+        Text(bottomBorder, color = Color.Cyan, textStyle = TextStyle.Bold)
     }
 }
